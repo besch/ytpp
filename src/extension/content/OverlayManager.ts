@@ -48,7 +48,7 @@ export class OverlayManager {
     canvasElement.style.position = "absolute";
     canvasElement.style.left = `${videoElement.offsetLeft}px`;
     canvasElement.style.top = `${videoElement.offsetTop}px`;
-    canvasElement.style.pointerEvents = "auto";
+    canvasElement.style.pointerEvents = "all";
     canvasElement.style.zIndex = "9999";
 
     videoElement.parentElement?.appendChild(canvasElement);

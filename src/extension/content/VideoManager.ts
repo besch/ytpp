@@ -13,34 +13,10 @@ export class VideoManager {
 
     if (this.videoElement) {
       this.handleVideo(this.videoElement);
-      this.setDubbingActiveFlag();
       return;
     }
 
-    const iframes = document.querySelectorAll("iframe");
-    for (let i = 0; i < iframes.length; i++) {
-      const iframe = iframes[i];
-      try {
-        const iframeDocument =
-          iframe.contentDocument || iframe.contentWindow?.document;
-        if (iframeDocument) {
-          this.videoElement = iframeDocument.querySelector("video");
-          if (this.videoElement) {
-            this.handleVideo(this.videoElement);
-            this.setDubbingActiveFlag();
-            return;
-          }
-        }
-      } catch (e) {
-        console.error("Could not access iframe content:", e);
-      }
-    }
-
-    await this.setupVideoObserver();
-  }
-
-  private setDubbingActiveFlag(): void {
-    window.top?.postMessage({ type: "SET_DUBBING_ACTIVE" }, "*");
+    this.setupVideoObserver();
   }
 
   private handleVideo(video: HTMLVideoElement): void {
