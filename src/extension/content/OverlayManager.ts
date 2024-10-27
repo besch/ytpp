@@ -5,6 +5,8 @@ import {
   Rect,
   Circle,
   Textbox,
+  TPointerEventInfo,
+  TPointerEvent,
 } from "fabric";
 
 interface CustomFabricObject extends FabricObject {
@@ -149,10 +151,66 @@ export class OverlayManager {
   private static setupEditing(): void {
     if (!this.canvas) return;
 
+    // Add event listeners for selection events
     this.canvas.on("selection:created", this.onObjectSelected as any);
     this.canvas.on("selection:updated", this.onObjectSelected as any);
     this.canvas.on("selection:cleared", this.onSelectionCleared);
+
+    // Prevent click events from reaching the video when interacting with canvas
+    this.canvas.on("mouse:down", this.handleCanvasMouseDown);
+    this.canvas.on("mouse:up", this.handleCanvasMouseUp);
+    this.canvas.on("mouse:move", this.handleCanvasMouseMove);
+
+    // Add event listener to the canvas element
+    const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
+    canvasElement.addEventListener("click", this.handleCanvasClick);
   }
+
+  private static handleCanvasClick = (e: MouseEvent): void => {
+    // Stop event propagation if we're in edit mode
+    if (this.isEditing) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  private static handleCanvasMouseDown = (
+    e: TPointerEventInfo<TPointerEvent>
+  ): void => {
+    if (
+      this.isEditing &&
+      (e.target || this.canvas?.getActiveObjects().length)
+    ) {
+      // If clicking on an object or there are selected objects
+      const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
+      canvasElement.style.pointerEvents = "auto";
+    }
+  };
+
+  private static handleCanvasMouseUp = (
+    e: TPointerEventInfo<TPointerEvent>
+  ): void => {
+    if (this.isEditing) {
+      const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
+      // Small delay to ensure click event is handled before changing pointer-events
+      setTimeout(() => {
+        canvasElement.style.pointerEvents = "auto";
+      }, 50);
+    }
+  };
+
+  private static handleCanvasMouseMove = (
+    e: TPointerEventInfo<TPointerEvent>
+  ): void => {
+    if (
+      this.isEditing &&
+      (e.target || this.canvas?.getActiveObjects().length)
+    ) {
+      // If dragging an object or there are selected objects
+      const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
+      canvasElement.style.pointerEvents = "auto";
+    }
+  };
 
   private static onObjectSelected = (event: {
     selected: CustomFabricObject[];
@@ -320,6 +378,10 @@ export class OverlayManager {
 
   public static removeOverlay(): void {
     if (this.canvas) {
+      // Remove event listeners
+      const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
+      canvasElement.removeEventListener("click", this.handleCanvasClick);
+
       // Disconnect resize observer
       if (this.resizeObserver) {
         this.resizeObserver.disconnect();
@@ -330,7 +392,6 @@ export class OverlayManager {
       window.removeEventListener("resize", this.handleResize);
 
       // Remove canvas
-      const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
       canvasElement.parentElement?.removeChild(canvasElement);
       this.canvas.dispose();
       this.canvas = null;
