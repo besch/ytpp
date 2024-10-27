@@ -8,20 +8,20 @@
   "action": {
     "default_popup": "index.html",
     "default_icon": {
-      "48": "icons/mic-active-filled48.png",
-      "128": "icons/mic-active-filled128.png"
+      "48": "assets/icons/icon.png",
+      "128": "assets/icons/icon.png"
     }
   },
   "icons": {
-    "48": "icons/mic-active-filled48.png",
-    "128": "icons/mic-active-filled128.png"
+    "48": "assets/icons/icon.png",
+    "128": "assets/icons/icon.png"
   },
   "background": {
     "service_worker": "background.js"
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
+      "resources": ["assets/*"],
       "matches": ["<all_urls>"]
     }
   ]
