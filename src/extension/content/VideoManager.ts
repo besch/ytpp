@@ -36,7 +36,7 @@ export class VideoManager {
       }
     }
 
-    this.setupVideoObserver();
+    await this.setupVideoObserver();
   }
 
   private setDubbingActiveFlag(): void {

@@ -37,6 +37,20 @@ const App: React.FC = () => {
             target: { tabId: tab.id, allFrames: true },
             files: ["content.js"],
           });
+
+          // Wait for content script to initialize
+          await new Promise((resolve) => {
+            const listener = (event: MessageEvent) => {
+              if (
+                event.source === window &&
+                event.data === "__CONTENT_SCRIPT_LOADED__"
+              ) {
+                window.removeEventListener("message", listener);
+                resolve(null);
+              }
+            };
+            window.addEventListener("message", listener);
+          });
         }
       } catch (error) {
         console.error("Error handling content script:", error);
@@ -45,6 +59,15 @@ const App: React.FC = () => {
 
     loadContentScript();
   }, []);
+
+  // Example function to enable play mode from the UI
+  const enablePlayMode = () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "ENABLE_PLAY_MODE" });
+      }
+    });
+  };
 
   return (
     <Router>

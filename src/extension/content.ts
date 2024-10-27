@@ -16,7 +16,14 @@ class ContentScript {
     this.setupUnloadListener();
 
     this.videoManager = new VideoManager();
-    this.videoManager.findAndStoreVideoElement();
+    this.videoManager.findAndStoreVideoElement().then(() => {
+      // Automatically enable play mode on initialization
+      this.isPlayMode = true;
+      this.enablePlayMode();
+
+      // Notify the UI that content script is loaded
+      window.postMessage("__CONTENT_SCRIPT_LOADED__", "*");
+    });
   }
 
   private setupUnloadListener(): void {
