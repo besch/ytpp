@@ -1,9 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
-import scriptReducer from "@/store/scriptSlice";
+import timelineReducer from "@/store/timelineSlice";
 
 export const store = configureStore({
   reducer: {
-    script: scriptReducer,
+    timeline: timelineReducer,
   },
 });
 

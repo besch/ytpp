@@ -2,20 +2,19 @@ import { toast } from "react-toastify";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
 import config from "@/extension/content/config";
-import {} from "@/types";
 import {} from "@/api";
 
-interface ScriptState {}
+interface timelineState {}
 
-const initialState: ScriptState = {};
+const initialState: timelineState = {};
 
-const scriptSlice = createSlice({
+const timelineSlice = createSlice({
   name: "script",
   initialState,
   reducers: {},
   extraReducers: (builder) => {},
 });
 
-export const {} = scriptSlice.actions;
+export const {} = timelineSlice.actions;
 
-export default scriptSlice.reducer;
+export default timelineSlice.reducer;
