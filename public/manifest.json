@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "YTPP",
+  "version": "0.1",
+  "description": "Play movie on your favourite website with ai dubbing applied to it",
+  "permissions": ["activeTab", "alarms", "storage", "scripting"],
+  "host_permissions": ["https://*/", "http://*/"],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "48": "icons/mic-active-filled48.png",
+      "128": "icons/mic-active-filled128.png"
+    }
+  },
+  "icons": {
+    "48": "icons/mic-active-filled48.png",
+    "128": "icons/mic-active-filled128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
