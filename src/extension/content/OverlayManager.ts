@@ -27,6 +27,7 @@ export class OverlayManager {
   private static isEditing: boolean = false;
   private static videoElement: HTMLVideoElement | null = null;
   private static elements: any[] = [];
+  private static resizeObserver: ResizeObserver | null = null;
 
   public static createOverlay(
     videoElement: HTMLVideoElement,
@@ -59,21 +60,50 @@ export class OverlayManager {
       this.setupEditing();
     }
 
+    this.setupResizeObservers();
+  }
+
+  private static setupResizeObservers(): void {
+    // Handle window resize
     window.addEventListener("resize", this.handleResize);
+
+    // Handle video element resize
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === this.videoElement) {
+          this.updateCanvasSize();
+        }
+      }
+    });
+
+    if (this.videoElement) {
+      this.resizeObserver.observe(this.videoElement);
+    }
+  }
+
+  private static updateCanvasSize(): void {
+    if (!this.canvas || !this.videoElement) return;
+
+    const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
+    const videoRect = this.videoElement.getBoundingClientRect();
+
+    // Update canvas size and position
+    canvasElement.width = this.videoElement.clientWidth;
+    canvasElement.height = this.videoElement.clientHeight;
+    canvasElement.style.left = `${this.videoElement.offsetLeft}px`;
+    canvasElement.style.top = `${this.videoElement.offsetTop}px`;
+
+    // Update fabric.js canvas dimensions
+    this.canvas.setDimensions({
+      width: canvasElement.width,
+      height: canvasElement.height,
+    });
+
+    this.adjustElementPositions();
   }
 
   private static handleResize = (): void => {
-    if (this.canvas && this.videoElement) {
-      const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
-      canvasElement.width = this.videoElement.clientWidth;
-      canvasElement.height = this.videoElement.clientHeight;
-      canvasElement.style.left = `${this.videoElement.offsetLeft}px`;
-      canvasElement.style.top = `${this.videoElement.offsetTop}px`;
-      this.canvas.setWidth(canvasElement.width);
-      this.canvas.setHeight(canvasElement.height);
-
-      this.adjustElementPositions();
-    }
+    this.updateCanvasSize();
   };
 
   private static adjustElementPositions(): void {
@@ -290,7 +320,16 @@ export class OverlayManager {
 
   public static removeOverlay(): void {
     if (this.canvas) {
+      // Disconnect resize observer
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+        this.resizeObserver = null;
+      }
+
+      // Remove window resize listener
       window.removeEventListener("resize", this.handleResize);
+
+      // Remove canvas
       const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
       canvasElement.parentElement?.removeChild(canvasElement);
       this.canvas.dispose();
