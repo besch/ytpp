@@ -47,6 +47,8 @@ export class OverlayManager {
     canvasElement.style.left = `${videoElement.offsetLeft}px`;
     canvasElement.style.top = `${videoElement.offsetTop}px`;
     canvasElement.style.pointerEvents = "all";
+    canvasElement.style.width = "100%";
+    canvasElement.style.height = "100%";
 
     videoElement.parentElement?.appendChild(canvasElement);
 
@@ -166,34 +168,22 @@ export class OverlayManager {
   private static handleCanvasMouseDown = (
     e: TPointerEventInfo<TPointerEvent>
   ): void => {
-    if (
-      this.isEditing &&
-      (e.target || this.canvas?.getActiveObjects().length)
-    ) {
-      const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
-      canvasElement.style.pointerEvents = "all";
-    }
+    const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
+    canvasElement.style.pointerEvents = "all";
   };
 
   private static handleCanvasMouseUp = (
     e: TPointerEventInfo<TPointerEvent>
   ): void => {
-    if (this.isEditing) {
-      const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
-      canvasElement.style.pointerEvents = "all";
-    }
+    const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
+    canvasElement.style.pointerEvents = "all";
   };
 
   private static handleCanvasMouseMove = (
     e: TPointerEventInfo<TPointerEvent>
   ): void => {
-    if (
-      this.isEditing &&
-      (e.target || this.canvas?.getActiveObjects().length)
-    ) {
-      const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
-      canvasElement.style.pointerEvents = "all";
-    }
+    const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
+    canvasElement.style.pointerEvents = "all";
   };
 
   private static onObjectSelected = (event: {
