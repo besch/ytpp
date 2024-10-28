@@ -1,5 +1,3 @@
-import config from "./config";
-
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
   private originalVideoVolume: number = 1;

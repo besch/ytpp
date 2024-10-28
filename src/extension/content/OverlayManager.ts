@@ -1,7 +1,6 @@
 import {
   Canvas,
-  TEvent,
-  Object as FabricObject,
+  FabricObject,
   Rect,
   Circle,
   Textbox,
