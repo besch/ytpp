@@ -2,8 +2,6 @@ import { VideoManager } from "./content/VideoManager";
 import { OverlayManager } from "./content/OverlayManager";
 
 class ContentScript {
-  private isEditMode: boolean = false;
-  private isPlayMode: boolean = false;
   private videoManager: VideoManager | null = null;
   private elements: any[] = [];
 
@@ -17,9 +15,15 @@ class ContentScript {
 
     this.videoManager = new VideoManager();
     this.videoManager.findAndStoreVideoElement().then(() => {
-      // Automatically enable play mode on initialization
-      this.isPlayMode = true;
-      this.enablePlayMode();
+      if (this.videoManager?.hasVideoElement()) {
+        OverlayManager.createOverlay(
+          this.videoManager!.getVideoElement()!,
+          true
+        );
+        this.loadElements(() => {
+          OverlayManager.loadElements(this.elements);
+        });
+      }
 
       // Notify the UI that content script is loaded
       window.postMessage("__CONTENT_SCRIPT_LOADED__", "*");
@@ -44,43 +48,12 @@ class ContentScript {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ): Promise<boolean> {
-    if (message.action === "ENABLE_EDIT_MODE") {
-      this.isEditMode = true;
-      this.isPlayMode = false;
-      this.enableEditMode();
-    } else if (message.action === "ENABLE_PLAY_MODE") {
-      this.isEditMode = false;
-      this.isPlayMode = true;
-      this.enablePlayMode();
-    } else if (message.action === "ADD_ELEMENT") {
+    if (message.action === "ADD_ELEMENT") {
       OverlayManager.addElement(message.elementType);
     } else if (message.action === "SAVE_ELEMENTS") {
       this.saveElements();
     }
     return true;
-  }
-
-  private enableEditMode(): void {
-    if (this.videoManager && this.videoManager.hasVideoElement()) {
-      const videoElement = this.videoManager.getVideoElement();
-      OverlayManager.createOverlay(videoElement!, true);
-    }
-  }
-
-  private enablePlayMode(): void {
-    if (this.videoManager && this.videoManager.hasVideoElement()) {
-      const videoElement = this.videoManager.getVideoElement();
-
-      // Create canvas overlay without editing capabilities
-      OverlayManager.createOverlay(videoElement!, false);
-
-      // Load elements from storage and add to canvas
-      this.loadElements(() => {
-        OverlayManager.loadElements(this.elements);
-      });
-
-      this.startPlay();
-    }
   }
 
   private loadElements(callback?: () => void): void {

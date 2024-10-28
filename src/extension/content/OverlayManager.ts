@@ -178,9 +178,8 @@ export class OverlayManager {
       this.isEditing &&
       (e.target || this.canvas?.getActiveObjects().length)
     ) {
-      // If clicking on an object or there are selected objects
       const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
-      canvasElement.style.pointerEvents = "auto";
+      canvasElement.style.pointerEvents = "all";
     }
   };
 
@@ -189,10 +188,7 @@ export class OverlayManager {
   ): void => {
     if (this.isEditing) {
       const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
-      // Small delay to ensure click event is handled before changing pointer-events
-      setTimeout(() => {
-        canvasElement.style.pointerEvents = "auto";
-      }, 50);
+      canvasElement.style.pointerEvents = "all";
     }
   };
 
@@ -203,9 +199,8 @@ export class OverlayManager {
       this.isEditing &&
       (e.target || this.canvas?.getActiveObjects().length)
     ) {
-      // If dragging an object or there are selected objects
       const canvasElement = this.canvas?.getElement() as HTMLCanvasElement;
-      canvasElement.style.pointerEvents = "auto";
+      canvasElement.style.pointerEvents = "all";
     }
   };
 
@@ -394,6 +389,10 @@ export class OverlayManager {
       canvasElement.parentElement?.removeChild(canvasElement);
       this.canvas.dispose();
       this.canvas = null;
+
+      if (this.videoElement) {
+        this.videoElement.style.pointerEvents = "auto";
+      }
     }
   }
 }

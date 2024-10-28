@@ -5,6 +5,7 @@ export class VideoManager {
   private originalVideoVolume: number = 1;
   private currentVideoPlayerVolume: number = 1;
   private timeUpdateListeners: Array<(currentTimeMs: number) => void> = [];
+  private clickHandler: ((event: MouseEvent) => void) | null = null;
 
   constructor() {}
 
@@ -23,12 +24,12 @@ export class VideoManager {
     this.videoElement = video;
     this.currentVideoPlayerVolume = video.volume;
     this.originalVideoVolume = video.volume;
-    this.removeVideoEventListeners();
     video.addEventListener("play", this.handleVideoPlay);
     video.addEventListener("pause", this.handleVideoPause);
     video.addEventListener("seeking", this.handleVideoSeeking);
     video.addEventListener("volumechange", this.handleVolumeChange);
     video.addEventListener("timeupdate", this.handleTimeUpdate);
+    this.preventVideoClicks();
   }
 
   public removeVideoEventListeners(): void {
@@ -45,6 +46,7 @@ export class VideoManager {
         this.handleTimeUpdate
       );
     }
+    this.removeVideoClickPrevention();
   }
 
   private setupVideoObserver(): void {
@@ -126,4 +128,24 @@ export class VideoManager {
   private handlePageUnload = (): void => {
     this.restoreOriginalVideoVolume();
   };
+
+  public preventVideoClicks(): void {
+    // Create the handler
+    this.clickHandler = (event: MouseEvent) => {
+      if ((event.target as Element).matches("video")) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+    };
+
+    // Add the handler with capture phase
+    window.addEventListener("click", this.clickHandler, true);
+  }
+
+  public removeVideoClickPrevention(): void {
+    if (this.clickHandler) {
+      window.removeEventListener("click", this.clickHandler, true);
+      this.clickHandler = null;
+    }
+  }
 }
