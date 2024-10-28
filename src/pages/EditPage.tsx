@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import Button from "@/components/ui/Button";
 
 const EditPage: React.FC = () => {
   const addElement = (elementType: string) => {
@@ -33,11 +34,11 @@ const EditPage: React.FC = () => {
     <div className="p-4">
       <h1>Edit Page</h1>
       <div className="element-toolbar">
-        <button onClick={() => addElement("rectangle")}>Add Rectangle</button>
-        <button onClick={() => addElement("circle")}>Add Circle</button>
-        <button onClick={() => addElement("text")}>Add Text</button>
+        <Button onClick={() => addElement("rectangle")}>Add Rectangle</Button>
+        <Button onClick={() => addElement("circle")}>Add Circle</Button>
+        <Button onClick={() => addElement("text")}>Add Text</Button>
       </div>
-      <button onClick={saveElements}>Save Elements</button>
+      <Button onClick={saveElements}>Save Elements</Button>
     </div>
   );
 };

@@ -107,5 +107,5 @@ class ContentScript {
   }
 }
 
-const contentScript = new ContentScript();
+export const contentScript = new ContentScript();
 (window as any).__CONTENT_SCRIPT_LOADED__ = true;

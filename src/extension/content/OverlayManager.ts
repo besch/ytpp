@@ -49,7 +49,6 @@ export class OverlayManager {
     canvasElement.style.left = `${videoElement.offsetLeft}px`;
     canvasElement.style.top = `${videoElement.offsetTop}px`;
     canvasElement.style.pointerEvents = "all";
-    canvasElement.style.zIndex = "9999";
 
     videoElement.parentElement?.appendChild(canvasElement);
 
@@ -66,10 +65,8 @@ export class OverlayManager {
   }
 
   private static setupResizeObservers(): void {
-    // Handle window resize
     window.addEventListener("resize", this.handleResize);
 
-    // Handle video element resize
     this.resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         if (entry.target === this.videoElement) {
@@ -355,18 +352,20 @@ export class OverlayManager {
     if (!this.canvas) return;
     elements.forEach((elementData) => {
       let element: CustomFabricObject;
+      const props = { ...elementData.properties };
+
+      delete props.type;
+
       switch (elementData.type) {
         case "rect":
-          element = new Rect(elementData.properties) as CustomFabricObject;
+          element = new Rect(props) as CustomFabricObject;
           break;
         case "circle":
-          element = new Circle(elementData.properties) as CustomFabricObject;
+          element = new Circle(props) as CustomFabricObject;
           break;
         case "textbox":
-          element = new Textbox(
-            elementData.properties.text,
-            elementData.properties
-          ) as CustomFabricObject;
+          const { text, ...textProps } = props;
+          element = new Textbox(text, textProps) as CustomFabricObject;
           break;
         default:
           return;
