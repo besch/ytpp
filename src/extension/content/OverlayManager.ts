@@ -27,7 +27,6 @@ export class OverlayManager {
   private static canvas: Canvas | null = null;
   private static isEditing: boolean = false;
   private static videoElement: HTMLVideoElement | null = null;
-  private static elements: any[] = [];
   private static resizeObserver: ResizeObserver | null = null;
 
   public static createOverlay(
@@ -83,15 +82,12 @@ export class OverlayManager {
     if (!this.canvas || !this.videoElement) return;
 
     const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
-    const videoRect = this.videoElement.getBoundingClientRect();
 
-    // Update canvas size and position
     canvasElement.width = this.videoElement.clientWidth;
     canvasElement.height = this.videoElement.clientHeight;
     canvasElement.style.left = `${this.videoElement.offsetLeft}px`;
     canvasElement.style.top = `${this.videoElement.offsetTop}px`;
 
-    // Update fabric.js canvas dimensions
     this.canvas.setDimensions({
       width: canvasElement.width,
       height: canvasElement.height,
@@ -371,20 +367,16 @@ export class OverlayManager {
 
   public static removeOverlay(): void {
     if (this.canvas) {
-      // Remove event listeners
       const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
       canvasElement.removeEventListener("click", this.handleCanvasClick);
 
-      // Disconnect resize observer
       if (this.resizeObserver) {
         this.resizeObserver.disconnect();
         this.resizeObserver = null;
       }
 
-      // Remove window resize listener
       window.removeEventListener("resize", this.handleResize);
 
-      // Remove canvas
       canvasElement.parentElement?.removeChild(canvasElement);
       this.canvas.dispose();
       this.canvas = null;
