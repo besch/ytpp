@@ -159,11 +159,8 @@ export class OverlayManager {
   }
 
   private static handleCanvasClick = (e: MouseEvent): void => {
-    // Stop event propagation if we're in edit mode
-    if (this.isEditing) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   private static handleCanvasMouseDown = (
