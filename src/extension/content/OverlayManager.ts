@@ -40,17 +40,31 @@ export class OverlayManager {
       this.removeOverlay();
     }
 
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "absolute";
+    wrapper.style.left = "0";
+    wrapper.style.top = "0";
+    wrapper.style.width = "100%";
+    wrapper.style.height = "100%";
+    wrapper.style.pointerEvents = "all";
+
     const canvasElement = document.createElement("canvas");
     canvasElement.width = videoElement.clientWidth;
     canvasElement.height = videoElement.clientHeight;
     canvasElement.style.position = "absolute";
-    canvasElement.style.left = `${videoElement.offsetLeft}px`;
-    canvasElement.style.top = `${videoElement.offsetTop}px`;
-    canvasElement.style.pointerEvents = "all";
+    canvasElement.style.left = "0";
+    canvasElement.style.top = "0";
     canvasElement.style.width = "100%";
     canvasElement.style.height = "100%";
+    canvasElement.style.pointerEvents = "all";
 
-    videoElement.parentElement?.appendChild(canvasElement);
+    wrapper.appendChild(canvasElement);
+
+    const videoContainer = videoElement.parentElement;
+    if (videoContainer) {
+      videoContainer.style.position = "relative";
+      videoContainer.appendChild(wrapper);
+    }
 
     this.canvas = new Canvas(canvasElement, {
       selection: isEditing,
@@ -62,6 +76,15 @@ export class OverlayManager {
     }
 
     this.setupResizeObservers();
+
+    wrapper.addEventListener(
+      "click",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      true
+    );
   }
 
   private static setupResizeObservers(): void {
@@ -355,7 +378,11 @@ export class OverlayManager {
   public static removeOverlay(): void {
     if (this.canvas) {
       const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
-      canvasElement.removeEventListener("click", this.handleCanvasClick);
+      const wrapper = canvasElement.parentElement;
+
+      if (wrapper && wrapper.parentElement) {
+        wrapper.parentElement.removeChild(wrapper);
+      }
 
       if (this.resizeObserver) {
         this.resizeObserver.disconnect();
@@ -364,13 +391,8 @@ export class OverlayManager {
 
       window.removeEventListener("resize", this.handleResize);
 
-      canvasElement.parentElement?.removeChild(canvasElement);
       this.canvas.dispose();
       this.canvas = null;
-
-      if (this.videoElement) {
-        this.videoElement.style.pointerEvents = "auto";
-      }
     }
   }
 }

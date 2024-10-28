@@ -128,7 +128,10 @@ export class VideoManager {
   };
 
   public preventVideoClicks(): void {
-    // Create the handler
+    if (this.videoElement) {
+      this.videoElement.style.pointerEvents = "none";
+    }
+
     this.clickHandler = (event: MouseEvent) => {
       if ((event.target as Element).matches("video")) {
         event.stopPropagation();
@@ -136,7 +139,6 @@ export class VideoManager {
       }
     };
 
-    // Add the handler with capture phase
     window.addEventListener("click", this.clickHandler, true);
   }
 
