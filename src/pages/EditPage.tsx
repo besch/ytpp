@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { Circle, Square, Type } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 const EditPage: React.FC = () => {
@@ -21,24 +22,38 @@ const EditPage: React.FC = () => {
     });
   };
 
-  useEffect(() => {
-    // Enable edit mode in content script
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id!, { action: "ENABLE_EDIT_MODE" });
-      }
-    });
-  }, []);
-
   return (
-    <div className="p-4">
-      <h1>Edit Page</h1>
-      <div className="element-toolbar">
-        <Button onClick={() => addElement("rectangle")}>Add Rectangle</Button>
-        <Button onClick={() => addElement("circle")}>Add Circle</Button>
-        <Button onClick={() => addElement("text")}>Add Text</Button>
+    <div className="flex flex-col gap-4 bg-background p-4 rounded-lg shadow-lg">
+      <h2 className="text-lg font-semibold text-foreground">Add Elements</h2>
+      <div className="flex gap-2">
+        <Button
+          onClick={() => addElement("rectangle")}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Square size={18} />
+          Rectangle
+        </Button>
+        <Button
+          onClick={() => addElement("circle")}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Circle size={18} />
+          Circle
+        </Button>
+        <Button
+          onClick={() => addElement("text")}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Type size={18} />
+          Text
+        </Button>
       </div>
-      <Button onClick={saveElements}>Save Elements</Button>
+      <Button onClick={saveElements} className="mt-2">
+        Save Elements
+      </Button>
     </div>
   );
 };

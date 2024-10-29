@@ -8,6 +8,22 @@ class BackgroundService {
 
   private async initialize(): Promise<void> {
     await this.initializeStorage();
+    this.setupClickHandler();
+  }
+
+  private setupClickHandler(): void {
+    chrome.action.onClicked.addListener(async (tab) => {
+      if (tab.id) {
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ["content.js"],
+          });
+        } catch (error) {
+          console.error("Failed to execute content script:", error);
+        }
+      }
+    });
   }
 
   private initializeListeners(): void {
@@ -48,4 +64,4 @@ class BackgroundService {
   }
 }
 
-new BackgroundService();
+export default new BackgroundService();

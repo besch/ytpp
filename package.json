@@ -79,8 +79,11 @@
     "@types/chrome": "^0.0.268",
     "@types/lodash": "^4.17.5",
     "cross-env": "^7.0.3",
+    "css-loader": "^7.1.2",
     "dotenv": "^16.4.5",
+    "postcss-loader": "^8.1.1",
     "replace-in-file": "^8.0.1",
+    "style-loader": "^4.0.0",
     "ts-loader": "^9.5.1",
     "webpack-cli": "^5.1.4"
   }

@@ -12,6 +12,7 @@ class ContentScript {
   private initialize(): void {
     this.setupMessageListener();
     this.setupUnloadListener();
+    this.injectReactApp();
 
     this.videoManager = new VideoManager();
     this.videoManager.findAndStoreVideoElement().then(() => {
@@ -24,10 +25,14 @@ class ContentScript {
           OverlayManager.loadElements(this.elements);
         });
       }
-
-      // Notify the UI that content script is loaded
-      window.postMessage("__CONTENT_SCRIPT_LOADED__", "*");
     });
+  }
+
+  private injectReactApp(): void {
+    const script = document.createElement("script");
+    script.src = chrome.runtime.getURL("injected-app.js");
+    script.type = "text/javascript";
+    document.documentElement.appendChild(script);
   }
 
   private setupUnloadListener(): void {
@@ -81,4 +86,3 @@ class ContentScript {
 }
 
 export const contentScript = new ContentScript();
-(window as any).__CONTENT_SCRIPT_LOADED__ = true;

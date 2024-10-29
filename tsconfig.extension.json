@@ -1,16 +1,21 @@
 {
   "compilerOptions": {
     "outDir": "./build",
-    "rootDir": "./src/extension",
+    "rootDir": "./src",
     "module": "esnext",
     "target": "es2015",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
+    "jsx": "react-jsx",
     "lib": ["dom", "dom.iterable", "esnext", "es2015"],
     "types": ["chrome"],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
-  "include": ["src/extension/**/*.ts"]
+  "include": ["src/extension/**/*.ts", "src/injected-app/**/*.tsx"]
 }

@@ -6,12 +6,14 @@ module.exports = {
   entry: {
     content: path.join(__dirname, "src", "extension", "content.ts"),
     background: path.join(__dirname, "src", "extension", "background.ts"),
+    "injected-app": path.join(__dirname, "src", "injected-app", "index.tsx"),
   },
   mode: "development",
+  devtool: "inline-source-map",
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.(ts|tsx)$/,
         use: [
           {
             loader: "ts-loader",
@@ -23,21 +25,37 @@ module.exports = {
         ],
         exclude: /node_modules/,
       },
+      {
+        test: /\.css$/,
+        use: [
+          "style-loader",
+          "css-loader",
+          {
+            loader: "postcss-loader",
+            options: {
+              postcssOptions: {
+                plugins: [require("tailwindcss"), require("autoprefixer")],
+              },
+            },
+          },
+        ],
+      },
     ],
   },
   resolve: {
-    extensions: [".ts", ".js"],
-    modules: [path.resolve(__dirname, "src", "extension"), "node_modules"],
+    extensions: [".ts", ".tsx", ".js", ".css"],
+    modules: [path.resolve(__dirname, "src"), "node_modules"],
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      "@": path.resolve(__dirname, "src"),
     },
   },
   output: {
     filename: "[name].js",
     path: path.resolve(__dirname, "build"),
+    publicPath: "/",
   },
   optimization: {
-    minimize: false, // Disable minimization
+    minimize: false,
     concatenateModules: true,
   },
   plugins: [
@@ -50,5 +68,4 @@ module.exports = {
       maxChunks: 1,
     }),
   ],
-  devtool: "source-map", // Add source map for better debugging
 };
