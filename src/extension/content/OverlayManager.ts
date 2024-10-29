@@ -25,7 +25,6 @@ interface CustomFabricObject extends FabricObject {
 
 export class OverlayManager {
   private static canvas: Canvas | null = null;
-  private static isEditing: boolean = false;
   private static videoElement: HTMLVideoElement | null = null;
   private static resizeObserver: ResizeObserver | null = null;
 
@@ -34,8 +33,6 @@ export class OverlayManager {
     isEditing: boolean
   ): void {
     this.videoElement = videoElement;
-    this.isEditing = isEditing;
-
     if (this.canvas) {
       this.removeOverlay();
     }
