@@ -12,6 +12,7 @@ class ContentScript {
   private initialize(): void {
     this.setupMessageListener();
     this.setupUnloadListener();
+    this.setupCustomEventListeners();
     this.injectReactApp();
 
     this.videoManager = new VideoManager();
@@ -26,6 +27,27 @@ class ContentScript {
         });
       }
     });
+  }
+
+  private setupCustomEventListeners(): void {
+    // Listen for add element events
+    window.addEventListener("ADD_ELEMENT", ((event: CustomEvent) => {
+      const { elementType } = event.detail;
+      OverlayManager.addElement(elementType);
+    }) as EventListener);
+
+    // Listen for save elements events
+    window.addEventListener("SAVE_ELEMENTS", (() => {
+      const elements = OverlayManager.getElements();
+      chrome.storage.local.set({ elements }, () => {
+        // Dispatch success event back to React app
+        window.dispatchEvent(
+          new CustomEvent("SAVE_SUCCESS", {
+            detail: { message: "Elements saved successfully!" },
+          })
+        );
+      });
+    }) as EventListener);
   }
 
   private injectReactApp(): void {

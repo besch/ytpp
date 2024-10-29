@@ -1,25 +1,34 @@
 import React, { useEffect } from "react";
 import { Circle, Square, Type } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { toast } from "react-toastify";
 
 const EditPage: React.FC = () => {
+  useEffect(() => {
+    const handleSaveSuccess = (event: CustomEvent) => {
+      toast.success(event.detail.message);
+    };
+
+    window.addEventListener("SAVE_SUCCESS", handleSaveSuccess as EventListener);
+
+    return () => {
+      window.removeEventListener(
+        "SAVE_SUCCESS",
+        handleSaveSuccess as EventListener
+      );
+    };
+  }, []);
+
   const addElement = (elementType: string) => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id!, {
-          action: "ADD_ELEMENT",
-          elementType,
-        });
-      }
-    });
+    window.dispatchEvent(
+      new CustomEvent("ADD_ELEMENT", {
+        detail: { elementType },
+      })
+    );
   };
 
   const saveElements = () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id!, { action: "SAVE_ELEMENTS" });
-      }
-    });
+    window.dispatchEvent(new CustomEvent("SAVE_ELEMENTS"));
   };
 
   return (

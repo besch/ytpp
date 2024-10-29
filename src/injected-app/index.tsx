@@ -7,7 +7,7 @@ import "../index.css";
 
 function init() {
   const container = document.createElement("div");
-  container.id = "onedub-extension-root";
+  container.id = "extension-root";
   container.style.width = "100%";
   container.style.padding = "16px";
 

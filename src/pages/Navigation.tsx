@@ -11,7 +11,7 @@ const Navigation: React.FC = () => {
         <img
           src="assets/icons/logo-onedub.png"
           className="w-[125px]"
-          alt="OneDub Logo"
+          alt="Logo"
         />
       </div>
       <div className="flex space-x-6 items-center">
