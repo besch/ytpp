@@ -4,6 +4,7 @@ import { OverlayManager } from "./content/OverlayManager";
 class ContentScript {
   private videoManager: VideoManager | null = null;
   private elements: any[] = [];
+  private isOverlayVisible: boolean = false;
 
   constructor() {
     this.initialize();
@@ -13,20 +14,49 @@ class ContentScript {
     this.setupMessageListener();
     this.setupUnloadListener();
     this.setupCustomEventListeners();
-    this.injectReactApp();
 
+    // Don't inject React app immediately
     this.videoManager = new VideoManager();
-    this.videoManager.findAndStoreVideoElement().then(() => {
-      if (this.videoManager?.hasVideoElement()) {
+    this.videoManager.findAndStoreVideoElement();
+  }
+
+  private async toggleOverlay(): Promise<void> {
+    if (!this.videoManager?.hasVideoElement()) {
+      await this.videoManager?.findAndStoreVideoElement();
+    }
+
+    if (this.videoManager?.hasVideoElement()) {
+      if (this.isOverlayVisible) {
+        // Remove overlay and React app
+        OverlayManager.removeOverlay();
+        this.removeReactApp();
+      } else {
+        // Show overlay and inject React app
+        this.injectReactApp();
         OverlayManager.createOverlay(
-          this.videoManager!.getVideoElement()!,
+          this.videoManager.getVideoElement()!,
           true
         );
         this.loadElements(() => {
           OverlayManager.loadElements(this.elements);
         });
       }
-    });
+      this.isOverlayVisible = !this.isOverlayVisible;
+    }
+  }
+
+  private removeReactApp(): void {
+    // Remove the injected script
+    const injectedScripts = document.querySelectorAll(
+      'script[src*="injected-app.js"]'
+    );
+    injectedScripts.forEach((script) => script.remove());
+
+    // Remove the React app container
+    const appContainer = document.getElementById("react-overlay-root");
+    if (appContainer) {
+      appContainer.remove();
+    }
   }
 
   private setupCustomEventListeners(): void {
@@ -97,7 +127,10 @@ class ContentScript {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ): Promise<boolean> {
-    if (message.action === "ADD_ELEMENT") {
+    if (message.action === "TOGGLE_OVERLAY") {
+      await this.toggleOverlay();
+      sendResponse({ success: true });
+    } else if (message.action === "ADD_ELEMENT") {
       OverlayManager.addElement(message.elementType);
     } else if (message.action === "SAVE_ELEMENTS") {
       this.saveElements();

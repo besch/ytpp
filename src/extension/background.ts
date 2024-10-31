@@ -13,10 +13,16 @@ class BackgroundService {
     chrome.action.onClicked.addListener(async (tab) => {
       if (tab.id) {
         try {
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ["content.js"],
-          });
+          const response = await chrome.tabs
+            .sendMessage(tab.id, { action: "TOGGLE_OVERLAY" })
+            .catch(() => null);
+
+          if (!response) {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ["content.js"],
+            });
+          }
         } catch (error) {
           console.error("Failed to execute content script:", error);
         }
