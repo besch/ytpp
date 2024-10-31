@@ -1,8 +1,6 @@
 import { toast } from "react-toastify";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
-import config from "@/extension/content/config";
-import {} from "@/api";
 
 interface timelineState {}
 
