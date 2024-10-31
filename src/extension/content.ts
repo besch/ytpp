@@ -48,6 +48,28 @@ class ContentScript {
         );
       });
     }) as EventListener);
+
+    // Listen for update element color events
+    window.addEventListener("UPDATE_ELEMENT_COLOR", ((event: CustomEvent) => {
+      const { color, type } = event.detail;
+      OverlayManager.updateElementColor(color, type);
+    }) as EventListener);
+
+    // Listen for element selection events from fabric.js
+    window.addEventListener("ELEMENT_SELECTED", ((event: CustomEvent) => {
+      const selectedElement = event.detail.element;
+      // Forward the event to the injected React app
+      window.dispatchEvent(
+        new CustomEvent("ELEMENT_SELECTED", {
+          detail: { element: selectedElement },
+        })
+      );
+    }) as EventListener);
+
+    window.addEventListener("SELECTION_CLEARED", (() => {
+      // Forward the event to the injected React app
+      window.dispatchEvent(new CustomEvent("SELECTION_CLEARED"));
+    }) as EventListener);
   }
 
   private injectReactApp(): void {

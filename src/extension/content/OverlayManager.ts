@@ -211,12 +211,22 @@ export class OverlayManager {
   }) => {
     const selectedObject = event.selected[0];
     if (selectedObject) {
-      this.showPropertiesPanel(selectedObject);
+      window.dispatchEvent(
+        new CustomEvent("ELEMENT_SELECTED", {
+          detail: {
+            element: {
+              type: selectedObject.type,
+              fill: selectedObject.fill,
+              stroke: selectedObject.stroke,
+            },
+          },
+        })
+      );
     }
   };
 
   private static onSelectionCleared = () => {
-    this.hidePropertiesPanel();
+    window.dispatchEvent(new CustomEvent("SELECTION_CLEARED"));
   };
 
   private static showPropertiesPanel(object: FabricObject): void {
@@ -225,13 +235,16 @@ export class OverlayManager {
     if (!panel) {
       panel = document.createElement("div");
       panel.id = "element-properties-panel";
-      panel.style.position = "fixed";
-      panel.style.top = "10px";
-      panel.style.right = "10px";
-      panel.style.backgroundColor = "white";
-      panel.style.border = "1px solid #ccc";
-      panel.style.padding = "10px";
-      panel.style.zIndex = "10000";
+      panel.style.position = "absolute";
+      panel.style.right = "20px";
+      panel.style.top = "20px";
+      panel.style.padding = "16px";
+      panel.style.borderRadius = "8px";
+      panel.style.backgroundColor = "hsl(222.2 84% 4.9%)";
+      panel.style.color = "hsl(210 40% 98%)";
+      panel.style.boxShadow =
+        "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)";
+      panel.style.border = "1px solid hsl(217.2 32.6% 17.5%)";
       document.body.appendChild(panel);
     }
 
@@ -391,5 +404,30 @@ export class OverlayManager {
       this.canvas.dispose();
       this.canvas = null;
     }
+  }
+
+  public static updateElementColor(
+    color: string,
+    type: "fill" | "stroke" | "text"
+  ): void {
+    if (!this.canvas) return;
+
+    const activeObject = this.canvas.getActiveObject();
+    if (!activeObject) return;
+
+    if (type === "fill") {
+      activeObject.set("fill", color);
+    } else if (type === "stroke") {
+      activeObject.set("stroke", color);
+    } else if (type === "text" && activeObject.type === "textbox") {
+      activeObject.set("fill", color);
+    }
+
+    this.canvas.renderAll();
+  }
+
+  public static getSelectedElement(): any {
+    if (!this.canvas) return null;
+    return this.canvas.getActiveObject();
   }
 }
