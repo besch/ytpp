@@ -14,8 +14,6 @@ export class VideoManager {
       this.handleVideo(this.videoElement);
       return;
     }
-
-    this.setupVideoObserver();
   }
 
   private handleVideo(video: HTMLVideoElement): void {
@@ -45,23 +43,6 @@ export class VideoManager {
       );
     }
     this.removeVideoClickPrevention();
-  }
-
-  private setupVideoObserver(): void {
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === "childList") {
-          this.videoElement = document.querySelector("video");
-          if (this.videoElement) {
-            this.handleVideo(this.videoElement);
-            observer.disconnect();
-            return;
-          }
-        }
-      }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
   }
 
   private handleVideoPlay = (): void => {};
