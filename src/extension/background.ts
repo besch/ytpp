@@ -1,5 +1,3 @@
-import * as api from "@/api";
-
 class BackgroundService {
   constructor() {
     this.initializeListeners();

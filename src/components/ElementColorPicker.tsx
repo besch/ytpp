@@ -1,6 +1,6 @@
 import React from "react";
 import { SketchPicker } from "react-color";
-import { Palette, Type, Square } from "lucide-react";
+import { Palette, Square } from "lucide-react";
 
 interface ElementColorPickerProps {
   selectedElement: any;
