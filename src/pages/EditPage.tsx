@@ -22,7 +22,7 @@ const EditPage: React.FC = () => {
 
     window.addEventListener("SAVE_SUCCESS", handleSaveSuccess as EventListener);
     window.addEventListener(
-      "ELEMENT_SELECTED",
+      "FORWARDED_ELEMENT_SELECTED",
       handleElementSelected as EventListener
     );
     window.addEventListener(
@@ -36,7 +36,7 @@ const EditPage: React.FC = () => {
         handleSaveSuccess as EventListener
       );
       window.removeEventListener(
-        "ELEMENT_SELECTED",
+        "FORWARDED_ELEMENT_SELECTED",
         handleElementSelected as EventListener
       );
       window.removeEventListener(

@@ -88,9 +88,9 @@ class ContentScript {
     // Listen for element selection events from fabric.js
     window.addEventListener("ELEMENT_SELECTED", ((event: CustomEvent) => {
       const selectedElement = event.detail.element;
-      // Forward the event to the injected React app
+      // Forward the event with a different name to avoid loop
       window.dispatchEvent(
-        new CustomEvent("ELEMENT_SELECTED", {
+        new CustomEvent("FORWARDED_ELEMENT_SELECTED", {
           detail: { element: selectedElement },
         })
       );
