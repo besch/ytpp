@@ -87,10 +87,7 @@ const EditPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 bg-background p-4 rounded-lg shadow-lg">
       <VideoTimeDisplay />
-      <ElementColorPicker
-        selectedElement={selectedElement}
-        onColorChange={handleColorChange}
-      />
+      <ElementColorPicker />
 
       <h2 className="text-lg font-semibold text-foreground">Add Elements</h2>
       <div className="flex gap-2">

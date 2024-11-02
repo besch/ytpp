@@ -1,120 +1,82 @@
 import React, { useState, useEffect } from "react";
-import { SketchPicker } from "react-color";
-import { Palette, Square } from "lucide-react";
-import TimeRangeInputs from "./TimeRangeInputs";
+import { useSelector, useDispatch } from "react-redux";
+import { ChromePicker, ColorResult } from "react-color";
+import {
+  selectSelectedElementStyle,
+  selectSelectedElement,
+  setElementColor,
+} from "@/store/timelineSlice";
 
-interface ElementColorPickerProps {
-  selectedElement: any;
-  onColorChange: (color: string, type: "fill" | "stroke" | "text") => void;
-}
-
-const ElementColorPicker: React.FC<ElementColorPickerProps> = ({
-  selectedElement,
-  onColorChange,
-}) => {
-  const [from, setFrom] = useState<number>(selectedElement?.data?.from || 0);
-  const [to, setTo] = useState<number>(selectedElement?.data?.to || 0);
+const ElementColorPicker: React.FC = () => {
+  const dispatch = useDispatch();
+  const elementStyle = useSelector(selectSelectedElementStyle);
+  const selectedElementId = useSelector(selectSelectedElement);
+  const [currentColor, setCurrentColor] = useState<string>(elementStyle.fill);
 
   useEffect(() => {
-    if (selectedElement) {
-      setFrom(selectedElement.data?.from || 0);
-      setTo(selectedElement.data?.to || 0);
+    if (elementStyle.fill) {
+      setCurrentColor(elementStyle.fill);
     }
-  }, [selectedElement]);
+  }, [elementStyle]);
 
-  const handleFromChange = (value: number) => {
-    setFrom(value);
+  useEffect(() => {
+    // Listen for selection events
+    const handleElementSelected = (event: CustomEvent) => {
+      const { element } = event.detail;
+      if (element && element.fill) {
+        setCurrentColor(element.fill);
+      }
+    };
+
+    const handleSelectionCleared = () => {
+      setCurrentColor("#000000"); // Reset to default color
+    };
+
+    window.addEventListener(
+      "FORWARDED_ELEMENT_SELECTED",
+      handleElementSelected as EventListener
+    );
+    window.addEventListener(
+      "SELECTION_CLEARED",
+      handleSelectionCleared as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        "FORWARDED_ELEMENT_SELECTED",
+        handleElementSelected as EventListener
+      );
+      window.removeEventListener(
+        "SELECTION_CLEARED",
+        handleSelectionCleared as EventListener
+      );
+    };
+  }, []);
+
+  const handleColorChange = (color: ColorResult, type: "fill" | "stroke") => {
+    setCurrentColor(color.hex);
+
     window.dispatchEvent(
-      new CustomEvent("UPDATE_ELEMENT_TIME", {
-        detail: { from: value, to },
+      new CustomEvent("UPDATE_ELEMENT_COLOR", {
+        detail: {
+          color: color.hex,
+          type: type,
+        },
       })
     );
   };
 
-  const handleToChange = (value: number) => {
-    setTo(value);
-    window.dispatchEvent(
-      new CustomEvent("UPDATE_ELEMENT_TIME", {
-        detail: { from, to: value },
-      })
-    );
-  };
-
-  if (!selectedElement) {
-    return (
-      <div className="mb-6 p-4 border border-border rounded-lg bg-muted/10">
-        <p className="text-sm text-muted-foreground text-center">
-          Select an element to customize its properties
-        </p>
-      </div>
-    );
+  if (!selectedElementId) {
+    return null;
   }
 
-  const isText = selectedElement.type === "textbox";
-
   return (
-    <div className="mb-6 p-4 border border-border rounded-lg bg-muted/10">
-      <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-        <Palette size={20} />
-        Element Properties
-      </h2>
-
-      <TimeRangeInputs
-        from={from}
-        to={to}
-        onFromChange={handleFromChange}
-        onToChange={handleToChange}
+    <div>
+      <ChromePicker
+        color={currentColor}
+        onChange={(color) => handleColorChange(color, "fill")}
+        disableAlpha={true}
       />
-
-      {/* Color Pickers */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="flex flex-col gap-2">
-          <label className="text-sm text-muted-foreground flex items-center gap-2">
-            <Square size={14} className="fill-current" />
-            Fill Color
-          </label>
-          <div className="sketch-picker-wrapper">
-            <SketchPicker
-              color={selectedElement.fill || "#000000"}
-              onChange={(color) => onColorChange(color.hex, "fill")}
-              width="100%"
-              presetColors={[]}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm text-muted-foreground flex items-center gap-2">
-            <Square size={14} />
-            Stroke Color
-          </label>
-          <div className="sketch-picker-wrapper">
-            <SketchPicker
-              color={selectedElement.stroke || "#000000"}
-              onChange={(color) => onColorChange(color.hex, "stroke")}
-              width="100%"
-              presetColors={[]}
-            />
-          </div>
-        </div>
-
-        {isText && (
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-muted-foreground flex items-center gap-2">
-              <Square size={14} />
-              Text Color
-            </label>
-            <div className="sketch-picker-wrapper">
-              <SketchPicker
-                color={selectedElement.fill || "#000000"}
-                onChange={(color) => onColorChange(color.hex, "text")}
-                width="100%"
-                presetColors={[]}
-              />
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 };

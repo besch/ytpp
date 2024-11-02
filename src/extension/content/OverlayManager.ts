@@ -219,8 +219,8 @@ export class OverlayManager {
           detail: {
             element: {
               type: selectedObject.type,
-              fill: selectedObject.fill,
-              stroke: selectedObject.stroke,
+              fill: selectedObject.fill || "#000000",
+              stroke: selectedObject.stroke || "#000000",
             },
           },
         })
@@ -435,15 +435,21 @@ export class OverlayManager {
     const activeObject = this.canvas.getActiveObject();
     if (!activeObject) return;
 
-    if (type === "fill") {
-      activeObject.set("fill", color);
-    } else if (type === "stroke") {
-      activeObject.set("stroke", color);
-    } else if (type === "text" && activeObject.type === "textbox") {
-      activeObject.set("fill", color);
+    switch (type) {
+      case "fill":
+        activeObject.set({ fill: color });
+        break;
+      case "stroke":
+        activeObject.set({ stroke: color });
+        break;
+      case "text":
+        if (activeObject.type === "textbox") {
+          activeObject.set({ fill: color });
+        }
+        break;
     }
 
-    this.canvas.renderAll();
+    this.canvas.requestRenderAll(); // Force canvas to re-render
     this.saveElementsToStorage();
   }
 

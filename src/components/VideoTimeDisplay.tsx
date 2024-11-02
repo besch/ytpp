@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { selectCurrentTime, setCurrentTime } from "@/store/timelineSlice";
 
 const VideoTimeDisplay: React.FC = () => {
-  const [currentTime, setCurrentTime] = useState<number>(0);
+  const dispatch = useDispatch();
+  const currentTime = useSelector(selectCurrentTime);
 
   const formatTime = (timeMs: number): string => {
     const totalSeconds = Math.floor(timeMs / 1000);
@@ -15,30 +18,26 @@ const VideoTimeDisplay: React.FC = () => {
   };
 
   useEffect(() => {
-    // Update time handler
     const handleTimeUpdate = (event: CustomEvent) => {
-      setCurrentTime(event.detail.currentTimeMs);
+      dispatch(setCurrentTime(event.detail.currentTimeMs));
     };
 
-    // Add event listener
     window.addEventListener(
       "VIDEO_TIME_UPDATE",
       handleTimeUpdate as EventListener
     );
 
-    // Initial time set
     const initialTime =
       (window as any).videoManager?.getCurrentVideoTimeMs() || 0;
-    setCurrentTime(initialTime);
+    dispatch(setCurrentTime(initialTime));
 
-    // Cleanup
     return () => {
       window.removeEventListener(
         "VIDEO_TIME_UPDATE",
         handleTimeUpdate as EventListener
       );
     };
-  }, []);
+  }, [dispatch]);
 
   return (
     <div className="mb-4 p-3 bg-muted/10 border border-border rounded-lg">

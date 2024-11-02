@@ -1,26 +1,19 @@
 import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { selectTimeRange, setTimeRange } from "@/store/timelineSlice";
 
-interface TimeRangeInputsProps {
-  from: number;
-  to: number;
-  onFromChange: (value: number) => void;
-  onToChange: (value: number) => void;
-}
+const TimeRangeInputs: React.FC = () => {
+  const dispatch = useDispatch();
+  const { from, to } = useSelector(selectTimeRange);
 
-const TimeRangeInputs: React.FC<TimeRangeInputsProps> = ({
-  from,
-  to,
-  onFromChange,
-  onToChange,
-}) => {
   const handleFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
-    onFromChange(value);
+    dispatch(setTimeRange({ from: value, to }));
   };
 
   const handleToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
-    onToChange(value);
+    dispatch(setTimeRange({ from, to: value }));
   };
 
   return (
