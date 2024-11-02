@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import ElementColorPicker from "@/components/ElementColorPicker";
 import { OverlayManager } from "../extension/content/OverlayManager";
 import VideoTimeDisplay from "@/components/VideoTimeDisplay";
+import TimeRangeInputs from "@/components/TimeRangeInputs";
 
 const EditPage: React.FC = () => {
   const [selectedElement, setSelectedElement] = useState<any>(null);
@@ -87,6 +88,7 @@ const EditPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 bg-background p-4 rounded-lg shadow-lg">
       <VideoTimeDisplay />
+      <TimeRangeInputs />
       <ElementColorPicker />
 
       <h2 className="text-lg font-semibold text-foreground">Add Elements</h2>
