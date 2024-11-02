@@ -3,6 +3,8 @@ import { Circle, Square, Type } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { toast } from "react-toastify";
 import ElementColorPicker from "@/components/ElementColorPicker";
+import { OverlayManager } from "../extension/content/OverlayManager";
+import VideoTimeDisplay from "@/components/VideoTimeDisplay";
 
 const EditPage: React.FC = () => {
   const [selectedElement, setSelectedElement] = useState<any>(null);
@@ -20,6 +22,11 @@ const EditPage: React.FC = () => {
       setSelectedElement(null);
     };
 
+    const handleUpdateElementTime = (event: CustomEvent) => {
+      const { from, to } = event.detail;
+      OverlayManager.updateElementTime(selectedElement, from, to);
+    };
+
     window.addEventListener("SAVE_SUCCESS", handleSaveSuccess as EventListener);
     window.addEventListener(
       "FORWARDED_ELEMENT_SELECTED",
@@ -28,6 +35,10 @@ const EditPage: React.FC = () => {
     window.addEventListener(
       "SELECTION_CLEARED",
       handleSelectionCleared as EventListener
+    );
+    window.addEventListener(
+      "UPDATE_ELEMENT_TIME",
+      handleUpdateElementTime as EventListener
     );
 
     return () => {
@@ -43,8 +54,12 @@ const EditPage: React.FC = () => {
         "SELECTION_CLEARED",
         handleSelectionCleared as EventListener
       );
+      window.removeEventListener(
+        "UPDATE_ELEMENT_TIME",
+        handleUpdateElementTime as EventListener
+      );
     };
-  }, []);
+  }, [selectedElement]);
 
   const addElement = (elementType: string) => {
     window.dispatchEvent(
@@ -71,6 +86,7 @@ const EditPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 bg-background p-4 rounded-lg shadow-lg">
+      <VideoTimeDisplay />
       <ElementColorPicker
         selectedElement={selectedElement}
         onColorChange={handleColorChange}

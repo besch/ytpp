@@ -153,7 +153,10 @@ export class OverlayManager {
     this.canvas.getObjects().forEach((obj) => {
       const customObj = obj as CustomFabricObject;
       const element = customObj.data;
-      if (currentTimeMs >= element!.from && currentTimeMs <= element!.to) {
+
+      if (!element) return;
+
+      if (currentTimeMs >= element.from && currentTimeMs <= element.to) {
         customObj.visible = true;
       } else {
         customObj.visible = false;
@@ -343,6 +346,7 @@ export class OverlayManager {
     };
 
     this.canvas.add(element);
+    this.saveElementsToStorage();
   }
 
   public static getElements(): any[] {
@@ -351,7 +355,22 @@ export class OverlayManager {
       const customObj = obj as CustomFabricObject;
       return {
         type: customObj.type,
-        properties: customObj.toObject(),
+        properties: {
+          ...customObj.toObject(),
+          left: customObj.left,
+          top: customObj.top,
+          scaleX: customObj.scaleX,
+          scaleY: customObj.scaleY,
+          // Include 'from' and 'to' in properties
+          data: {
+            from: customObj.data?.from || 0,
+            to: customObj.data?.to || Number.MAX_SAFE_INTEGER,
+            originalLeft: customObj.originalLeft || customObj.left,
+            originalTop: customObj.originalTop || customObj.top,
+            originalScaleX: customObj.originalScaleX || customObj.scaleX,
+            originalScaleY: customObj.originalScaleY || customObj.scaleY,
+          },
+        },
         data: customObj.data,
       };
     });
@@ -383,6 +402,7 @@ export class OverlayManager {
       element.data = elementData.data;
       this.canvas!.add(element);
     });
+    this.saveElementsToStorage();
   }
 
   public static removeOverlay(): void {
@@ -424,10 +444,34 @@ export class OverlayManager {
     }
 
     this.canvas.renderAll();
+    this.saveElementsToStorage();
   }
 
   public static getSelectedElement(): any {
     if (!this.canvas) return null;
     return this.canvas.getActiveObject();
+  }
+
+  // New Method to Update Element Time
+  public static updateElementTime(
+    element: FabricObject,
+    from: number,
+    to: number
+  ): void {
+    const customObj = element as CustomFabricObject;
+    if (customObj.data) {
+      customObj.data.from = from;
+      customObj.data.to = to;
+      this.canvas?.renderAll();
+      this.saveElementsToStorage();
+    }
+  }
+
+  // New Method to Save Elements to Storage
+  private static saveElementsToStorage(): void {
+    const elements = this.getElements();
+    chrome.storage.local.set({ elements }, () => {
+      console.log("Elements saved to storage.");
+    });
   }
 }

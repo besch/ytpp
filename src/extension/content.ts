@@ -18,6 +18,7 @@ class ContentScript {
     // Don't inject React app immediately
     this.videoManager = new VideoManager();
     this.videoManager.findAndStoreVideoElement();
+    this.startPlay();
   }
 
   private async toggleOverlay(): Promise<void> {
@@ -99,6 +100,17 @@ class ContentScript {
     window.addEventListener("SELECTION_CLEARED", (() => {
       // Forward the event to the injected React app
       window.dispatchEvent(new CustomEvent("SELECTION_CLEARED"));
+    }) as EventListener);
+
+    // Listen for update element time events
+    window.addEventListener("UPDATE_ELEMENT_TIME", ((event: CustomEvent) => {
+      const { from, to } = event.detail;
+      const selectedElement = OverlayManager.getSelectedElement();
+      if (selectedElement) {
+        OverlayManager.updateElementTime(selectedElement, from, to);
+      } else {
+        console.warn("No element is currently selected.");
+      }
     }) as EventListener);
   }
 

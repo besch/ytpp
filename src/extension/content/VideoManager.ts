@@ -5,15 +5,15 @@ export class VideoManager {
   private timeUpdateListeners: Array<(currentTimeMs: number) => void> = [];
   private clickHandler: ((event: MouseEvent) => void) | null = null;
 
-  constructor() {}
-
   public async findAndStoreVideoElement(): Promise<void> {
     this.videoElement = document.querySelector("video");
 
     if (this.videoElement) {
       this.handleVideo(this.videoElement);
-      return;
+      (window as any).videoManager = this;
+      return Promise.resolve();
     }
+    return Promise.resolve();
   }
 
   private handleVideo(video: HTMLVideoElement): void {
@@ -56,6 +56,14 @@ export class VideoManager {
   private handleTimeUpdate = (event: Event): void => {
     const video = event.target as HTMLVideoElement;
     const currentTimeMs = video.currentTime * 1000;
+
+    // Dispatch custom event with current time
+    window.dispatchEvent(
+      new CustomEvent("VIDEO_TIME_UPDATE", {
+        detail: { currentTimeMs },
+      })
+    );
+
     this.timeUpdateListeners.forEach((listener) => listener(currentTimeMs));
   };
 
