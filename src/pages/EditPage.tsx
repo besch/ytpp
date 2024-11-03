@@ -7,6 +7,7 @@ import TimeRangeInputs from "@/components/TimeRangeInputs";
 import { RootState } from "@/store";
 import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 import AddElements from "@/components/AddElements";
+import DeleteElementButton from "@/components/DeleteElementButton";
 
 const EditPage: React.FC = () => {
   useCanvasEvents();
@@ -28,9 +29,12 @@ const EditPage: React.FC = () => {
       <TimeRangeInputs />
       <ElementColorPicker />
       <AddElements />
-      <Button onClick={saveElements} className="mt-2">
-        Save Elements
-      </Button>
+      <div className="flex justify-between items-center mt-2">
+        <DeleteElementButton />
+        <Button onClick={saveElements} className="mt-2">
+          Save Elements
+        </Button>
+      </div>
     </div>
   );
 };

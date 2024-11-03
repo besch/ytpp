@@ -238,72 +238,22 @@ export class ElementManager {
     window.dispatchEvent(new CustomEvent("SELECTION_CLEARED"));
   };
 
-  public showPropertiesPanel(object: FabricObject): void {
-    const customObject = object as CustomFabricObject;
-    let panel = document.getElementById("element-properties-panel");
-    if (!panel) {
-      panel = document.createElement("div");
-      panel.id = "element-properties-panel";
-      panel.style.position = "absolute";
-      panel.style.right = "20px";
-      panel.style.top = "20px";
-      panel.style.padding = "16px";
-      panel.style.borderRadius = "8px";
-      panel.style.backgroundColor = "hsl(222.2 84% 4.9%)";
-      panel.style.color = "hsl(210 40% 98%)";
-      panel.style.boxShadow =
-        "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)";
-      panel.style.border = "1px solid hsl(217.2 32.6% 17.5%)";
-      document.body.appendChild(panel);
-    }
+  public deleteSelectedElement(): void {
+    if (!this.canvas) return;
 
-    panel.innerHTML = "";
+    const activeObject = this.canvas.getActiveObject();
+    if (activeObject) {
+      this.canvas.remove(activeObject);
+      this.canvas.renderAll();
+      this.saveElementsToStorage();
 
-    const fromLabel = document.createElement("label");
-    fromLabel.textContent = "From (ms): ";
-    const fromInput = document.createElement("input");
-    fromInput.type = "number";
-    fromInput.value = customObject.data?.from?.toString() || "0";
-    fromLabel.appendChild(fromInput);
-    panel.appendChild(fromLabel);
-
-    panel.appendChild(document.createElement("br"));
-
-    const toLabel = document.createElement("label");
-    toLabel.textContent = "To (ms): ";
-    const toInput = document.createElement("input");
-    toInput.type = "number";
-    toInput.value = customObject.data?.to?.toString() || "0";
-    toLabel.appendChild(toInput);
-    panel.appendChild(toLabel);
-
-    panel.appendChild(document.createElement("br"));
-
-    fromInput.addEventListener("change", (e) => {
-      const value = parseFloat((e.target as HTMLInputElement).value);
-      customObject.data!.from = value;
-    });
-
-    toInput.addEventListener("change", (e) => {
-      const value = parseFloat((e.target as HTMLInputElement).value);
-      customObject.data!.to = value;
-    });
-
-    panel.appendChild(document.createElement("br"));
-
-    const deleteButton = document.createElement("button");
-    deleteButton.textContent = "Delete Element";
-    deleteButton.addEventListener("click", () => {
-      this.canvas?.remove(object);
-      this.hidePropertiesPanel();
-    });
-    panel.appendChild(deleteButton);
-  }
-
-  private hidePropertiesPanel(): void {
-    const panel = document.getElementById("element-properties-panel");
-    if (panel) {
-      document.body.removeChild(panel);
+      // Dispatch updated elements
+      const elements = this.getElements();
+      window.dispatchEvent(
+        new CustomEvent("SET_ELEMENTS", {
+          detail: { elements },
+        })
+      );
     }
   }
 }

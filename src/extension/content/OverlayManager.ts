@@ -4,7 +4,7 @@ import { CustomFabricObject } from "@/types";
 
 export class OverlayManager {
   private static canvasManager: CanvasManager | null = null;
-  private static elementManager: ElementManager | null = null;
+  public static elementManager: ElementManager | null = null;
   private static videoElement: HTMLVideoElement | null = null;
   private static isOverlayVisible: boolean = false;
 
@@ -83,9 +83,5 @@ export class OverlayManager {
     to: number
   ): void {
     this.elementManager?.updateElementTime(element, from, to);
-  }
-
-  public static showPropertiesPanel(object: CustomFabricObject): void {
-    this.elementManager?.showPropertiesPanel(object);
   }
 }

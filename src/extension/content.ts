@@ -94,6 +94,11 @@ class ContentScript {
         console.warn("No element is currently selected.");
       }
     }) as EventListener);
+
+    // Listen for delete element events
+    window.addEventListener("DELETE_ELEMENT", ((event: CustomEvent) => {
+      OverlayManager.elementManager?.deleteSelectedElement();
+    }) as EventListener);
   }
 
   private injectReactApp(): void {
