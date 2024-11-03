@@ -63,7 +63,9 @@ export class OverlayManager {
   }
 
   public static update(currentTimeMs: number, elements: any[]): void {
-    this.elementManager?.update(currentTimeMs, elements);
+    if (this.elementManager) {
+      this.elementManager.updateVisibility(currentTimeMs);
+    }
   }
 
   public static updateElementColor(

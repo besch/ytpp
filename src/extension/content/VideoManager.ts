@@ -57,7 +57,6 @@ export class VideoManager {
     const video = event.target as HTMLVideoElement;
     const currentTimeMs = video.currentTime * 1000;
 
-    // Dispatch custom event with current time
     window.dispatchEvent(
       new CustomEvent("VIDEO_TIME_UPDATE", {
         detail: { currentTimeMs },

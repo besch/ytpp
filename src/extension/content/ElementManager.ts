@@ -134,13 +134,25 @@ export class ElementManager {
 
       if (!element) return;
 
-      if (currentTimeMs >= element.from && currentTimeMs <= element.to) {
-        customObj.visible = true;
-      } else {
-        customObj.visible = false;
+      // Check if current time is within the element's time range
+      const isVisible =
+        currentTimeMs >= element.from && currentTimeMs <= element.to;
+
+      if (customObj.visible !== isVisible) {
+        customObj.visible = isVisible;
+        if (isVisible) {
+          // Reset to original position and scale when becoming visible
+          customObj.set({
+            left: element.originalLeft,
+            top: element.originalTop,
+            scaleX: element.originalScaleX,
+            scaleY: element.originalScaleY,
+          });
+        }
       }
     });
-    this.canvas.renderAll();
+
+    this.canvas.requestRenderAll();
   }
 
   public updateElementColor(
@@ -184,6 +196,7 @@ export class ElementManager {
       customObj.data.from = from;
       customObj.data.to = to;
       this.canvas?.renderAll();
+      this.saveElementsToStorage();
     }
   }
 
@@ -255,5 +268,32 @@ export class ElementManager {
         })
       );
     }
+  }
+
+  public updateVisibility(currentTimeMs: number): void {
+    if (!this.canvas) return;
+
+    const objects = this.canvas.getObjects() as CustomFabricObject[];
+
+    objects.forEach((obj) => {
+      if (!obj.data) return;
+
+      const isVisible =
+        currentTimeMs >= obj.data.from && currentTimeMs <= obj.data.to;
+
+      if (obj.visible !== isVisible) {
+        obj.visible = isVisible;
+        if (isVisible) {
+          obj.set({
+            left: obj.data.originalLeft,
+            top: obj.data.originalTop,
+            scaleX: obj.data.originalScaleX,
+            scaleY: obj.data.originalScaleY,
+          });
+        }
+      }
+    });
+
+    this.canvas.requestRenderAll();
   }
 }

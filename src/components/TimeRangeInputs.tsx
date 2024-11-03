@@ -16,6 +16,16 @@ const TimeRangeInputs: React.FC = () => {
         timeRange: { from: value, to: selectedElement.timeRange.to },
       })
     );
+
+    window.dispatchEvent(
+      new CustomEvent("UPDATE_ELEMENT_TIME", {
+        detail: {
+          elementId: selectedElement.id,
+          from: value,
+          to: selectedElement.timeRange.to,
+        },
+      })
+    );
   };
 
   const handleToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,6 +34,16 @@ const TimeRangeInputs: React.FC = () => {
       updateElement({
         id: selectedElement.id,
         timeRange: { from: selectedElement.timeRange.from, to: value },
+      })
+    );
+
+    window.dispatchEvent(
+      new CustomEvent("UPDATE_ELEMENT_TIME", {
+        detail: {
+          elementId: selectedElement.id,
+          from: selectedElement.timeRange.from,
+          to: value,
+        },
       })
     );
   };

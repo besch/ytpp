@@ -86,12 +86,10 @@ class ContentScript {
 
     // Listen for update element time events
     window.addEventListener("UPDATE_ELEMENT_TIME", ((event: CustomEvent) => {
-      const { from, to } = event.detail;
+      const { elementId, from, to } = event.detail;
       const selectedElement = OverlayManager.getSelectedElement();
-      if (selectedElement) {
+      if (selectedElement && selectedElement.data?.id === elementId) {
         OverlayManager.updateElementTime(selectedElement, from, to);
-      } else {
-        console.warn("No element is currently selected.");
       }
     }) as EventListener);
 
@@ -161,15 +159,16 @@ class ContentScript {
     }
   }
 
+  private handleTimeUpdate = (currentTimeMs: number): void => {
+    const elements = OverlayManager.elementManager?.getElements() || [];
+    OverlayManager.update(currentTimeMs, elements);
+  };
+
   private startPlay(): void {
     if (this.videoManager) {
       this.videoManager.addTimeUpdateListener(this.handleTimeUpdate);
     }
   }
-
-  private handleTimeUpdate = (currentTimeMs: number): void => {
-    OverlayManager.update(currentTimeMs, this.elements);
-  };
 
   private saveElements(): void {
     const elements = OverlayManager.getElements();
