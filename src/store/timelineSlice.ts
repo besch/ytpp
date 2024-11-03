@@ -64,7 +64,6 @@ export const {
   setElements,
 } = timelineSlice.actions;
 
-// Updated selectors
 export const selectCurrentTime = (state: RootState) =>
   state.timeline.currentTime;
 export const selectElements = (state: RootState) => state.timeline.elements;
@@ -72,7 +71,6 @@ export const selectSelectedElementId = (state: RootState) =>
   state.timeline.selectedElementId;
 export const selectSelectedElement = (state: RootState) => {
   const selectedId = state.timeline.selectedElementId;
-  console.log("Current selected element ID:", selectedId);
   return selectedId
     ? state.timeline.elements.find((el) => el.id === selectedId)
     : null;

@@ -6,7 +6,7 @@ export const useCanvasEvents = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const handleElementsLoaded = (event: CustomEvent) => {
+    const handleSetElements = (event: CustomEvent) => {
       dispatch(setElements(event.detail.elements));
     };
 
@@ -18,22 +18,21 @@ export const useCanvasEvents = () => {
       dispatch(setSelectedElementId(null));
     };
 
-    // Add event listeners
-    window.addEventListener(
-      "ELEMENTS_LOADED",
-      handleElementsLoaded as EventListener
-    );
+    window.addEventListener("SET_ELEMENTS", handleSetElements as EventListener);
     window.addEventListener(
       "ELEMENT_SELECTED",
       handleElementSelected as EventListener
     );
     window.addEventListener("SELECTION_CLEARED", handleSelectionCleared);
 
-    // Cleanup
+    // Signal that React app is ready
+    (window as any).__REACT_APP_READY__ = true;
+    window.dispatchEvent(new CustomEvent("REACT_APP_READY"));
+
     return () => {
       window.removeEventListener(
-        "ELEMENTS_LOADED",
-        handleElementsLoaded as EventListener
+        "SET_ELEMENTS",
+        handleSetElements as EventListener
       );
       window.removeEventListener(
         "ELEMENT_SELECTED",

@@ -38,9 +38,7 @@ class ContentScript {
           this.videoManager.getVideoElement()!,
           true
         );
-        this.loadElements(() => {
-          OverlayManager.loadElements(this.elements);
-        });
+        this.loadElements();
       }
       this.isOverlayVisible = !this.isOverlayVisible;
     }
@@ -135,16 +133,28 @@ class ContentScript {
     return true;
   }
 
-  private loadElements(callback?: () => void): void {
-    chrome.storage.local.get(["elements"], (result) => {
-      this.elements = result.elements || [];
-      window.dispatchEvent(
-        new CustomEvent("ELEMENTS_LOADED", {
-          detail: { elements: this.elements },
-        })
-      );
-      if (callback) callback();
-    });
+  private loadElements(): void {
+    const loadAndDispatchElements = () => {
+      chrome.storage.local.get(["elements"], (result) => {
+        this.elements = result.elements || [];
+        OverlayManager.loadElements(this.elements);
+        window.dispatchEvent(
+          new CustomEvent("SET_ELEMENTS", {
+            detail: { elements: this.elements },
+          })
+        );
+      });
+    };
+
+    // Check if React app is already ready
+    if ((window as any).__REACT_APP_READY__) {
+      loadAndDispatchElements();
+    } else {
+      // Wait for React app ready event
+      window.addEventListener("REACT_APP_READY", loadAndDispatchElements, {
+        once: true,
+      });
+    }
   }
 
   private startPlay(): void {
