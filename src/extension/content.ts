@@ -138,6 +138,11 @@ class ContentScript {
   private loadElements(callback?: () => void): void {
     chrome.storage.local.get(["elements"], (result) => {
       this.elements = result.elements || [];
+      window.dispatchEvent(
+        new CustomEvent("ELEMENTS_LOADED", {
+          detail: { elements: this.elements },
+        })
+      );
       if (callback) callback();
     });
   }
