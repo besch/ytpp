@@ -41,7 +41,7 @@ const VideoTimeDisplay: React.FC = () => {
 
   return (
     <div className="mb-4 p-3 bg-muted/10 border border-border rounded-lg">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground">
         Current Time:{" "}
         <span className="font-mono font-medium text-foreground">
           {formatTime(currentTime)}
