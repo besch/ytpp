@@ -87,22 +87,6 @@ class ContentScript {
       OverlayManager.updateElementColor(color, type);
     }) as EventListener);
 
-    // Listen for element selection events from fabric.js
-    window.addEventListener("ELEMENT_SELECTED", ((event: CustomEvent) => {
-      const selectedElement = event.detail.element;
-      // Forward the event with a different name to avoid loop
-      window.dispatchEvent(
-        new CustomEvent("FORWARDED_ELEMENT_SELECTED", {
-          detail: { element: selectedElement },
-        })
-      );
-    }) as EventListener);
-
-    window.addEventListener("SELECTION_CLEARED", (() => {
-      // Forward the event to the injected React app
-      window.dispatchEvent(new CustomEvent("SELECTION_CLEARED"));
-    }) as EventListener);
-
     // Listen for update element time events
     window.addEventListener("UPDATE_ELEMENT_TIME", ((event: CustomEvent) => {
       const { from, to } = event.detail;

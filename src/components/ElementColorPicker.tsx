@@ -1,80 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ChromePicker, ColorResult } from "react-color";
-import {
-  selectSelectedElementStyle,
-  selectSelectedElement,
-  setElementColor,
-} from "@/store/timelineSlice";
+import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
+import { RootState } from "@/store";
 
 const ElementColorPicker: React.FC = () => {
   const dispatch = useDispatch();
-  const elementStyle = useSelector(selectSelectedElementStyle);
-  const selectedElementId = useSelector(selectSelectedElement);
-  const [currentColor, setCurrentColor] = useState<string>(elementStyle.fill);
+  const selectedElement = useSelector(selectSelectedElement);
+  const { selectedElementId, elements } = useSelector(
+    (state: RootState) => state.timeline
+  );
 
-  useEffect(() => {
-    if (elementStyle.fill) {
-      setCurrentColor(elementStyle.fill);
-    }
-  }, [elementStyle]);
+  console.log("selectedElement", selectedElement, selectedElementId, elements);
 
-  useEffect(() => {
-    // Listen for selection events
-    const handleElementSelected = (event: CustomEvent) => {
-      const { element } = event.detail;
-      if (element && element.fill) {
-        setCurrentColor(element.fill);
-      }
-    };
+  if (!selectedElement) {
+    return null;
+  }
 
-    const handleSelectionCleared = () => {
-      setCurrentColor("#000000"); // Reset to default color
-    };
-
-    window.addEventListener(
-      "FORWARDED_ELEMENT_SELECTED",
-      handleElementSelected as EventListener
-    );
-    window.addEventListener(
-      "SELECTION_CLEARED",
-      handleSelectionCleared as EventListener
+  const handleColorChange = (color: ColorResult) => {
+    dispatch(
+      updateElement({
+        id: selectedElement.id,
+        style: {
+          ...selectedElement.style,
+          fill: color.hex,
+        },
+      })
     );
 
-    return () => {
-      window.removeEventListener(
-        "FORWARDED_ELEMENT_SELECTED",
-        handleElementSelected as EventListener
-      );
-      window.removeEventListener(
-        "SELECTION_CLEARED",
-        handleSelectionCleared as EventListener
-      );
-    };
-  }, []);
-
-  const handleColorChange = (color: ColorResult, type: "fill" | "stroke") => {
-    setCurrentColor(color.hex);
-
+    // Keep the existing canvas update functionality
     window.dispatchEvent(
       new CustomEvent("UPDATE_ELEMENT_COLOR", {
         detail: {
           color: color.hex,
-          type: type,
+          type: "fill",
         },
       })
     );
   };
 
-  if (!selectedElementId) {
-    return null;
-  }
-
   return (
     <div>
       <ChromePicker
-        color={currentColor}
-        onChange={(color) => handleColorChange(color, "fill")}
+        color={selectedElement.style.fill}
+        onChange={handleColorChange}
         disableAlpha={true}
       />
     </div>

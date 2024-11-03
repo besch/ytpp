@@ -1,19 +1,31 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { selectTimeRange, setTimeRange } from "@/store/timelineSlice";
+import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
 
 const TimeRangeInputs: React.FC = () => {
   const dispatch = useDispatch();
-  const { from, to } = useSelector(selectTimeRange);
+  const selectedElement = useSelector(selectSelectedElement);
+
+  if (!selectedElement) return null;
 
   const handleFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
-    dispatch(setTimeRange({ from: value, to }));
+    dispatch(
+      updateElement({
+        id: selectedElement.id,
+        timeRange: { from: value, to: selectedElement.timeRange.to },
+      })
+    );
   };
 
   const handleToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
-    dispatch(setTimeRange({ from, to: value }));
+    dispatch(
+      updateElement({
+        id: selectedElement.id,
+        timeRange: { from: selectedElement.timeRange.from, to: value },
+      })
+    );
   };
 
   return (
@@ -22,7 +34,7 @@ const TimeRangeInputs: React.FC = () => {
         <label className="text-sm text-muted-foreground">From (ms):</label>
         <input
           type="number"
-          value={from}
+          value={selectedElement.timeRange.from}
           onChange={handleFromChange}
           className="px-3 py-2 border border-border rounded bg-background text-foreground"
           min="0"
@@ -32,7 +44,7 @@ const TimeRangeInputs: React.FC = () => {
         <label className="text-sm text-muted-foreground">To (ms):</label>
         <input
           type="number"
-          value={to}
+          value={selectedElement.timeRange.to}
           onChange={handleToChange}
           className="px-3 py-2 border border-border rounded bg-background text-foreground"
           min="0"

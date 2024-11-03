@@ -1,3 +1,4 @@
+import { CustomFabricObject } from "@/types";
 import {
   Canvas,
   FabricObject,
@@ -7,21 +8,6 @@ import {
   TPointerEventInfo,
   TPointerEvent,
 } from "fabric";
-
-interface CustomFabricObject extends FabricObject {
-  data?: {
-    from: number;
-    to: number;
-    originalLeft: number;
-    originalTop: number;
-    originalScaleX: number;
-    originalScaleY: number;
-  };
-  originalScaleX?: number;
-  originalScaleY?: number;
-  originalLeft?: number;
-  originalTop?: number;
-}
 
 export class OverlayManager {
   private static canvas: Canvas | null = null;
@@ -214,13 +200,34 @@ export class OverlayManager {
   }) => {
     const selectedObject = event.selected[0];
     if (selectedObject) {
+      if (!selectedObject.data) {
+        selectedObject.data = {
+          id: `element-${Date.now()}`,
+          from: 0,
+          to: 0,
+          originalLeft: selectedObject.left || 0,
+          originalTop: selectedObject.top || 0,
+          originalScaleX: selectedObject.scaleX || 1,
+          originalScaleY: selectedObject.scaleY || 1,
+        };
+      } else if (!selectedObject.data.id) {
+        selectedObject.data.id = `element-${Date.now()}`;
+      }
+
       window.dispatchEvent(
         new CustomEvent("ELEMENT_SELECTED", {
           detail: {
             element: {
+              id: selectedObject.data.id,
               type: selectedObject.type,
-              fill: selectedObject.fill || "#000000",
-              stroke: selectedObject.stroke || "#000000",
+              timeRange: {
+                from: selectedObject.data.from || 0,
+                to: selectedObject.data.to || 0,
+              },
+              style: {
+                fill: selectedObject.fill || "#000000",
+                stroke: selectedObject.stroke || "#000000",
+              },
             },
           },
         })
@@ -305,6 +312,8 @@ export class OverlayManager {
     if (!this.canvas || !this.videoElement) return;
 
     let element: CustomFabricObject;
+    const id = `element-${Date.now()}`;
+
     switch (elementType) {
       case "rectangle":
         element = new Rect({
@@ -337,12 +346,13 @@ export class OverlayManager {
     }
 
     element.data = {
+      id,
       from: 0,
-      to: Number.MAX_SAFE_INTEGER,
-      originalLeft: element.left,
-      originalTop: element.top,
-      originalScaleX: element.scaleX,
-      originalScaleY: element.scaleY,
+      to: 0,
+      originalLeft: element.left || 0,
+      originalTop: element.top || 0,
+      originalScaleX: element.scaleX || 1,
+      originalScaleY: element.scaleY || 1,
     };
 
     this.canvas.add(element);
@@ -354,24 +364,26 @@ export class OverlayManager {
     const elements = this.canvas.getObjects().map((obj) => {
       const customObj = obj as CustomFabricObject;
       return {
+        id: customObj.data?.id || `element-${Date.now()}`,
         type: customObj.type,
+        style: {
+          fill: customObj.fill || "#000000",
+          stroke: customObj.stroke || "#000000",
+        },
+        timeRange: {
+          from: customObj.data?.from || 0,
+          to: customObj.data?.to || Number.MAX_SAFE_INTEGER,
+        },
         properties: {
-          ...customObj.toObject(),
           left: customObj.left,
           top: customObj.top,
           scaleX: customObj.scaleX,
           scaleY: customObj.scaleY,
-          // Include 'from' and 'to' in properties
-          data: {
-            from: customObj.data?.from || 0,
-            to: customObj.data?.to || Number.MAX_SAFE_INTEGER,
-            originalLeft: customObj.originalLeft || customObj.left,
-            originalTop: customObj.originalTop || customObj.top,
-            originalScaleX: customObj.originalScaleX || customObj.scaleX,
-            originalScaleY: customObj.originalScaleY || customObj.scaleY,
-          },
+          width: customObj.width,
+          height: customObj.height,
+          radius: (customObj as any).radius, // for circles
+          text: (customObj as any).text, // for textboxes
         },
-        data: customObj.data,
       };
     });
     return elements;
@@ -379,11 +391,14 @@ export class OverlayManager {
 
   public static loadElements(elements: any[]): void {
     if (!this.canvas) return;
+
     elements.forEach((elementData) => {
       let element: CustomFabricObject;
-      const props = { ...elementData.properties };
-
-      delete props.type;
+      const props = {
+        ...elementData.properties,
+        fill: elementData.style.fill,
+        stroke: elementData.style.stroke,
+      };
 
       switch (elementData.type) {
         case "rect":
@@ -393,16 +408,25 @@ export class OverlayManager {
           element = new Circle(props) as CustomFabricObject;
           break;
         case "textbox":
-          const { text, ...textProps } = props;
-          element = new Textbox(text, textProps) as CustomFabricObject;
+          element = new Textbox(props.text || "", props) as CustomFabricObject;
           break;
         default:
           return;
       }
-      element.data = elementData.data;
-      this.canvas!.add(element);
+
+      element.data = {
+        id: elementData.id,
+        from: elementData.timeRange.from,
+        to: elementData.timeRange.to,
+        originalLeft: props.left,
+        originalTop: props.top,
+        originalScaleX: props.scaleX,
+        originalScaleY: props.scaleY,
+      };
+
+      this.canvas?.add(element);
     });
-    this.saveElementsToStorage();
+    this.canvas.renderAll();
   }
 
   public static removeOverlay(): void {
@@ -450,7 +474,6 @@ export class OverlayManager {
     }
 
     this.canvas.requestRenderAll(); // Force canvas to re-render
-    this.saveElementsToStorage();
   }
 
   public static getSelectedElement(): any {
@@ -469,7 +492,6 @@ export class OverlayManager {
       customObj.data.from = from;
       customObj.data.to = to;
       this.canvas?.renderAll();
-      this.saveElementsToStorage();
     }
   }
 

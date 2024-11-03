@@ -2,6 +2,7 @@ import { FabricObject } from "fabric";
 
 export interface CustomFabricObject extends FabricObject {
   data?: {
+    id: string;
     from: number;
     to: number;
     originalLeft: number;

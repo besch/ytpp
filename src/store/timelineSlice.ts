@@ -6,31 +6,27 @@ interface ElementStyle {
   stroke?: string;
 }
 
-interface TimelineState {
-  currentTime: number;
+interface Element {
+  id: string;
+  type: string;
+  style: ElementStyle;
   timeRange: {
     from: number;
     to: number;
   };
-  selectedElement: {
-    id: string | null;
-    style: ElementStyle;
-  };
+  // ... other properties
+}
+
+interface TimelineState {
+  currentTime: number;
+  elements: Element[];
+  selectedElementId: string | null;
 }
 
 const initialState: TimelineState = {
   currentTime: 0,
-  timeRange: {
-    from: 0,
-    to: 0,
-  },
-  selectedElement: {
-    id: null,
-    style: {
-      fill: "#000000",
-      stroke: "#000000",
-    },
-  },
+  elements: [],
+  selectedElementId: null,
 };
 
 const timelineSlice = createSlice({
@@ -40,41 +36,46 @@ const timelineSlice = createSlice({
     setCurrentTime: (state, action: PayloadAction<number>) => {
       state.currentTime = action.payload;
     },
-    setTimeRange: (
-      state,
-      action: PayloadAction<{ from: number; to: number }>
-    ) => {
-      state.timeRange = action.payload;
+    addElement: (state, action: PayloadAction<Element>) => {
+      state.elements.push(action.payload);
     },
-    setSelectedElement: (state, action: PayloadAction<string | null>) => {
-      state.selectedElement.id = action.payload;
-      if (!action.payload) {
-        state.selectedElement.style = { fill: "#000000", stroke: "#000000" };
+    updateElement: (state, action: PayloadAction<Partial<Element>>) => {
+      const index = state.elements.findIndex(
+        (el) => el.id === action.payload.id
+      );
+      if (index !== -1) {
+        state.elements[index] = { ...state.elements[index], ...action.payload };
       }
     },
-    setElementColor: (
-      state,
-      action: PayloadAction<{ type: "fill" | "stroke"; color: string }>
-    ) => {
-      state.selectedElement.style[action.payload.type] = action.payload.color;
+    setSelectedElementId: (state, action: PayloadAction<string | null>) => {
+      state.selectedElementId = action.payload;
+    },
+    setElements: (state, action: PayloadAction<Element[]>) => {
+      state.elements = action.payload;
     },
   },
 });
 
 export const {
   setCurrentTime,
-  setTimeRange,
-  setSelectedElement,
-  setElementColor,
+  addElement,
+  updateElement,
+  setSelectedElementId,
+  setElements,
 } = timelineSlice.actions;
 
-// Selectors
+// Updated selectors
 export const selectCurrentTime = (state: RootState) =>
   state.timeline.currentTime;
-export const selectTimeRange = (state: RootState) => state.timeline.timeRange;
-export const selectSelectedElement = (state: RootState) =>
-  state.timeline.selectedElement;
-export const selectSelectedElementStyle = (state: RootState) =>
-  state.timeline.selectedElement.style;
+export const selectElements = (state: RootState) => state.timeline.elements;
+export const selectSelectedElementId = (state: RootState) =>
+  state.timeline.selectedElementId;
+export const selectSelectedElement = (state: RootState) => {
+  const selectedId = state.timeline.selectedElementId;
+  console.log("Current selected element ID:", selectedId);
+  return selectedId
+    ? state.timeline.elements.find((el) => el.id === selectedId)
+    : null;
+};
 
 export default timelineSlice.reducer;
