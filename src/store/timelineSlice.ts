@@ -14,7 +14,17 @@ interface Element {
     from: number;
     to: number;
   };
-  // ... other properties
+  properties: {
+    scaleMode: "fixed" | "responsive";
+    originalWidth: number;
+    originalHeight: number;
+    originalX: number;
+    originalY: number;
+    relativeX?: number; // Percentage of video width
+    relativeY?: number; // Percentage of video height
+    relativeWidth?: number; // Percentage of video width
+    relativeHeight?: number; // Percentage of video height
+  };
 }
 
 interface TimelineState {

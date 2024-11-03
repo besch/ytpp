@@ -9,9 +9,16 @@ export interface CustomFabricObject extends FabricObject {
     originalTop: number;
     originalScaleX: number;
     originalScaleY: number;
+    originalWidth: number;
+    originalHeight: number;
+    relativeX: number;
+    relativeY: number;
+    relativeWidth: number;
+    relativeHeight: number;
+    scaleMode: "responsive" | "fixed";
+    relativeRadius?: number;
+    originalRadius?: number;
+    relativeFontSize?: number;
+    originalFontSize?: number;
   };
-  originalScaleX?: number;
-  originalScaleY?: number;
-  originalLeft?: number;
-  originalTop?: number;
 }

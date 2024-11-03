@@ -1,3 +1,4 @@
+import { CustomFabricObject } from "@/types";
 import {
   Canvas,
   FabricObject,
@@ -82,18 +83,89 @@ export class CanvasManager {
     if (!this.canvas || !this.videoElement) return;
 
     const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
+    const containerWidth = this.videoElement.clientWidth;
+    const containerHeight = this.videoElement.clientHeight;
+    const oldWidth = canvasElement.width;
+    const oldHeight = canvasElement.height;
 
-    canvasElement.width = this.videoElement.clientWidth;
-    canvasElement.height = this.videoElement.clientHeight;
+    canvasElement.width = containerWidth;
+    canvasElement.height = containerHeight;
     canvasElement.style.left = `${this.videoElement.offsetLeft}px`;
     canvasElement.style.top = `${this.videoElement.offsetTop}px`;
 
     this.canvas.setDimensions({
-      width: canvasElement.width,
-      height: canvasElement.height,
+      width: containerWidth,
+      height: containerHeight,
     });
 
-    // Notify ElementManager to adjust element positions if necessary
+    // Scale all elements according to their scaleMode
+    this.canvas.getObjects().forEach((obj: CustomFabricObject) => {
+      if (!obj.data) return;
+
+      if (obj.data.scaleMode === "responsive") {
+        const widthRatio = containerWidth / obj.data.originalWidth;
+        const heightRatio = containerHeight / obj.data.originalHeight;
+        const smallerDimension = Math.min(containerWidth, containerHeight);
+
+        // Calculate new position based on relative values
+        const newLeft = (obj.data.relativeX / 100) * containerWidth;
+        const newTop = (obj.data.relativeY / 100) * containerHeight;
+
+        // Handle different types of objects
+        switch (obj.type) {
+          case "circle": {
+            const circle = obj as Circle & CustomFabricObject;
+            const relativeRadius = circle.data?.relativeRadius ?? 10; // Default to 10% if undefined
+            const newRadius = (relativeRadius / 100) * smallerDimension;
+            circle.set({
+              left: newLeft,
+              top: newTop,
+              radius: newRadius,
+              scaleX: 1,
+              scaleY: 1,
+            });
+            break;
+          }
+
+          case "textbox": {
+            const textbox = obj as Textbox & CustomFabricObject;
+            const relativeFontSize = textbox.data?.relativeFontSize ?? 5; // Default to 5% if undefined
+            const relativeWidth = textbox.data?.relativeWidth ?? 20; // Default to 20% if undefined
+            const newFontSize = (relativeFontSize / 100) * smallerDimension;
+            const objWidth = (relativeWidth / 100) * containerWidth;
+            textbox.set({
+              left: newLeft,
+              top: newTop,
+              fontSize: newFontSize,
+              width: objWidth,
+              scaleX: 1,
+              scaleY: 1,
+            });
+            break;
+          }
+
+          default: {
+            const newObjWidth = (obj.data.relativeWidth / 100) * containerWidth;
+            const newObjHeight =
+              (obj.data.relativeHeight / 100) * containerHeight;
+            obj.set({
+              left: newLeft,
+              top: newTop,
+              width: newObjWidth,
+              height: newObjHeight,
+              scaleX: 1,
+              scaleY: 1,
+            });
+          }
+        }
+
+        // Update the object's data with new dimensions
+        obj.data.originalWidth = containerWidth;
+        obj.data.originalHeight = containerHeight;
+      }
+    });
+
+    this.canvas.renderAll();
   }
 
   private preventEventPropagation(): void {

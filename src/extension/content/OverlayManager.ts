@@ -22,7 +22,7 @@ export class OverlayManager {
 
     const canvas = this.canvasManager.getCanvas();
     if (canvas) {
-      this.elementManager = new ElementManager(canvas);
+      this.elementManager = new ElementManager(canvas, videoElement);
       if (isEditing) {
         canvas.on(
           "selection:created",

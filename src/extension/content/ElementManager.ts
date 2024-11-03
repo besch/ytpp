@@ -2,45 +2,62 @@ import { CustomFabricObject } from "@/types";
 import { Canvas, FabricObject, Rect, Circle, Textbox } from "fabric";
 
 export class ElementManager {
-  constructor(private canvas: Canvas) {}
+  constructor(private canvas: Canvas, private videoElement: HTMLVideoElement) {}
 
   public addElement(elementType: string): void {
-    if (!this.canvas) return;
+    if (!this.canvas || !this.videoElement) return;
 
     let element: CustomFabricObject;
     const id = `element-${Date.now()}`;
+    const videoWidth = this.videoElement.clientWidth;
+    const videoHeight = this.videoElement.clientHeight;
+
+    const defaultProps = {
+      left: videoWidth / 4,
+      top: videoHeight / 4,
+      scaleMode: "responsive" as const,
+    };
 
     switch (elementType) {
+      case "circle":
+        const radius = Math.min(videoWidth, videoHeight) * 0.1; // 10% of smaller dimension
+        element = new Circle({
+          ...defaultProps,
+          radius,
+          fill: "red",
+          opacity: 0.5,
+          scaleX: 1,
+          scaleY: 1,
+        }) as CustomFabricObject;
+        break;
+
+      case "text":
+        const fontSize = Math.min(videoWidth, videoHeight) * 0.05; // 5% of smaller dimension
+        element = new Textbox("Sample Text", {
+          ...defaultProps,
+          fontSize,
+          fill: "black",
+          width: videoWidth * 0.2, // 20% of video width
+          scaleX: 1,
+          scaleY: 1,
+        }) as CustomFabricObject;
+        break;
+
       case "rectangle":
         element = new Rect({
-          left: 100,
-          top: 100,
-          width: 60,
-          height: 70,
+          ...defaultProps,
+          width: videoWidth * 0.2, // 20% of video width
+          height: videoHeight * 0.2, // 20% of video height
           fill: "red",
           opacity: 0.5,
         }) as CustomFabricObject;
         break;
-      case "circle":
-        element = new Circle({
-          left: 100,
-          top: 100,
-          radius: 30,
-          fill: "green",
-          opacity: 0.5,
-        }) as CustomFabricObject;
-        break;
-      case "text":
-        element = new Textbox("Sample Text", {
-          left: 100,
-          top: 100,
-          fill: "blue",
-        }) as CustomFabricObject;
-        break;
+
       default:
         return;
     }
 
+    // Store original dimensions and positions
     element.data = {
       id,
       from: 0,
@@ -49,9 +66,42 @@ export class ElementManager {
       originalTop: element.top || 0,
       originalScaleX: element.scaleX || 1,
       originalScaleY: element.scaleY || 1,
+      originalWidth: videoWidth,
+      originalHeight: videoHeight,
+      relativeX: ((element.left || 0) / videoWidth) * 100,
+      relativeY: ((element.top || 0) / videoHeight) * 100,
+      relativeWidth: ((element.width || 0) / videoWidth) * 100,
+      relativeHeight: ((element.height || 0) / videoHeight) * 100,
+      scaleMode: "responsive",
     };
 
+    // For circles, store the radius as a percentage of the smaller dimension
+    if (element instanceof Circle) {
+      const circleElement = element as CustomFabricObject & Circle;
+      const smallerDimension = Math.min(videoWidth, videoHeight);
+      circleElement.data = {
+        ...circleElement.data!,
+        relativeRadius: ((circleElement.radius || 0) / smallerDimension) * 100,
+        originalRadius: circleElement.radius || 0,
+      };
+    }
+
+    // For textboxes, store the font size as a percentage of the smaller dimension
+    if (element instanceof Textbox) {
+      const textElement = element as CustomFabricObject & Textbox;
+      const smallerDimension = Math.min(videoWidth, videoHeight);
+      textElement.data = {
+        ...textElement.data!,
+        relativeFontSize:
+          ((textElement.fontSize || 20) / smallerDimension) * 100,
+        originalFontSize: textElement.fontSize || 20,
+        relativeWidth: ((textElement.width || 0) / videoWidth) * 100,
+      };
+    }
+
     this.canvas.add(element);
+    this.canvas.setActiveObject(element);
+    this.canvas.requestRenderAll();
     this.saveElementsToStorage();
   }
 
@@ -86,7 +136,10 @@ export class ElementManager {
   }
 
   public loadElements(elements: any[]): void {
-    if (!this.canvas) return;
+    if (!this.canvas || !this.videoElement) return;
+
+    const videoWidth = this.videoElement.clientWidth;
+    const videoHeight = this.videoElement.clientHeight;
 
     elements.forEach((elementData) => {
       let element: CustomFabricObject;
@@ -116,8 +169,15 @@ export class ElementManager {
         to: elementData.timeRange.to,
         originalLeft: props.left,
         originalTop: props.top,
-        originalScaleX: props.scaleX,
-        originalScaleY: props.scaleY,
+        originalScaleX: props.scaleX || 1,
+        originalScaleY: props.scaleY || 1,
+        originalWidth: videoWidth,
+        originalHeight: videoHeight,
+        relativeX: ((props.left || 0) / videoWidth) * 100,
+        relativeY: ((props.top || 0) / videoHeight) * 100,
+        relativeWidth: ((props.width || 0) / videoWidth) * 100,
+        relativeHeight: ((props.height || 0) / videoHeight) * 100,
+        scaleMode: elementData.properties.scaleMode || ("responsive" as const),
       };
 
       this.canvas.add(element);
@@ -212,6 +272,9 @@ export class ElementManager {
   }): void => {
     const selectedObject = event.selected[0];
     if (selectedObject) {
+      const videoWidth = this.videoElement.clientWidth;
+      const videoHeight = this.videoElement.clientHeight;
+
       if (!selectedObject.data) {
         selectedObject.data = {
           id: `element-${Date.now()}`,
@@ -221,6 +284,13 @@ export class ElementManager {
           originalTop: selectedObject.top || 0,
           originalScaleX: selectedObject.scaleX || 1,
           originalScaleY: selectedObject.scaleY || 1,
+          originalWidth: videoWidth,
+          originalHeight: videoHeight,
+          relativeX: ((selectedObject.left || 0) / videoWidth) * 100,
+          relativeY: ((selectedObject.top || 0) / videoHeight) * 100,
+          relativeWidth: ((selectedObject.width || 0) / videoWidth) * 100,
+          relativeHeight: ((selectedObject.height || 0) / videoHeight) * 100,
+          scaleMode: "responsive" as const,
         };
       } else if (!selectedObject.data.id) {
         selectedObject.data.id = `element-${Date.now()}`;
