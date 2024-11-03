@@ -81,7 +81,6 @@ class ContentScript {
     // Listen for update element color events
     window.addEventListener("UPDATE_ELEMENT_COLOR", ((event: CustomEvent) => {
       const { color, type } = event.detail;
-      console.log("Updating color:", color, type); // Debug log
       OverlayManager.updateElementColor(color, type);
     }) as EventListener);
 

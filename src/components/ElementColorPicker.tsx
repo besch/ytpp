@@ -2,16 +2,10 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ChromePicker, ColorResult } from "react-color";
 import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
-import { RootState } from "@/store";
 
 const ElementColorPicker: React.FC = () => {
   const dispatch = useDispatch();
   const selectedElement = useSelector(selectSelectedElement);
-  const { selectedElementId, elements } = useSelector(
-    (state: RootState) => state.timeline
-  );
-
-  console.log("selectedElement", selectedElement, selectedElementId, elements);
 
   if (!selectedElement) {
     return null;
@@ -28,7 +22,6 @@ const ElementColorPicker: React.FC = () => {
       })
     );
 
-    // Keep the existing canvas update functionality
     window.dispatchEvent(
       new CustomEvent("UPDATE_ELEMENT_COLOR", {
         detail: {
