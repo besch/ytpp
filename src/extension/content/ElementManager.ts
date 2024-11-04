@@ -8,12 +8,15 @@ import {
   Shadow,
   Triangle,
   Line,
+  FabricImage,
 } from "fabric";
 
 export class ElementManager {
+  private animationIntervals: Map<string, number> = new Map();
+
   constructor(private canvas: Canvas, private videoElement: HTMLVideoElement) {}
 
-  public addElement(elementType: string): void {
+  public async addElement(elementType: string, gifUrl?: string): Promise<void> {
     if (!this.canvas || !this.videoElement) return;
 
     let element: CustomFabricObject;
@@ -92,6 +95,48 @@ export class ElementManager {
         }) as CustomFabricObject;
         break;
 
+      case "gif":
+        if (!gifUrl) return;
+
+        // Create image element to load the GIF
+        const img = new Image();
+        img.src = gifUrl;
+
+        await new Promise((resolve) => {
+          img.onload = resolve;
+        });
+
+        element = new FabricImage(img, {
+          ...defaultProps,
+          width: videoWidth * 0.2,
+          height: videoHeight * 0.2,
+          objectFit: "contain",
+        }) as CustomFabricObject;
+
+        // Store GIF-specific data
+        element.data = {
+          id: `element-${Date.now()}`,
+          from: 0,
+          to: Number.MAX_SAFE_INTEGER,
+          originalLeft: element.left || 0,
+          originalTop: element.top || 0,
+          originalScaleX: element.scaleX || 1,
+          originalScaleY: element.scaleY || 1,
+          originalWidth: videoWidth,
+          originalHeight: videoHeight,
+          relativeX: ((element.left || 0) / videoWidth) * 100,
+          relativeY: ((element.top || 0) / videoHeight) * 100,
+          relativeWidth: ((element.width || 0) / videoWidth) * 100,
+          relativeHeight: ((element.height || 0) / videoHeight) * 100,
+          scaleMode: "responsive" as const,
+          isGif: true,
+          gifSrc: gifUrl,
+        };
+
+        // Start GIF animation
+        this.startGifAnimation(element);
+        break;
+
       default:
         return;
     }
@@ -100,7 +145,7 @@ export class ElementManager {
     element.data = {
       id,
       from: 0,
-      to: 0,
+      to: Number.MAX_SAFE_INTEGER,
       originalLeft: element.left || 0,
       originalTop: element.top || 0,
       originalScaleX: element.scaleX || 1,
@@ -182,14 +227,14 @@ export class ElementManager {
     return elements;
   }
 
-  public loadElements(elements: any[]): void {
+  public async loadElements(elements: any[]): Promise<void> {
     if (!this.canvas || !this.videoElement) return;
 
     const videoWidth = this.videoElement.clientWidth;
     const videoHeight = this.videoElement.clientHeight;
 
-    elements.forEach((elementData) => {
-      let element: CustomFabricObject;
+    for (const elementData of elements) {
+      let element: CustomFabricObject | null = null; // Initialize as null
       const props = {
         ...elementData.properties,
         fill: elementData.style.fill,
@@ -209,31 +254,60 @@ export class ElementManager {
         case "triangle":
           element = new Triangle(props) as CustomFabricObject;
           break;
+        case "image":
+          if (elementData.properties.gifSrc) {
+            const img = new Image();
+            img.src = elementData.properties.gifSrc;
+
+            await new Promise((resolve) => {
+              img.onload = resolve;
+            });
+
+            element = new FabricImage(img, props) as CustomFabricObject;
+          }
+          break;
         default:
-          return;
+          continue;
       }
 
-      element.data = {
-        id: elementData.id,
-        from: elementData.timeRange.from,
-        to: elementData.timeRange.to,
-        originalLeft: props.left,
-        originalTop: props.top,
-        originalScaleX: props.scaleX || 1,
-        originalScaleY: props.scaleY || 1,
-        currentScaleX: props.scaleX || 1,
-        currentScaleY: props.scaleY || 1,
-        originalWidth: videoWidth,
-        originalHeight: videoHeight,
-        relativeX: ((props.left || 0) / videoWidth) * 100,
-        relativeY: ((props.top || 0) / videoHeight) * 100,
-        relativeWidth: ((props.width || 0) / videoWidth) * 100,
-        relativeHeight: ((props.height || 0) / videoHeight) * 100,
-        scaleMode: elementData.properties.scaleMode || ("responsive" as const),
-      };
+      // Only proceed if element was successfully created
+      if (element) {
+        element.data = {
+          id: elementData.id,
+          from: elementData.timeRange.from,
+          to: elementData.timeRange.to,
+          originalLeft: props.left,
+          originalTop: props.top,
+          originalScaleX: props.scaleX || 1,
+          originalScaleY: props.scaleY || 1,
+          currentScaleX: props.scaleX || 1,
+          currentScaleY: props.scaleY || 1,
+          originalWidth: videoWidth,
+          originalHeight: videoHeight,
+          relativeX: ((props.left || 0) / videoWidth) * 100,
+          relativeY: ((props.top || 0) / videoHeight) * 100,
+          relativeWidth: ((props.width || 0) / videoWidth) * 100,
+          relativeHeight: ((props.height || 0) / videoHeight) * 100,
+          scaleMode:
+            elementData.properties.scaleMode || ("responsive" as const),
+        };
 
-      this.canvas.add(element);
-    });
+        // Add GIF-specific properties if it's a GIF
+        if (elementData.type === "image" && elementData.properties.gifSrc) {
+          element.data = {
+            ...element.data,
+            isGif: true,
+            gifSrc: elementData.properties.gifSrc,
+          };
+        }
+
+        this.canvas.add(element);
+
+        if (element && element.data?.isGif) {
+          this.startGifAnimation(element);
+        }
+      }
+    }
     this.canvas.renderAll();
   }
 
@@ -384,13 +458,15 @@ export class ElementManager {
   public deleteSelectedElement(): void {
     if (!this.canvas) return;
 
-    const activeObject = this.canvas.getActiveObject();
+    const activeObject = this.canvas.getActiveObject() as CustomFabricObject;
     if (activeObject) {
+      if (activeObject.data?.isGif) {
+        this.stopGifAnimation(activeObject.data.id);
+      }
       this.canvas.remove(activeObject);
       this.canvas.renderAll();
       this.saveElementsToStorage();
 
-      // Dispatch updated elements
       const elements = this.getElements();
       window.dispatchEvent(
         new CustomEvent("SET_ELEMENTS", {
@@ -413,6 +489,14 @@ export class ElementManager {
 
       if (obj.visible !== isVisible) {
         obj.visible = isVisible;
+
+        // Handle GIF animation when visibility changes
+        if (isVisible && obj.data.isGif) {
+          this.startGifAnimation(obj);
+        } else if (!isVisible && obj.data.isGif) {
+          this.stopGifAnimation(obj.data.id);
+        }
+
         if (isVisible) {
           obj.set({
             left: obj.data.originalLeft,
@@ -425,5 +509,48 @@ export class ElementManager {
     });
 
     this.canvas.requestRenderAll();
+  }
+
+  private startGifAnimation(element: CustomFabricObject): void {
+    if (!element.data?.isGif || !element.data.gifSrc || !this.canvas) return;
+
+    const frameDelay = 100; // Adjust this value for animation speed
+    const gifElement = element as FabricImage;
+
+    // Create a new image for animation frames
+    const img = new Image();
+    img.src = element.data.gifSrc;
+
+    // Use setInterval for animation
+    const intervalId = window.setInterval(() => {
+      if (element.visible && this.canvas) {
+        // Update the image source to force a redraw
+        gifElement.setElement(img);
+        this.canvas.requestRenderAll();
+      }
+    }, frameDelay);
+
+    // Store the interval ID for cleanup
+    this.animationIntervals.set(element.data.id, intervalId);
+  }
+
+  // Add cleanup method for GIF animations
+  private stopGifAnimation(elementId: string): void {
+    const intervalId = this.animationIntervals.get(elementId);
+    if (intervalId) {
+      clearInterval(intervalId);
+      this.animationIntervals.delete(elementId);
+    }
+  }
+
+  // Update dispose method to clean up GIF animations
+  public dispose(): void {
+    // Clear all GIF animations
+    this.animationIntervals.forEach((intervalId) => {
+      clearInterval(intervalId);
+    });
+    this.animationIntervals.clear();
+
+    // ... existing dispose code ...
   }
 }

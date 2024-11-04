@@ -28,5 +28,7 @@ export interface CustomFabricObject extends FabricObject {
       x2: number;
       y2: number;
     };
+    isGif?: boolean;
+    gifSrc?: string;
   };
 }

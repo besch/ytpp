@@ -61,8 +61,8 @@ class ContentScript {
   private setupCustomEventListeners(): void {
     // Listen for add element events
     window.addEventListener("ADD_ELEMENT", ((event: CustomEvent) => {
-      const { elementType } = event.detail;
-      OverlayManager.addElement(elementType);
+      const { elementType, gifUrl } = event.detail;
+      OverlayManager.addElement(elementType, gifUrl);
     }) as EventListener);
 
     // Listen for save elements events

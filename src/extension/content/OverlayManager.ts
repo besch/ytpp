@@ -50,8 +50,8 @@ export class OverlayManager {
     this.isOverlayVisible = false;
   }
 
-  public static addElement(elementType: string): void {
-    this.elementManager?.addElement(elementType);
+  public static addElement(elementType: string, gifUrl?: string): void {
+    this.elementManager?.addElement(elementType, gifUrl);
   }
 
   public static getElements(): any[] {
