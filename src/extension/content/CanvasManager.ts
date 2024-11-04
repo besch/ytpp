@@ -85,8 +85,6 @@ export class CanvasManager {
     const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
     const containerWidth = this.videoElement.clientWidth;
     const containerHeight = this.videoElement.clientHeight;
-    const oldWidth = canvasElement.width;
-    const oldHeight = canvasElement.height;
 
     canvasElement.width = containerWidth;
     canvasElement.height = containerHeight;
@@ -103,11 +101,9 @@ export class CanvasManager {
       if (!obj.data) return;
 
       if (obj.data.scaleMode === "responsive") {
-        const widthRatio = containerWidth / obj.data.originalWidth;
-        const heightRatio = containerHeight / obj.data.originalHeight;
         const smallerDimension = Math.min(containerWidth, containerHeight);
 
-        // Calculate new position based on relative values
+        // Calculate new position based on stored relative values
         const newLeft = (obj.data.relativeX / 100) * containerWidth;
         const newTop = (obj.data.relativeY / 100) * containerHeight;
 
@@ -115,53 +111,57 @@ export class CanvasManager {
         switch (obj.type) {
           case "circle": {
             const circle = obj as Circle & CustomFabricObject;
-            const relativeRadius = circle.data?.relativeRadius ?? 10; // Default to 10% if undefined
+            const relativeRadius = circle.data?.relativeRadius ?? 10;
             const newRadius = (relativeRadius / 100) * smallerDimension;
             circle.set({
               left: newLeft,
               top: newTop,
               radius: newRadius,
-              scaleX: 1,
-              scaleY: 1,
+              scaleX: obj.data.currentScaleX || 1,
+              scaleY: obj.data.currentScaleY || 1,
             });
             break;
           }
 
           case "textbox": {
             const textbox = obj as Textbox & CustomFabricObject;
-            const relativeFontSize = textbox.data?.relativeFontSize ?? 5; // Default to 5% if undefined
-            const relativeWidth = textbox.data?.relativeWidth ?? 20; // Default to 20% if undefined
+            const relativeFontSize = textbox.data?.relativeFontSize ?? 5;
+            const relativeWidth = textbox.data?.relativeWidth ?? 20;
             const newFontSize = (relativeFontSize / 100) * smallerDimension;
-            const objWidth = (relativeWidth / 100) * containerWidth;
+            const newWidth = (relativeWidth / 100) * containerWidth;
             textbox.set({
               left: newLeft,
               top: newTop,
               fontSize: newFontSize,
-              width: objWidth,
-              scaleX: 1,
-              scaleY: 1,
+              width: newWidth,
+              scaleX: obj.data.currentScaleX || 1,
+              scaleY: obj.data.currentScaleY || 1,
             });
             break;
           }
 
           default: {
-            const newObjWidth = (obj.data.relativeWidth / 100) * containerWidth;
-            const newObjHeight =
-              (obj.data.relativeHeight / 100) * containerHeight;
+            const newWidth = (obj.data.relativeWidth / 100) * containerWidth;
+            const newHeight = (obj.data.relativeHeight / 100) * containerHeight;
             obj.set({
               left: newLeft,
               top: newTop,
-              width: newObjWidth,
-              height: newObjHeight,
-              scaleX: 1,
-              scaleY: 1,
+              width: newWidth,
+              height: newHeight,
+              scaleX: obj.data.currentScaleX || 1,
+              scaleY: obj.data.currentScaleY || 1,
             });
           }
         }
 
-        // Update the object's data with new dimensions
-        obj.data.originalWidth = containerWidth;
-        obj.data.originalHeight = containerHeight;
+        // Update the stored dimensions while preserving current scale
+        obj.data = {
+          ...obj.data,
+          originalWidth: containerWidth,
+          originalHeight: containerHeight,
+          currentScaleX: obj.scaleX,
+          currentScaleY: obj.scaleY,
+        };
       }
     });
 

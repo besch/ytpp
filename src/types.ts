@@ -9,6 +9,8 @@ export interface CustomFabricObject extends FabricObject {
     originalTop: number;
     originalScaleX: number;
     originalScaleY: number;
+    currentScaleX?: number;
+    currentScaleY?: number;
     originalWidth: number;
     originalHeight: number;
     relativeX: number;

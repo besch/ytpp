@@ -197,6 +197,8 @@ export class ElementManager {
         originalTop: props.top,
         originalScaleX: props.scaleX || 1,
         originalScaleY: props.scaleY || 1,
+        currentScaleX: props.scaleX || 1,
+        currentScaleY: props.scaleY || 1,
         originalWidth: videoWidth,
         originalHeight: videoHeight,
         relativeX: ((props.left || 0) / videoWidth) * 100,
