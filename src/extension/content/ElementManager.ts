@@ -1,5 +1,5 @@
 import { CustomFabricObject } from "@/types";
-import { Canvas, FabricObject, Rect, Circle, Textbox } from "fabric";
+import { Canvas, FabricObject, Rect, Circle, Textbox, Shadow } from "fabric";
 
 export class ElementManager {
   constructor(private canvas: Canvas, private videoElement: HTMLVideoElement) {}
@@ -16,40 +16,58 @@ export class ElementManager {
       left: videoWidth / 4,
       top: videoHeight / 4,
       scaleMode: "responsive" as const,
+      strokeWidth: 2,
+      stroke: "#ffffff",
+      shadow: new Shadow({
+        color: "rgba(0,0,0,0.3)",
+        blur: 10,
+        offsetX: 0,
+        offsetY: 0,
+      }),
     };
 
     switch (elementType) {
       case "circle":
-        const radius = Math.min(videoWidth, videoHeight) * 0.1; // 10% of smaller dimension
+        const radius = Math.min(videoWidth, videoHeight) * 0.1;
         element = new Circle({
           ...defaultProps,
           radius,
-          fill: "red",
-          opacity: 0.5,
-          scaleX: 1,
-          scaleY: 1,
+          fill: "rgba(66, 135, 245, 0.6)",
+          strokeWidth: 3,
+          stroke: "#2d74da",
         }) as CustomFabricObject;
         break;
 
       case "text":
-        const fontSize = Math.min(videoWidth, videoHeight) * 0.05; // 5% of smaller dimension
+        const fontSize = Math.min(videoWidth, videoHeight) * 0.05;
         element = new Textbox("Sample Text", {
           ...defaultProps,
           fontSize,
-          fill: "black",
-          width: videoWidth * 0.2, // 20% of video width
-          scaleX: 1,
-          scaleY: 1,
+          fill: "#ffffff",
+          stroke: "rgba(0,0,0,0.5)",
+          strokeWidth: 1,
+          fontFamily: "Inter, system-ui, sans-serif",
+          width: videoWidth * 0.2,
+          textAlign: "center",
+          shadow: new Shadow({
+            color: "rgba(0,0,0,0.5)",
+            blur: 15,
+            offsetX: 0,
+            offsetY: 0,
+          }),
         }) as CustomFabricObject;
         break;
 
       case "rectangle":
         element = new Rect({
           ...defaultProps,
-          width: videoWidth * 0.2, // 20% of video width
-          height: videoHeight * 0.2, // 20% of video height
-          fill: "red",
-          opacity: 0.5,
+          width: videoWidth * 0.2,
+          height: videoHeight * 0.2,
+          fill: "rgba(255, 71, 87, 0.6)",
+          strokeWidth: 3,
+          stroke: "#ff4757",
+          rx: 8, // rounded corners
+          ry: 8, // rounded corners
         }) as CustomFabricObject;
         break;
 
