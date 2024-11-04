@@ -21,7 +21,6 @@ const AddElements: React.FC = () => {
           className="flex items-center gap-2"
         >
           <Square size={18} />
-          Rectangle
         </Button>
         <Button
           onClick={() => addElement("circle")}
@@ -29,7 +28,6 @@ const AddElements: React.FC = () => {
           className="flex items-center gap-2"
         >
           <Circle size={18} />
-          Circle
         </Button>
         <Button
           onClick={() => addElement("text")}
@@ -37,7 +35,6 @@ const AddElements: React.FC = () => {
           className="flex items-center gap-2"
         >
           <Type size={18} />
-          Text
         </Button>
       </div>
     </>
