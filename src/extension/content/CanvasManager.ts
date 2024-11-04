@@ -200,6 +200,8 @@ export class CanvasManager {
 
       window.removeEventListener("resize", this.handleResize);
 
+      this.canvas.off("object:modified", this.handleObjectModified);
+
       this.canvas.dispose();
       this.canvas = null;
     }
@@ -216,6 +218,8 @@ export class CanvasManager {
     // Add event listener to the canvas element
     const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
     canvasElement.addEventListener("click", this.handleCanvasClick);
+
+    this.canvas.on("object:modified", this.handleObjectModified);
   }
 
   private handleCanvasClick = (e: MouseEvent): void => {
@@ -240,5 +244,50 @@ export class CanvasManager {
   ): void => {
     const canvasElement = this.canvas!.getElement() as HTMLCanvasElement;
     canvasElement.style.pointerEvents = "all";
+  };
+
+  private handleObjectModified = (e: { target: FabricObject | null }): void => {
+    if (!e.target || !this.videoElement) return;
+
+    const obj = e.target as CustomFabricObject;
+    if (!obj.data) return;
+
+    const containerWidth = this.videoElement.clientWidth;
+    const containerHeight = this.videoElement.clientHeight;
+    const smallerDimension = Math.min(containerWidth, containerHeight);
+
+    // Update relative positions and dimensions after modification
+    obj.data = {
+      ...obj.data,
+      originalLeft: obj.left || 0,
+      originalTop: obj.top || 0,
+      relativeX: ((obj.left || 0) / containerWidth) * 100,
+      relativeY: ((obj.top || 0) / containerHeight) * 100,
+      currentScaleX: obj.scaleX,
+      currentScaleY: obj.scaleY,
+    };
+
+    // Handle specific object types
+    switch (obj.type) {
+      case "circle": {
+        const circle = obj as Circle & CustomFabricObject;
+        obj.data.relativeRadius =
+          ((circle.radius || 0) / smallerDimension) * 100;
+        obj.data.originalRadius = circle.radius || 0;
+        break;
+      }
+      case "textbox": {
+        const textbox = obj as Textbox & CustomFabricObject;
+        obj.data.relativeFontSize =
+          ((textbox.fontSize || 20) / smallerDimension) * 100;
+        obj.data.originalFontSize = textbox.fontSize || 20;
+        obj.data.relativeWidth = ((textbox.width || 0) / containerWidth) * 100;
+        break;
+      }
+      default: {
+        obj.data.relativeWidth = ((obj.width || 0) / containerWidth) * 100;
+        obj.data.relativeHeight = ((obj.height || 0) / containerHeight) * 100;
+      }
+    }
   };
 }
