@@ -120,6 +120,14 @@ export class ElementManager {
     this.canvas.add(element);
     this.canvas.setActiveObject(element);
     this.canvas.requestRenderAll();
+
+    const elements = this.getElements();
+    window.dispatchEvent(
+      new CustomEvent("SET_ELEMENTS", {
+        detail: { elements },
+      })
+    );
+
     this.saveElementsToStorage();
   }
 
@@ -310,8 +318,6 @@ export class ElementManager {
           relativeHeight: ((selectedObject.height || 0) / videoHeight) * 100,
           scaleMode: "responsive" as const,
         };
-      } else if (!selectedObject.data.id) {
-        selectedObject.data.id = `element-${Date.now()}`;
       }
 
       window.dispatchEvent(
@@ -327,6 +333,16 @@ export class ElementManager {
               style: {
                 fill: selectedObject.fill || "#000000",
                 stroke: selectedObject.stroke || "#000000",
+              },
+              properties: {
+                left: selectedObject.left,
+                top: selectedObject.top,
+                scaleX: selectedObject.scaleX,
+                scaleY: selectedObject.scaleY,
+                width: selectedObject.width,
+                height: selectedObject.height,
+                radius: (selectedObject as any).radius,
+                text: (selectedObject as any).text,
               },
             },
           },
