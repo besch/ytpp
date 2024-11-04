@@ -1,5 +1,4 @@
 import React from "react";
-import { useSelector } from "react-redux";
 import Button from "@/components/ui/Button";
 import ElementColorPicker from "@/components/ElementColorPicker";
 import VideoTimeDisplay from "@/components/VideoTimeDisplay";
@@ -16,7 +15,7 @@ const EditPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 bg-background p-4 rounded-lg shadow-lg">
+    <div className="flex flex-col gap-4 bg-background p-4 rounded-lg shadow-lg border border-foreground">
       <VideoTimeDisplay />
       <TimeRangeInputs />
       <ElementColorPicker />
