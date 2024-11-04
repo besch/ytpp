@@ -22,5 +22,11 @@ export interface CustomFabricObject extends FabricObject {
     originalRadius?: number;
     relativeFontSize?: number;
     originalFontSize?: number;
+    originalCoords?: {
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+    };
   };
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Circle, Square, Type } from "lucide-react";
+import { Circle, Square, Type, Triangle, Minus } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 const AddElements: React.FC = () => {
@@ -35,6 +35,13 @@ const AddElements: React.FC = () => {
           className="flex items-center gap-2"
         >
           <Type size={18} />
+        </Button>
+        <Button
+          onClick={() => addElement("triangle")}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Triangle size={18} />
         </Button>
       </div>
     </>

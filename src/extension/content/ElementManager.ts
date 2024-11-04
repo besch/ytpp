@@ -1,5 +1,14 @@
 import { CustomFabricObject } from "@/types";
-import { Canvas, FabricObject, Rect, Circle, Textbox, Shadow } from "fabric";
+import {
+  Canvas,
+  FabricObject,
+  Rect,
+  Circle,
+  Textbox,
+  Shadow,
+  Triangle,
+  Line,
+} from "fabric";
 
 export class ElementManager {
   constructor(private canvas: Canvas, private videoElement: HTMLVideoElement) {}
@@ -68,6 +77,18 @@ export class ElementManager {
           stroke: "#ff4757",
           rx: 8, // rounded corners
           ry: 8, // rounded corners
+        }) as CustomFabricObject;
+        break;
+
+      case "triangle":
+        const size = Math.min(videoWidth, videoHeight) * 0.2;
+        element = new Triangle({
+          ...defaultProps,
+          width: size,
+          height: size,
+          fill: "rgba(255, 193, 7, 0.6)",
+          strokeWidth: 3,
+          stroke: "#ffc107",
         }) as CustomFabricObject;
         break;
 
@@ -184,6 +205,9 @@ export class ElementManager {
           break;
         case "textbox":
           element = new Textbox(props.text || "", props) as CustomFabricObject;
+          break;
+        case "triangle":
+          element = new Triangle(props) as CustomFabricObject;
           break;
         default:
           return;

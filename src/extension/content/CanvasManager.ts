@@ -7,6 +7,8 @@ import {
   Textbox,
   TPointerEventInfo,
   TPointerEvent,
+  Triangle,
+  Line,
 } from "fabric";
 
 export class CanvasManager {
@@ -134,6 +136,20 @@ export class CanvasManager {
               top: newTop,
               fontSize: newFontSize,
               width: newWidth,
+              scaleX: obj.data.currentScaleX || 1,
+              scaleY: obj.data.currentScaleY || 1,
+            });
+            break;
+          }
+
+          case "triangle": {
+            const newWidth = (obj.data.relativeWidth / 100) * containerWidth;
+            const newHeight = (obj.data.relativeHeight / 100) * containerHeight;
+            obj.set({
+              left: newLeft,
+              top: newTop,
+              width: newWidth,
+              height: newHeight,
               scaleX: obj.data.currentScaleX || 1,
               scaleY: obj.data.currentScaleY || 1,
             });
