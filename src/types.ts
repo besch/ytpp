@@ -33,11 +33,23 @@ export interface CustomFabricObject extends FabricObject {
   };
 }
 
-export interface Instruction {
+export interface BaseInstruction {
   id: string;
-  stopTime: number;
+  triggerTime: number;
+  type: string;
+}
+
+export interface PauseInstruction extends BaseInstruction {
+  type: "pause";
   pauseDuration: number;
 }
+
+export interface SkipInstruction extends BaseInstruction {
+  type: "skip";
+  skipToTime: number;
+}
+
+export type Instruction = PauseInstruction | SkipInstruction;
 
 export interface InstructionsState {
   instructions: Instruction[];

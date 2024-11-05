@@ -1,0 +1,35 @@
+ youtube not allowing to reupload updated video to the same url where it was before to keep likes, views etc. 
+ I am creating chrome extension that can extend video.
+I can add timeline instuctions e.g to pause video at certain time for several seconds, 
+within that time I can display canvas on top of video where I can put animated canvas elements, gifs, play other video or audio.
+
+I want to enhance video, if video creator forget something to do in video and then uploaded it to youtube, 
+he cannot add new part to video, so the chrome extension is suppose to add instruction 
+like pause video for 3 seconds show different content on top of video and resume original video. 
+I dont you to write code, try to predict and give me key points why people could use this extension, 
+I gave you one example (stop video for few seconds and play e.g. gif with some audio then resume) 
+how to enhance original video, now you give me more ideas. 
+Also I want you to think how is target auditory and how people might interact with this extension and augmented video
+
+
+
+
+
+this chrome extension suppose to enhance Youtube video
+the instructions of this chrome extension could help with:
+
+skip unwanted content
+pause video and show new content
+create a summary where user can watch 10 video fragments for few seconds instead of watching full video
+new tab in EditPage to show gif comments
+interaction with videos dynamically, display prompts or quizzes during pause instruction
+video owner or other users can augment the same video, allow multiple video augmentation, share augmented version
+
+
+
+
+
+
+Support instruction templates for common use cases ()
+Add export/import functionality to share instruction sets
+Implement instruction preview mode

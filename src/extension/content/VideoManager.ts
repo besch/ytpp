@@ -39,6 +39,11 @@ export class VideoManager {
 
   public removeVideoEventListeners(): void {
     if (this.videoElement) {
+      // Clear any existing pause timeout
+      if ((this.videoElement as any)._pauseTimeout) {
+        clearTimeout((this.videoElement as any)._pauseTimeout);
+      }
+
       this.videoElement.removeEventListener("play", this.handleVideoPlay);
       this.videoElement.removeEventListener("pause", this.handleVideoPause);
       this.videoElement.removeEventListener("seeking", this.handleVideoSeeking);
@@ -86,32 +91,47 @@ export class VideoManager {
 
       const matchingInstruction = instructions.find(
         (instruction: Instruction) =>
-          currentTimeMs >= instruction.stopTime &&
-          currentTimeMs <= instruction.stopTime + 100 // Add small threshold
+          Math.abs(currentTimeMs - instruction.triggerTime) < 100
       );
 
       if (matchingInstruction && this.videoElement?.paused === false) {
-        this.handleInstructionPause(matchingInstruction.pauseDuration);
+        switch (matchingInstruction.type) {
+          case "pause":
+            this.handleInstructionPause(matchingInstruction.pauseDuration);
+            break;
+          case "skip":
+            this.handleInstructionSkip(matchingInstruction.skipToTime);
+            break;
+        }
       }
     } catch (error) {
       console.error("Error checking instructions:", error);
     }
   }
 
+  private handleInstructionSkip = (skipToTime: number): void => {
+    if (this.videoElement) {
+      this.videoElement.currentTime = skipToTime / 1000;
+    }
+  };
+
   public handleInstructionPause = (pauseDuration: number): void => {
     if (this.videoElement && !this.videoElement.paused) {
+      console.log(`Pausing video for ${pauseDuration}ms`);
       this.videoElement.pause();
-      console.log("Video paused for instruction");
 
-      // Resume playback after pause duration
-      setTimeout(() => {
+      // Ensure the video stays paused for the full duration
+      const resumeTime = setTimeout(() => {
         if (this.videoElement && this.videoElement.paused) {
+          console.log("Resuming video after pause");
           this.videoElement.play().catch((error) => {
             console.error("Error resuming video:", error);
           });
-          console.log("Video resumed after pause");
         }
       }, pauseDuration);
+
+      // Store the timeout to clear it if needed
+      (this.videoElement as any)._pauseTimeout = resumeTime;
     }
   };
 
@@ -198,5 +218,11 @@ export class VideoManager {
       "SEEK_TO_TIME",
       this.handleSeekToTime as EventListener
     );
+  }
+
+  public seekTo(timeMs: number): void {
+    if (this.videoElement) {
+      this.videoElement.currentTime = timeMs / 1000; // Convert ms to seconds
+    }
   }
 }

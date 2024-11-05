@@ -37,6 +37,7 @@ class BackgroundService {
   }
 
   private async onInstalled(): Promise<void> {
+    // await chrome.storage.local.clear();
     await this.initializeStorage();
   }
 

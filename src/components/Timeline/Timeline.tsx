@@ -5,13 +5,16 @@ import {
   selectInstructions,
   setSelectedInstructionId,
 } from "@/store/instructionsSlice";
-import { Instruction } from "@/types";
+import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
+import { RootState } from "@/store";
 
 const Timeline: React.FC = () => {
   const dispatch = useDispatch();
   const timelineRef = useRef<HTMLDivElement>(null);
   const currentTime = useSelector(selectCurrentTime);
-  const instructions = useSelector(selectInstructions);
+  const instructions: Instruction[] = useSelector((state: RootState) =>
+    selectInstructions(state)
+  );
   const [duration, setDuration] = useState<number>(0);
 
   useEffect(() => {
@@ -86,7 +89,7 @@ const Timeline: React.FC = () => {
     instruction: Instruction
   ) => {
     e.stopPropagation();
-    seekToTime(instruction.stopTime);
+    seekToTime(instruction.triggerTime);
     dispatch(setSelectedInstructionId(instruction.id));
   };
 
@@ -111,28 +114,42 @@ const Timeline: React.FC = () => {
         />
 
         {/* Instructions markers */}
-        {instructions.map((instruction) => (
-          <div
-            key={instruction.id}
-            className="absolute top-0 h-full"
-            style={{ left: `${getTimelinePosition(instruction.stopTime)}%` }}
-          >
+        {instructions.map((instruction: Instruction) => {
+          const getInstructionLabel = (instr: Instruction): string => {
+            if (instr.type === "pause") {
+              return `${(instr as PauseInstruction).pauseDuration}ms`;
+            } else if (instr.type === "skip") {
+              return `→ ${(instr as SkipInstruction).skipToTime}ms`;
+            }
+            // @ts-ignore
+            return instr.type;
+          };
+
+          return (
             <div
-              className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 
-                ${
-                  currentTime === instruction.stopTime
-                    ? "bg-accent"
-                    : "bg-secondary"
-                } 
-                rounded-full cursor-pointer hover:scale-110 transition-transform`}
-              onClick={(e) => handleInstructionClick(e, instruction)}
+              key={instruction.id}
+              className="absolute top-0 h-full"
+              style={{
+                left: `${getTimelinePosition(instruction.triggerTime)}%`,
+              }}
             >
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs">
-                {instruction.pauseDuration}ms
+              <div
+                className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 
+                  ${
+                    currentTime === instruction.triggerTime
+                      ? "bg-accent"
+                      : "bg-secondary"
+                  } 
+                  rounded-full cursor-pointer hover:scale-110 transition-transform`}
+                onClick={(e) => handleInstructionClick(e, instruction)}
+              >
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs">
+                  {getInstructionLabel(instruction)}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

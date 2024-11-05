@@ -1,68 +1,48 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
-import { selectCurrentTime } from "@/store/timelineSlice";
-import {
-  addInstruction,
-  removeInstruction,
-  selectSelectedInstructionId,
-  selectInstructions,
-} from "@/store/instructionsSlice";
+import { ArrowLeft, Save } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { Trash2 } from "lucide-react";
+import { selectCurrentTime } from "@/store/timelineSlice";
+import { addInstruction, selectInstructions } from "@/store/instructionsSlice";
+import InstructionTypeSelect from "./InstructionTypeSelect";
+import { PauseInstruction, SkipInstruction } from "@/types";
+import InstructionsList from "./InstructionsList";
 
-interface InstructionFormData {
+interface PauseFormData {
   pauseDuration: number;
 }
 
+interface SkipFormData {
+  skipToTime: number;
+}
+
 const InstructionEditor: React.FC = () => {
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const dispatch = useDispatch();
   const currentTime = useSelector(selectCurrentTime);
-  const selectedInstructionId = useSelector(selectSelectedInstructionId);
   const instructions = useSelector(selectInstructions);
-  const selectedInstruction = instructions.find(
-    (i) => i.id === selectedInstructionId
-  );
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    setValue,
-  } = useForm<InstructionFormData>({
-    defaultValues: {
-      pauseDuration: selectedInstruction?.pauseDuration || 0,
-    },
-  });
+    register: registerPause,
+    handleSubmit: handlePauseSubmit,
+    formState: { errors: pauseErrors },
+    reset: resetPause,
+  } = useForm<PauseFormData>();
 
-  useEffect(() => {
-    if (selectedInstruction) {
-      setValue("pauseDuration", selectedInstruction.pauseDuration);
-    } else {
-      reset({ pauseDuration: 0 });
-    }
-  }, [selectedInstruction, setValue, reset]);
+  const {
+    register: registerSkip,
+    handleSubmit: handleSkipSubmit,
+    formState: { errors: skipErrors },
+    reset: resetSkip,
+  } = useForm<SkipFormData>();
 
-  const onSubmit = (data: InstructionFormData) => {
-    dispatch(
-      addInstruction({
-        id: selectedInstructionId || Date.now().toString(),
-        stopTime: currentTime,
-        pauseDuration: data.pauseDuration,
-      })
-    );
+  const handleBack = () => {
+    setSelectedType(null);
   };
 
-  const handleDelete = () => {
-    if (selectedInstructionId) {
-      dispatch(removeInstruction(selectedInstructionId));
-      reset({ pauseDuration: 0 });
-    }
-  };
-
-  const handleSaveAll = () => {
+  const handleSave = () => {
     window.dispatchEvent(
       new CustomEvent("SAVE_INSTRUCTIONS", {
         detail: { instructions },
@@ -70,68 +50,141 @@ const InstructionEditor: React.FC = () => {
     );
   };
 
-  return (
-    <div className="mt-4 p-4 bg-background border border-border rounded-lg">
-      <h3 className="text-sm font-medium text-foreground mb-4">
-        {selectedInstructionId ? "Edit Instruction" : "Add Instruction"}
-      </h3>
+  const onSubmitPause = (data: PauseFormData) => {
+    dispatch(
+      addInstruction({
+        id: Date.now().toString(),
+        type: "pause",
+        triggerTime: currentTime,
+        pauseDuration: data.pauseDuration,
+      })
+    );
+    resetPause();
+    setSelectedType(null);
+  };
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="text-sm text-muted-foreground">Stop Time</label>
-          <Input
-            type="text"
-            value={`${Math.round(currentTime)}ms`}
-            disabled
-            className="bg-muted/20"
-          />
-        </div>
+  const onSubmitSkip = (data: SkipFormData) => {
+    dispatch(
+      addInstruction({
+        id: Date.now().toString(),
+        type: "skip",
+        triggerTime: currentTime,
+        skipToTime: data.skipToTime,
+      })
+    );
+    resetSkip();
+    setSelectedType(null);
+  };
 
-        <div>
-          <label className="text-sm text-muted-foreground">
-            Pause Duration (ms)
-          </label>
-          <Input
-            type="number"
-            {...register("pauseDuration", { required: true, min: 0 })}
-          />
-          {errors.pauseDuration && (
-            <span className="text-xs text-destructive">
-              This field is required
-            </span>
-          )}
-        </div>
-
-        <div className="flex justify-between">
-          {selectedInstructionId && (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-              className="flex items-center gap-2"
+  const renderForm = () => {
+    switch (selectedType) {
+      case "pause":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                className="p-0 h-8 w-8"
+              >
+                <ArrowLeft size={20} />
+              </Button>
+              <h3 className="text-sm font-medium">Instruction List</h3>
+            </div>
+            <form
+              onSubmit={handlePauseSubmit(onSubmitPause)}
+              className="space-y-4"
             >
-              <Trash2 size={16} />
-              Delete
-            </Button>
-          )}
-          <Button type="submit">
-            {selectedInstructionId ? "Update" : "Add"} Instruction
-          </Button>
-        </div>
-      </form>
+              <div>
+                <label className="text-sm text-muted-foreground">
+                  Pause Duration (ms)
+                </label>
+                <Input
+                  type="number"
+                  {...registerPause("pauseDuration", {
+                    required: true,
+                    min: 0,
+                  })}
+                />
+                {pauseErrors.pauseDuration && (
+                  <span className="text-xs text-destructive">
+                    This field is required
+                  </span>
+                )}
+              </div>
+              <Button type="submit" className="w-full">
+                Add Instruction
+              </Button>
+            </form>
+          </div>
+        );
 
-      <div className="flex justify-between mt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleSaveAll}
-          className="flex items-center gap-2"
-        >
-          Save All Instructions
-        </Button>
-      </div>
-    </div>
-  );
+      case "skip":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                className="p-0 h-8 w-8"
+              >
+                <ArrowLeft size={20} />
+              </Button>
+              <h3 className="text-sm font-medium">Add Skip Instruction</h3>
+            </div>
+            <form
+              onSubmit={handleSkipSubmit(onSubmitSkip)}
+              className="space-y-4"
+            >
+              <div>
+                <label className="text-sm text-muted-foreground">
+                  Skip to Time (ms)
+                </label>
+                <Input
+                  type="number"
+                  {...registerSkip("skipToTime", { required: true, min: 0 })}
+                />
+                {skipErrors.skipToTime && (
+                  <span className="text-xs text-destructive">
+                    This field is required
+                  </span>
+                )}
+              </div>
+              <Button type="submit" className="w-full">
+                Add Instruction
+              </Button>
+            </form>
+          </div>
+        );
+      default:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium">Instructions</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                className="flex items-center gap-2"
+              >
+                <Save size={16} />
+                Save Instructions
+              </Button>
+            </div>
+            <InstructionsList />
+            <div className="pt-4 border-t border-border">
+              <InstructionTypeSelect
+                onSelect={(type) => setSelectedType(type)}
+              />
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return <div className="p-4">{renderForm()}</div>;
 };
 
 export default InstructionEditor;

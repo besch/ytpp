@@ -214,13 +214,17 @@ class ContentScript {
 
       // Find instruction that matches current time
       const matchingInstruction = instructions.find(
-        (instruction) => Math.abs(instruction.stopTime - currentTimeMs) < 50 // 50ms threshold
+        (instruction) => Math.abs(instruction.triggerTime - currentTimeMs) < 50 // 50ms threshold
       );
 
       if (matchingInstruction && this.videoManager) {
-        this.videoManager.handleInstructionPause(
-          matchingInstruction.pauseDuration
-        );
+        if (matchingInstruction.type === "pause") {
+          this.videoManager.handleInstructionPause(
+            matchingInstruction.pauseDuration
+          );
+        } else if (matchingInstruction.type === "skip") {
+          this.videoManager.seekTo(matchingInstruction.skipToTime);
+        }
       }
     }) as unknown as EventListener);
   }
