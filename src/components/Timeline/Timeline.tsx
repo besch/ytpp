@@ -18,8 +18,37 @@ const Timeline: React.FC = () => {
     const videoElement = document.querySelector("video");
     if (videoElement) {
       setDuration(videoElement.duration * 1000);
+
+      const initialTime =
+        (window as any).videoManager?.getCurrentVideoTimeMs() ||
+        videoElement.currentTime * 1000;
+      dispatch(setCurrentTime(initialTime));
+
+      const handleLoadedMetadata = () => {
+        setDuration(videoElement.duration * 1000);
+        const currentTimeMs = videoElement.currentTime * 1000;
+        dispatch(setCurrentTime(currentTimeMs));
+      };
+
+      const handleDurationChange = () => {
+        setDuration(videoElement.duration * 1000);
+      };
+
+      videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+      videoElement.addEventListener("durationchange", handleDurationChange);
+
+      return () => {
+        videoElement.removeEventListener(
+          "loadedmetadata",
+          handleLoadedMetadata
+        );
+        videoElement.removeEventListener(
+          "durationchange",
+          handleDurationChange
+        );
+      };
     }
-  }, []);
+  }, [dispatch]);
 
   const seekToTime = (timeMs: number) => {
     window.dispatchEvent(
