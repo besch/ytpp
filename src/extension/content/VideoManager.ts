@@ -64,13 +64,34 @@ export class VideoManager {
     const video = event.target as HTMLVideoElement;
     const currentTimeMs = video.currentTime * 1000;
 
+    // Dispatch current time event
     window.dispatchEvent(
       new CustomEvent("VIDEO_TIME_UPDATE", {
         detail: { currentTimeMs },
       })
     );
 
+    // Check for instructions
+    window.dispatchEvent(
+      new CustomEvent("CHECK_INSTRUCTIONS", {
+        detail: { currentTimeMs },
+      })
+    );
+
     this.timeUpdateListeners.forEach((listener) => listener(currentTimeMs));
+  };
+
+  public handleInstructionPause = (pauseDuration: number): void => {
+    if (this.videoElement) {
+      this.videoElement.pause();
+
+      // Resume playback after pause duration
+      setTimeout(() => {
+        if (this.videoElement) {
+          this.videoElement.play();
+        }
+      }, pauseDuration);
+    }
   };
 
   public addTimeUpdateListener(

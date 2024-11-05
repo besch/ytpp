@@ -178,6 +178,14 @@ class ContentScript {
     alert("Elements saved successfully!");
   }
 
+  private async getInstructions(): Promise<Instruction[]> {
+    return new Promise<Instruction[]>((resolve) => {
+      chrome.storage.local.get("instructions", (result) => {
+        resolve(result.instructions || []);
+      });
+    });
+  }
+
   private initializeInstructionsHandling(): void {
     // Load instructions when app is ready
     window.addEventListener(
@@ -190,6 +198,25 @@ class ContentScript {
       const customEvent = event as CustomEvent<{ instructions: Instruction[] }>;
       this.saveInstructions(customEvent.detail.instructions);
     }) as EventListener);
+
+    // Listen for instructions events
+    window.addEventListener("CHECK_INSTRUCTIONS", (async (
+      event: CustomEvent<{ currentTimeMs: number }>
+    ) => {
+      const currentTimeMs = event.detail.currentTimeMs;
+      const instructions = await this.getInstructions();
+
+      // Find instruction that matches current time
+      const matchingInstruction = instructions.find(
+        (instruction) => Math.abs(instruction.stopTime - currentTimeMs) < 50 // 50ms threshold
+      );
+
+      if (matchingInstruction && this.videoManager) {
+        this.videoManager.handleInstructionPause(
+          matchingInstruction.pauseDuration
+        );
+      }
+    }) as unknown as EventListener);
   }
 
   private async loadInstructions(): Promise<void> {
