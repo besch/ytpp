@@ -1,3 +1,5 @@
+import { Instruction } from "@/types";
+
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
   private originalVideoVolume: number = 1;
@@ -71,24 +73,43 @@ export class VideoManager {
       })
     );
 
-    // Check for instructions
-    window.dispatchEvent(
-      new CustomEvent("CHECK_INSTRUCTIONS", {
-        detail: { currentTimeMs },
-      })
-    );
+    // Check for instructions with more precise timing
+    this.checkInstructions(currentTimeMs);
 
     this.timeUpdateListeners.forEach((listener) => listener(currentTimeMs));
   };
 
+  private async checkInstructions(currentTimeMs: number): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get("instructions");
+      const instructions = result.instructions || [];
+
+      const matchingInstruction = instructions.find(
+        (instruction: Instruction) =>
+          currentTimeMs >= instruction.stopTime &&
+          currentTimeMs <= instruction.stopTime + 100 // Add small threshold
+      );
+
+      if (matchingInstruction && this.videoElement?.paused === false) {
+        this.handleInstructionPause(matchingInstruction.pauseDuration);
+      }
+    } catch (error) {
+      console.error("Error checking instructions:", error);
+    }
+  }
+
   public handleInstructionPause = (pauseDuration: number): void => {
-    if (this.videoElement) {
+    if (this.videoElement && !this.videoElement.paused) {
       this.videoElement.pause();
+      console.log("Video paused for instruction");
 
       // Resume playback after pause duration
       setTimeout(() => {
-        if (this.videoElement) {
-          this.videoElement.play();
+        if (this.videoElement && this.videoElement.paused) {
+          this.videoElement.play().catch((error) => {
+            console.error("Error resuming video:", error);
+          });
+          console.log("Video resumed after pause");
         }
       }, pauseDuration);
     }
