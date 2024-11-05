@@ -1,11 +1,10 @@
 import React from "react";
-import { Circle, Square, Type, Triangle, Minus, Image } from "lucide-react";
+import { Circle, Square, Type, Triangle, Image } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 const AddElements: React.FC = () => {
   const addElement = (elementType: string) => {
     if (elementType === "gif") {
-      // Open file picker for GIF
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/gif";
@@ -34,47 +33,32 @@ const AddElements: React.FC = () => {
     }
   };
 
+  const elements = [
+    { type: "rectangle", icon: Square, label: "Rectangle" },
+    { type: "circle", icon: Circle, label: "Circle" },
+    { type: "text", icon: Type, label: "Text" },
+    { type: "triangle", icon: Triangle, label: "Triangle" },
+    { type: "gif", icon: Image, label: "GIF" },
+  ];
+
   return (
-    <>
-      <h2 className="text-lg font-semibold text-foreground">Add Elements</h2>
-      <div className="flex gap-2">
-        <Button
-          onClick={() => addElement("rectangle")}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Square size={18} />
-        </Button>
-        <Button
-          onClick={() => addElement("circle")}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Circle size={18} />
-        </Button>
-        <Button
-          onClick={() => addElement("text")}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Type size={18} />
-        </Button>
-        <Button
-          onClick={() => addElement("triangle")}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Triangle size={18} />
-        </Button>
-        <Button
-          onClick={() => addElement("gif")}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Image size={18} />
-        </Button>
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium text-foreground">Add Elements</h3>
+      <div className="grid grid-cols-5 gap-2">
+        {elements.map(({ type, icon: Icon, label }) => (
+          <Button
+            key={type}
+            onClick={() => addElement(type)}
+            variant="outline"
+            className="flex flex-col items-center gap-2 p-3 h-auto"
+            title={label}
+          >
+            <Icon size={20} />
+            <span className="text-xs">{label}</span>
+          </Button>
+        ))}
       </div>
-    </>
+    </div>
   );
 };
 

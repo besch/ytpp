@@ -33,12 +33,16 @@ const ElementColorPicker: React.FC = () => {
   };
 
   return (
-    <div>
-      <ChromePicker
-        color={selectedElement.style.fill}
-        onChange={handleColorChange}
-        disableAlpha={true}
-      />
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium text-foreground">Element Color</h3>
+      <div className="p-3 bg-muted/10 rounded-lg border border-border">
+        <ChromePicker
+          color={selectedElement.style.fill}
+          onChange={handleColorChange}
+          disableAlpha={true}
+          className="w-full !shadow-none"
+        />
+      </div>
     </div>
   );
 };

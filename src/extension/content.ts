@@ -58,6 +58,12 @@ class ContentScript {
     if (appContainer) {
       appContainer.remove();
     }
+
+    // Remove the timeline container
+    const timelineContainer = document.getElementById("timeline-container");
+    if (timelineContainer) {
+      timelineContainer.remove();
+    }
   }
 
   private setupCustomEventListeners(): void {

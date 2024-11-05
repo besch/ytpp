@@ -1,6 +1,7 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
+import Input from "@/components/ui/Input";
 
 const TimeRangeInputs: React.FC = () => {
   const dispatch = useDispatch();
@@ -49,26 +50,31 @@ const TimeRangeInputs: React.FC = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-      <div className="flex flex-col gap-2">
-        <label className="text-sm text-muted-foreground">From (ms):</label>
-        <input
-          type="number"
-          value={selectedElement.timeRange.from}
-          onChange={handleFromChange}
-          className="px-3 py-2 border border-border rounded bg-background text-foreground"
-          min="0"
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-sm text-muted-foreground">To (ms):</label>
-        <input
-          type="number"
-          value={selectedElement.timeRange.to}
-          onChange={handleToChange}
-          className="px-3 py-2 border border-border rounded bg-background text-foreground"
-          min="0"
-        />
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium text-foreground">Time Range</h3>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm text-muted-foreground">
+            Start Time (ms)
+          </label>
+          <Input
+            type="number"
+            value={selectedElement.timeRange.from}
+            onChange={handleFromChange}
+            min="0"
+            className="w-full"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm text-muted-foreground">End Time (ms)</label>
+          <Input
+            type="number"
+            value={selectedElement.timeRange.to}
+            onChange={handleToChange}
+            min="0"
+            className="w-full"
+          />
+        </div>
       </div>
     </div>
   );
