@@ -19,13 +19,16 @@ const Timeline: React.FC = () => {
     if (videoElement) {
       setDuration(videoElement.duration * 1000);
 
-      const initialTime =
-        (window as any).videoManager?.getCurrentVideoTimeMs() ||
-        videoElement.currentTime * 1000;
-      dispatch(setCurrentTime(initialTime));
+      const initialTimeMs = videoElement.currentTime * 1000;
+      dispatch(setCurrentTime(initialTimeMs));
 
       const handleLoadedMetadata = () => {
         setDuration(videoElement.duration * 1000);
+        const currentTimeMs = videoElement.currentTime * 1000;
+        dispatch(setCurrentTime(currentTimeMs));
+      };
+
+      const handleTimeUpdate = () => {
         const currentTimeMs = videoElement.currentTime * 1000;
         dispatch(setCurrentTime(currentTimeMs));
       };
@@ -35,6 +38,7 @@ const Timeline: React.FC = () => {
       };
 
       videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+      videoElement.addEventListener("timeupdate", handleTimeUpdate);
       videoElement.addEventListener("durationchange", handleDurationChange);
 
       return () => {
@@ -42,6 +46,7 @@ const Timeline: React.FC = () => {
           "loadedmetadata",
           handleLoadedMetadata
         );
+        videoElement.removeEventListener("timeupdate", handleTimeUpdate);
         videoElement.removeEventListener(
           "durationchange",
           handleDurationChange
@@ -86,8 +91,8 @@ const Timeline: React.FC = () => {
   };
 
   return (
-    <div className="mt-4 p-4 bg-background border border-border rounded-lg">
-      <div className="flex items-center justify-between mb-2">
+    <div className="bg-background border border-border rounded-lg">
+      <div className="flex items-center justify-between p-4">
         <h3 className="text-sm font-medium text-foreground">Timeline</h3>
         <div className="text-xs text-muted-foreground">
           Click on timeline to set time
@@ -96,7 +101,7 @@ const Timeline: React.FC = () => {
 
       <div
         ref={timelineRef}
-        className="relative h-20 bg-muted/20 rounded-md cursor-pointer"
+        className="relative h-20 bg-muted/20 rounded-md cursor-pointer mx-4 mb-4"
         onClick={handleTimelineClick}
       >
         {/* Timeline marker */}
