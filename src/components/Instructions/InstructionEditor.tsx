@@ -132,7 +132,7 @@ const InstructionEditor: React.FC = () => {
               >
                 <ArrowLeft size={20} />
               </Button>
-              <h3 className="text-sm font-medium">Add Skip Instruction</h3>
+              <h3 className="text-sm font-medium">Instruction List</h3>
             </div>
             <form
               onSubmit={handleSkipSubmit(onSubmitSkip)}

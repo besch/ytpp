@@ -8,6 +8,25 @@ import {
 import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
 import { RootState } from "@/store";
 
+const formatTime = (timeMs: number): string => {
+  const totalSeconds = Math.floor(timeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (num: number) => num.toString().padStart(2, "0");
+  return `${minutes}:${pad(seconds)}`;
+};
+
+const getInstructionLabel = (instruction: Instruction): string => {
+  if ("pauseDuration" in instruction) {
+    return `Pause for ${
+      (instruction as PauseInstruction).pauseDuration / 1000
+    }s`;
+  } else if ("skipToTime" in instruction) {
+    return `Skip to ${(instruction as SkipInstruction).skipToTime / 1000}s`;
+  }
+  return "Unknown instruction";
+};
+
 const Timeline: React.FC = () => {
   const dispatch = useDispatch();
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -97,59 +116,74 @@ const Timeline: React.FC = () => {
     <div className="bg-background border border-border rounded-lg">
       <div className="flex items-center justify-between p-4">
         <h3 className="text-sm font-medium text-foreground">Timeline</h3>
-        <div className="text-xs text-muted-foreground">
-          Click on timeline to set time
-        </div>
+        <div className="text-xs text-muted-foreground">Click to seek</div>
       </div>
 
       <div
         ref={timelineRef}
-        className="relative h-20 bg-muted/20 rounded-md cursor-pointer mx-4 mb-4"
+        className="relative h-24 bg-muted/10 rounded-md cursor-pointer mx-4 mb-4 overflow-hidden"
         onClick={handleTimelineClick}
       >
-        {/* Timeline marker */}
+        {/* Time markers */}
+        <div className="absolute top-0 left-0 right-0 h-6 flex justify-between px-2 text-xs text-muted-foreground">
+          {[0, 25, 50, 75, 100].map((percent) => (
+            <div key={percent} className="relative">
+              {formatTime((duration * percent) / 100)}
+              <div className="absolute top-6 w-px h-full bg-muted/20" />
+            </div>
+          ))}
+        </div>
+
+        {/* Timeline track */}
+        <div className="absolute left-0 right-0 h-1 bg-muted/30 top-1/2 -translate-y-1/2">
+          {/* Progress bar */}
+          <div
+            className="absolute h-full bg-primary/30"
+            style={{ width: `${getTimelinePosition(currentTime)}%` }}
+          />
+        </div>
+
+        {/* Current time marker */}
         <div
           className="absolute top-0 h-full w-0.5 bg-primary transition-all"
           style={{ left: `${getTimelinePosition(currentTime)}%` }}
-        />
+        >
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary px-2 py-1 rounded text-xs text-white">
+            {(currentTime / 1000).toFixed(1)}s
+          </div>
+          <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full" />
+        </div>
 
         {/* Instructions markers */}
-        {instructions.map((instruction: Instruction) => {
-          const getInstructionLabel = (instr: Instruction): string => {
-            if (instr.type === "pause") {
-              return `${(instr as PauseInstruction).pauseDuration}ms`;
-            } else if (instr.type === "skip") {
-              return `→ ${(instr as SkipInstruction).skipToTime}ms`;
-            }
-            // @ts-ignore
-            return instr.type;
-          };
-
-          return (
+        {instructions.map((instruction: Instruction) => (
+          <div
+            key={instruction.id}
+            className="absolute top-1/2 -translate-y-1/2"
+            style={{
+              left: `${getTimelinePosition(instruction.triggerTime)}%`,
+            }}
+          >
             <div
-              key={instruction.id}
-              className="absolute top-0 h-full"
-              style={{
-                left: `${getTimelinePosition(instruction.triggerTime)}%`,
-              }}
+              className={`relative group -translate-x-1/2 w-4 h-4 
+                ${
+                  currentTime === instruction.triggerTime
+                    ? "bg-accent"
+                    : "bg-secondary"
+                } 
+                rounded-full cursor-pointer hover:scale-110 transition-all
+                border-2 border-background shadow-md`}
+              onClick={(e) => handleInstructionClick(e, instruction)}
             >
               <div
-                className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 
-                  ${
-                    currentTime === instruction.triggerTime
-                      ? "bg-accent"
-                      : "bg-secondary"
-                  } 
-                  rounded-full cursor-pointer hover:scale-110 transition-transform`}
-                onClick={(e) => handleInstructionClick(e, instruction)}
+                className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 
+                bg-background border border-border px-2 py-1 rounded shadow-lg whitespace-nowrap text-xs"
               >
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs">
-                  {getInstructionLabel(instruction)}
-                </div>
+                {getInstructionLabel(instruction)}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-background border-b border-r border-border rotate-45" />
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
