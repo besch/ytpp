@@ -31,7 +31,6 @@ function init() {
   const container = document.createElement("div");
   container.id = "react-overlay-root";
   container.style.width = "100%";
-  container.style.padding = "16px";
 
   const secondary = document.getElementById("secondary");
   if (secondary) {

@@ -3,8 +3,15 @@ import { Trash2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedElementId, setElements } from "@/store/timelineSlice";
 import Button from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
-const DeleteElementButton: React.FC = () => {
+interface DeleteElementButtonProps {
+  className?: string;
+}
+
+const DeleteElementButton: React.FC<DeleteElementButtonProps> = ({
+  className,
+}) => {
   const dispatch = useDispatch();
   const selectedElementId = useSelector(selectSelectedElementId);
 
@@ -25,7 +32,7 @@ const DeleteElementButton: React.FC = () => {
     <Button
       onClick={handleDelete}
       variant="destructive"
-      className="flex items-center gap-2"
+      className={cn("flex items-center gap-2", className)}
       disabled={!selectedElementId}
     >
       <Trash2 size={18} />
