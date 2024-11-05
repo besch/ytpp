@@ -6,6 +6,8 @@ import TimeRangeInputs from "@/components/TimeRangeInputs";
 import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 import AddElements from "@/components/AddElements";
 import DeleteElementButton from "@/components/DeleteElementButton";
+import Timeline from "@/components/Timeline/Timeline";
+import InstructionEditor from "@/components/Instructions/InstructionEditor";
 
 const EditPage: React.FC = () => {
   useCanvasEvents();
@@ -17,6 +19,8 @@ const EditPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 bg-background p-4 rounded-lg shadow-lg border border-foreground">
       <VideoTimeDisplay />
+      <Timeline />
+      <InstructionEditor />
       <TimeRangeInputs />
       <ElementColorPicker />
       <AddElements />

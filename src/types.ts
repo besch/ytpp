@@ -32,3 +32,13 @@ export interface CustomFabricObject extends FabricObject {
     gifSrc?: string;
   };
 }
+
+export interface Instruction {
+  id: string;
+  stopTime: number;
+  pauseDuration: number;
+}
+
+export interface InstructionsState {
+  instructions: Instruction[];
+}

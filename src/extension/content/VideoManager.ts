@@ -5,6 +5,13 @@ export class VideoManager {
   private timeUpdateListeners: Array<(currentTimeMs: number) => void> = [];
   private clickHandler: ((event: MouseEvent) => void) | null = null;
 
+  constructor() {
+    window.addEventListener("SEEK_TO_TIME", ((event: Event) => {
+      const customEvent = event as CustomEvent<{ timeMs: number }>;
+      this.handleSeekToTime(customEvent);
+    }) as EventListener);
+  }
+
   public async findAndStoreVideoElement(): Promise<void> {
     this.videoElement = document.querySelector("video");
 
@@ -135,5 +142,19 @@ export class VideoManager {
       window.removeEventListener("click", this.clickHandler, true);
       this.clickHandler = null;
     }
+  }
+
+  private handleSeekToTime = (event: CustomEvent<{ timeMs: number }>) => {
+    const { timeMs } = event.detail;
+    if (this.videoElement) {
+      this.videoElement.currentTime = timeMs / 1000; // Convert ms to seconds
+    }
+  };
+
+  public destroy() {
+    window.removeEventListener(
+      "SEEK_TO_TIME",
+      this.handleSeekToTime as EventListener
+    );
   }
 }
