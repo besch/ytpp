@@ -62,6 +62,14 @@ const InstructionEditor: React.FC = () => {
     }
   };
 
+  const handleSaveAll = () => {
+    window.dispatchEvent(
+      new CustomEvent("SAVE_INSTRUCTIONS", {
+        detail: { instructions },
+      })
+    );
+  };
+
   return (
     <div className="mt-4 p-4 bg-background border border-border rounded-lg">
       <h3 className="text-sm font-medium text-foreground mb-4">
@@ -111,6 +119,17 @@ const InstructionEditor: React.FC = () => {
           </Button>
         </div>
       </form>
+
+      <div className="flex justify-between mt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleSaveAll}
+          className="flex items-center gap-2"
+        >
+          Save All Instructions
+        </Button>
+      </div>
     </div>
   );
 };

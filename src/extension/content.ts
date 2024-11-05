@@ -1,5 +1,6 @@
 import { VideoManager } from "./content/VideoManager";
 import { OverlayManager } from "./content/OverlayManager";
+import { Instruction } from "@/types";
 
 class ContentScript {
   private videoManager: VideoManager | null = null;
@@ -8,6 +9,7 @@ class ContentScript {
 
   constructor() {
     this.initialize();
+    this.initializeInstructionsHandling();
   }
 
   private initialize(): void {
@@ -174,6 +176,45 @@ class ContentScript {
     const elements = OverlayManager.getElements();
     chrome.storage.local.set({ elements });
     alert("Elements saved successfully!");
+  }
+
+  private initializeInstructionsHandling(): void {
+    // Load instructions when app is ready
+    window.addEventListener(
+      "REACT_APP_READY",
+      this.loadInstructions.bind(this)
+    );
+
+    // Save instructions when requested
+    window.addEventListener("SAVE_INSTRUCTIONS", ((event: Event) => {
+      const customEvent = event as CustomEvent<{ instructions: Instruction[] }>;
+      this.saveInstructions(customEvent.detail.instructions);
+    }) as EventListener);
+  }
+
+  private async loadInstructions(): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get("instructions");
+      const instructions = result.instructions || [];
+
+      // Dispatch instructions to React app
+      window.dispatchEvent(
+        new CustomEvent("SET_INSTRUCTIONS", {
+          detail: { instructions },
+        })
+      );
+    } catch (error) {
+      console.error("Failed to load instructions:", error);
+    }
+  }
+
+  private async saveInstructions(instructions: Instruction[]): Promise<void> {
+    try {
+      await chrome.storage.local.set({ instructions });
+      console.log("Instructions saved successfully");
+    } catch (error) {
+      console.error("Failed to save instructions:", error);
+    }
   }
 }
 

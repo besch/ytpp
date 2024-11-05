@@ -8,9 +8,11 @@ import AddElements from "@/components/AddElements";
 import DeleteElementButton from "@/components/DeleteElementButton";
 import Timeline from "@/components/Timeline/Timeline";
 import InstructionEditor from "@/components/Instructions/InstructionEditor";
+import { useInstructionsEvents } from "@/hooks/useInstructionsEvents";
 
 const EditPage: React.FC = () => {
   useCanvasEvents();
+  useInstructionsEvents();
 
   const saveElements = () => {
     window.dispatchEvent(new CustomEvent("SAVE_ELEMENTS"));

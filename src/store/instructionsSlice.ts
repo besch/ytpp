@@ -18,11 +18,24 @@ const instructionsSlice = createSlice({
   reducers: {
     addInstruction: (state, action: PayloadAction<Instruction>) => {
       state.instructions.push(action.payload);
+      window.dispatchEvent(
+        new CustomEvent("SAVE_INSTRUCTIONS", {
+          detail: { instructions: state.instructions },
+        })
+      );
     },
     removeInstruction: (state, action: PayloadAction<string>) => {
       state.instructions = state.instructions.filter(
         (instruction) => instruction.id !== action.payload
       );
+      window.dispatchEvent(
+        new CustomEvent("SAVE_INSTRUCTIONS", {
+          detail: { instructions: state.instructions },
+        })
+      );
+    },
+    setInstructions: (state, action: PayloadAction<Instruction[]>) => {
+      state.instructions = action.payload;
     },
     setSelectedInstructionId: (state, action: PayloadAction<string | null>) => {
       state.selectedInstructionId = action.payload;
@@ -30,8 +43,13 @@ const instructionsSlice = createSlice({
   },
 });
 
-export const { addInstruction, removeInstruction, setSelectedInstructionId } =
-  instructionsSlice.actions;
+export const {
+  addInstruction,
+  removeInstruction,
+  setInstructions,
+  setSelectedInstructionId,
+} = instructionsSlice.actions;
+
 export const selectInstructions = (state: RootState) =>
   state.instructions.instructions;
 export const selectSelectedInstructionId = (state: RootState) =>
