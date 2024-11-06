@@ -29,13 +29,6 @@ const InstructionEditor: React.FC = () => {
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
 
-  useEffect(() => {
-    if (!isEditing && selectedType === null) {
-      // Reset timeline current time when not editing
-      dispatch(setCurrentTime(currentTime));
-    }
-  }, [isEditing, currentTime, dispatch]);
-
   const parseTimeInput = (data: TimeInput) => {
     return (
       (Number(data.hours) * 3600 +
@@ -113,18 +106,21 @@ const InstructionEditor: React.FC = () => {
         setValue("skipToSeconds", skipSeconds);
       }
     }
-  }, [isEditing, editingInstruction]);
+  }, [isEditing, editingInstruction, currentTime, selectedType, setValue]);
 
-  const triggerTimeWatch = watch(["hours", "minutes", "seconds"]);
-
+  // Add useEffect to sync form inputs with currentTime when not editing
   useEffect(() => {
-    const newTime =
-      (Number(triggerTimeWatch[0]) * 3600 +
-        Number(triggerTimeWatch[1]) * 60 +
-        Number(triggerTimeWatch[2])) *
-      1000;
-    dispatch(setCurrentTime(newTime));
-  }, [dispatch, triggerTimeWatch]);
+    if (!isEditing && selectedType === null) {
+      const totalSeconds = currentTime / 1000;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+
+      setValue("hours", hours);
+      setValue("minutes", minutes);
+      setValue("seconds", seconds);
+    }
+  }, [currentTime, isEditing, selectedType, setValue]);
 
   const handleBack = () => {
     dispatch(setEditingInstruction(null));
@@ -171,6 +167,8 @@ const InstructionEditor: React.FC = () => {
     } else {
       dispatch(addInstruction(newInstruction));
     }
+
+    dispatch(setCurrentTime(triggerTime));
 
     // Update storage immediately after adding/updating instruction
     window.dispatchEvent(
