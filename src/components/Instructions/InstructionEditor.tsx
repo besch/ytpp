@@ -26,7 +26,7 @@ const InstructionEditor: React.FC = () => {
   const editingInstruction = useSelector(selectEditingInstruction);
   const instructions = useSelector(selectInstructions);
 
-  const isEditing = editingInstruction !== null;
+  const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
 
   useEffect(() => {
