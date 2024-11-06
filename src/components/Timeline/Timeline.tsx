@@ -121,7 +121,8 @@ const Timeline: React.FC = () => {
     const clickedTime = (percentage / 100) * duration;
 
     seekToTime(clickedTime);
-    dispatch(setSelectedInstructionId(null)); // Clear selected instruction
+    dispatch(setSelectedInstructionId(null));
+    dispatch(setEditingInstruction(null));
   };
 
   const handleInstructionClick = (

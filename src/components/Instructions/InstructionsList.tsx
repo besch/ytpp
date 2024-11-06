@@ -27,11 +27,15 @@ const InstructionsList: React.FC = () => {
 
   const handleEdit = (instruction: Instruction) => {
     dispatch(setEditingInstruction(instruction));
+    window.dispatchEvent(
+      new CustomEvent("SEEK_TO_TIME", {
+        detail: { timeMs: instruction.triggerTime },
+      })
+    );
   };
 
   const handleDelete = (id: string) => {
     dispatch(removeInstruction(id));
-    // Optionally, update the storage after deletion
     window.dispatchEvent(
       new CustomEvent("SAVE_INSTRUCTIONS", {
         detail: { instructions },
