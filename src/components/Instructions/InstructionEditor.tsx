@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { selectCurrentTime, setCurrentTime } from "@/store/timelineSlice";
@@ -11,6 +11,7 @@ import {
   selectEditingInstruction,
   selectInstructions,
   setEditingInstruction,
+  removeInstruction,
 } from "@/store/instructionsSlice";
 import {
   PauseInstruction,
@@ -201,18 +202,36 @@ const InstructionEditor: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="p-0 h-8 w-8"
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <h3 className="text-sm font-medium">
-            {isEditing ? "Edit Instruction" : "Add Instruction"}
-          </h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="p-0 h-8 w-8"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <h3 className="text-sm font-medium">
+              {isEditing ? "Edit Instruction" : "Add Instruction"}
+            </h3>
+          </div>
+          {isEditing && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (editingInstruction?.id) {
+                  dispatch(removeInstruction(editingInstruction.id));
+                  handleSaveInstructions();
+                  dispatch(setEditingInstruction(null));
+                }
+              }}
+            >
+              <Trash2 size={16} className="mr-2" />
+              Delete
+            </Button>
+          )}
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
