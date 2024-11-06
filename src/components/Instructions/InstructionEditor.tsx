@@ -100,8 +100,19 @@ const InstructionEditor: React.FC = () => {
       setValue("hours", hours);
       setValue("minutes", minutes);
       setValue("seconds", seconds);
+
+      // For new skip instructions, set skipToTime to currentTime + 1 second
+      if (selectedType === "skip") {
+        const skipToSeconds = totalSeconds + 1; // Add 1 second
+        const skipHours = Math.floor(skipToSeconds / 3600);
+        const skipMinutes = Math.floor((skipToSeconds % 3600) / 60);
+        const skipSeconds = Math.floor(skipToSeconds % 60);
+
+        setValue("skipToHours", skipHours);
+        setValue("skipToMinutes", skipMinutes);
+        setValue("skipToSeconds", skipSeconds);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing, editingInstruction]);
 
   const triggerTimeWatch = watch(["hours", "minutes", "seconds"]);
