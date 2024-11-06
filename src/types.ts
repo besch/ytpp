@@ -33,6 +33,12 @@ export interface CustomFabricObject extends FabricObject {
   };
 }
 
+export interface TimeInput {
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
 export interface BaseInstruction {
   id: string;
   triggerTime: number;

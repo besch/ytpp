@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { selectCurrentTime, setCurrentTime } from "@/store/timelineSlice";
@@ -12,25 +12,13 @@ import {
   selectInstructions,
   setEditingInstruction,
 } from "@/store/instructionsSlice";
-import InstructionTypeSelect from "./InstructionTypeSelect";
-import { PauseInstruction, SkipInstruction, Instruction } from "@/types";
+import {
+  PauseInstruction,
+  SkipInstruction,
+  Instruction,
+  TimeInput,
+} from "@/types";
 import InstructionsList from "./InstructionsList";
-
-interface TimeInput {
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-interface PauseFormData extends TimeInput {
-  pauseDuration: number;
-}
-
-interface SkipFormData extends TimeInput {
-  skipToHours: number;
-  skipToMinutes: number;
-  skipToSeconds: number;
-}
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
