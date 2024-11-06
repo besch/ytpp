@@ -31,12 +31,14 @@ interface TimelineState {
   currentTime: number;
   elements: Element[];
   selectedElementId: string | null;
+  activeTab: string;
 }
 
 const initialState: TimelineState = {
   currentTime: 0,
   elements: [],
   selectedElementId: null,
+  activeTab: "elements",
 };
 
 const timelineSlice = createSlice({
@@ -63,6 +65,9 @@ const timelineSlice = createSlice({
     setElements: (state, action: PayloadAction<Element[]>) => {
       state.elements = action.payload;
     },
+    setActiveTab: (state, action: PayloadAction<string>) => {
+      state.activeTab = action.payload;
+    },
   },
 });
 
@@ -72,6 +77,7 @@ export const {
   updateElement,
   setSelectedElementId,
   setElements,
+  setActiveTab,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>
@@ -85,5 +91,6 @@ export const selectSelectedElement = (state: RootState) => {
     ? state.timeline.elements.find((el) => el.id === selectedId)
     : null;
 };
+export const selectActiveTab = (state: RootState) => state.timeline.activeTab;
 
 export default timelineSlice.reducer;

@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { selectCurrentTime, setCurrentTime } from "@/store/timelineSlice";
+import {
+  selectCurrentTime,
+  setActiveTab,
+  setCurrentTime,
+} from "@/store/timelineSlice";
 import {
   selectInstructions,
   setSelectedInstructionId,
@@ -128,7 +132,7 @@ const Timeline: React.FC = () => {
     seekToTime(instruction.triggerTime);
     dispatch(setSelectedInstructionId(instruction.id));
     // Navigate to Instructions tab and open the edit form
-    window.dispatchEvent(new Event("SWITCH_TO_INSTRUCTIONS_TAB"));
+    dispatch(setActiveTab("instructions"));
     dispatch(setEditingInstruction(instruction));
   };
 

@@ -9,8 +9,12 @@ import InstructionEditor from "@/components/Instructions/InstructionEditor";
 import { useInstructionsEvents } from "@/hooks/useInstructionsEvents";
 import { Layers, Clock, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSelector } from "react-redux";
-import { selectSelectedElement } from "@/store/timelineSlice";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  selectSelectedElement,
+  selectActiveTab,
+  setActiveTab,
+} from "@/store/timelineSlice";
 
 type Tab = {
   id: string;
@@ -23,27 +27,17 @@ type Tab = {
 const EditPage: React.FC = () => {
   useCanvasEvents();
   useInstructionsEvents();
-  const [activeTab, setActiveTab] = useState("elements");
+  const dispatch = useDispatch();
+  const activeTab = useSelector(selectActiveTab);
   const selectedElement = useSelector(selectSelectedElement);
 
   useEffect(() => {
     if (selectedElement) {
-      setActiveTab("properties");
+      dispatch(setActiveTab("properties"));
     } else if (activeTab === "properties") {
-      setActiveTab("elements");
+      dispatch(setActiveTab("elements"));
     }
-  }, [selectedElement, activeTab]);
-
-  useEffect(() => {
-    const handleSwitchTab = () => {
-      setActiveTab("instructions");
-    };
-
-    window.addEventListener("SWITCH_TO_INSTRUCTIONS_TAB", handleSwitchTab);
-    return () => {
-      window.removeEventListener("SWITCH_TO_INSTRUCTIONS_TAB", handleSwitchTab);
-    };
-  }, []);
+  }, [selectedElement, activeTab, dispatch]);
 
   const saveElements = () => {
     window.dispatchEvent(new CustomEvent("SAVE_ELEMENTS"));
@@ -92,7 +86,7 @@ const EditPage: React.FC = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => dispatch(setActiveTab(tab.id))}
                 disabled={tab.disabled}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
