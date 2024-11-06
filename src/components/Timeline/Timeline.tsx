@@ -4,25 +4,28 @@ import { selectCurrentTime, setCurrentTime } from "@/store/timelineSlice";
 import {
   selectInstructions,
   setSelectedInstructionId,
+  setEditingInstruction,
 } from "@/store/instructionsSlice";
 import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
 import { RootState } from "@/store";
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   const pad = (num: number) => num.toString().padStart(2, "0");
-  return `${minutes}:${pad(seconds)}`;
+  if (hours > 0) {
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `${pad(minutes)}:${pad(seconds)}`;
 };
 
 const getInstructionLabel = (instruction: Instruction): string => {
   if ("pauseDuration" in instruction) {
-    return `Pause for ${
-      (instruction as PauseInstruction).pauseDuration / 1000
-    }s`;
+    return `Pause for ${(instruction as PauseInstruction).pauseDuration}s`;
   } else if ("skipToTime" in instruction) {
-    return `Skip to ${(instruction as SkipInstruction).skipToTime / 1000}s`;
+    return `Skip to ${formatTime((instruction as SkipInstruction).skipToTime)}`;
   }
   return "Unknown instruction";
 };
@@ -52,7 +55,9 @@ const Timeline: React.FC = () => {
 
       const handleTimeUpdate = () => {
         const currentTimeMs = videoElement.currentTime * 1000;
-        dispatch(setCurrentTime(currentTimeMs));
+        requestAnimationFrame(() => {
+          dispatch(setCurrentTime(currentTimeMs));
+        });
       };
 
       const handleDurationChange = () => {
@@ -75,6 +80,18 @@ const Timeline: React.FC = () => {
         );
       };
     }
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handleManualTimeUpdate = () => {
+      const videoElement = document.querySelector("video");
+      if (videoElement) {
+        dispatch(setCurrentTime(videoElement.currentTime * 1000));
+      }
+    };
+
+    const interval = setInterval(handleManualTimeUpdate, 100);
+    return () => clearInterval(interval);
   }, [dispatch]);
 
   const seekToTime = (timeMs: number) => {
@@ -110,6 +127,63 @@ const Timeline: React.FC = () => {
     e.stopPropagation();
     seekToTime(instruction.triggerTime);
     dispatch(setSelectedInstructionId(instruction.id));
+    // Navigate to Instructions tab and open the edit form
+    window.dispatchEvent(new Event("SWITCH_TO_INSTRUCTIONS_TAB"));
+    dispatch(setEditingInstruction(instruction));
+  };
+
+  const renderInstructionMarkers = () => {
+    // Group instructions by triggerTime to handle overlapping instructions
+    const groupedInstructions = instructions.reduce((acc, instruction) => {
+      const key = instruction.triggerTime;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(instruction);
+      return acc;
+    }, {} as { [key: number]: Instruction[] });
+
+    return Object.keys(groupedInstructions).map((timeKey) => {
+      const triggerTime = Number(timeKey);
+      const instructionGroup = groupedInstructions[triggerTime];
+      const groupPosition = getTimelinePosition(triggerTime);
+
+      return (
+        <div
+          key={timeKey}
+          className="absolute top-1/2 -translate-y-1/2"
+          style={{
+            left: `${groupPosition}%`,
+          }}
+        >
+          {instructionGroup.map((instruction, index) => (
+            <div
+              key={instruction.id}
+              className={`relative group -translate-x-1/2 w-4 h-4
+                ${
+                  currentTime === instruction.triggerTime
+                    ? "bg-accent"
+                    : "bg-secondary"
+                }
+                rounded-full cursor-pointer hover:scale-110 transition-all
+                border-2 border-background shadow-md`}
+              style={{
+                transform: `translate(-50%, -${index * 20}px)`,
+              }}
+              onClick={(e) => handleInstructionClick(e, instruction)}
+            >
+              <div
+                className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2
+                bg-background border border-border px-2 py-1 rounded shadow-lg whitespace-nowrap text-xs"
+              >
+                {getInstructionLabel(instruction)}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-background border-b border-r border-border rotate-45" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    });
   };
 
   return (
@@ -155,35 +229,7 @@ const Timeline: React.FC = () => {
         </div>
 
         {/* Instructions markers */}
-        {instructions.map((instruction: Instruction) => (
-          <div
-            key={instruction.id}
-            className="absolute top-1/2 -translate-y-1/2"
-            style={{
-              left: `${getTimelinePosition(instruction.triggerTime)}%`,
-            }}
-          >
-            <div
-              className={`relative group -translate-x-1/2 w-4 h-4 
-                ${
-                  currentTime === instruction.triggerTime
-                    ? "bg-accent"
-                    : "bg-secondary"
-                } 
-                rounded-full cursor-pointer hover:scale-110 transition-all
-                border-2 border-background shadow-md`}
-              onClick={(e) => handleInstructionClick(e, instruction)}
-            >
-              <div
-                className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 
-                bg-background border border-border px-2 py-1 rounded shadow-lg whitespace-nowrap text-xs"
-              >
-                {getInstructionLabel(instruction)}
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-background border-b border-r border-border rotate-45" />
-              </div>
-            </div>
-          </div>
-        ))}
+        {renderInstructionMarkers()}
       </div>
     </div>
   );

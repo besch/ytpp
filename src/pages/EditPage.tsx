@@ -32,7 +32,18 @@ const EditPage: React.FC = () => {
     } else if (activeTab === "properties") {
       setActiveTab("elements");
     }
-  }, [selectedElement]);
+  }, [selectedElement, activeTab]);
+
+  useEffect(() => {
+    const handleSwitchTab = () => {
+      setActiveTab("instructions");
+    };
+
+    window.addEventListener("SWITCH_TO_INSTRUCTIONS_TAB", handleSwitchTab);
+    return () => {
+      window.removeEventListener("SWITCH_TO_INSTRUCTIONS_TAB", handleSwitchTab);
+    };
+  }, []);
 
   const saveElements = () => {
     window.dispatchEvent(new CustomEvent("SAVE_ELEMENTS"));

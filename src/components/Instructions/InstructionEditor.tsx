@@ -1,48 +1,137 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Save } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { selectCurrentTime } from "@/store/timelineSlice";
-import { addInstruction, selectInstructions } from "@/store/instructionsSlice";
+import { selectCurrentTime, setCurrentTime } from "@/store/timelineSlice";
+import {
+  addInstruction,
+  updateInstruction,
+  selectEditingInstruction,
+  selectInstructions,
+  setEditingInstruction,
+} from "@/store/instructionsSlice";
 import InstructionTypeSelect from "./InstructionTypeSelect";
-import { PauseInstruction, SkipInstruction } from "@/types";
+import { PauseInstruction, SkipInstruction, Instruction } from "@/types";
 import InstructionsList from "./InstructionsList";
 
-interface PauseFormData {
+interface TimeInput {
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+interface PauseFormData extends TimeInput {
   pauseDuration: number;
 }
 
-interface SkipFormData {
-  skipToTime: number;
+interface SkipFormData extends TimeInput {
+  skipToHours: number;
+  skipToMinutes: number;
+  skipToSeconds: number;
 }
 
 const InstructionEditor: React.FC = () => {
-  const [selectedType, setSelectedType] = useState<string | null>(null);
   const dispatch = useDispatch();
   const currentTime = useSelector(selectCurrentTime);
+  const editingInstruction = useSelector(selectEditingInstruction);
   const instructions = useSelector(selectInstructions);
 
-  const {
-    register: registerPause,
-    handleSubmit: handlePauseSubmit,
-    formState: { errors: pauseErrors },
-    reset: resetPause,
-  } = useForm<PauseFormData>();
+  const isEditing = editingInstruction !== null;
+  const selectedType = editingInstruction?.type || null;
 
-  const {
-    register: registerSkip,
-    handleSubmit: handleSkipSubmit,
-    formState: { errors: skipErrors },
-    reset: resetSkip,
-  } = useForm<SkipFormData>();
+  useEffect(() => {
+    if (!isEditing && selectedType === null) {
+      // Reset timeline current time when not editing
+      dispatch(setCurrentTime(currentTime));
+    }
+  }, [isEditing, currentTime, dispatch]);
 
-  const handleBack = () => {
-    setSelectedType(null);
+  const parseTimeInput = (data: TimeInput) => {
+    return (
+      (Number(data.hours) * 3600 +
+        Number(data.minutes) * 60 +
+        Number(data.seconds)) *
+      1000
+    );
   };
 
-  const handleSave = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+    reset,
+  } = useForm<any>({
+    defaultValues: {
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      pauseDuration: 0,
+      skipToHours: 0,
+      skipToMinutes: 0,
+      skipToSeconds: 0,
+    },
+  });
+
+  useEffect(() => {
+    if (isEditing) {
+      const totalSeconds = editingInstruction.triggerTime / 1000;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+
+      setValue("hours", hours);
+      setValue("minutes", minutes);
+      setValue("seconds", seconds);
+
+      if (editingInstruction.type === "pause") {
+        setValue(
+          "pauseDuration",
+          (editingInstruction as PauseInstruction).pauseDuration
+        );
+      } else if (editingInstruction.type === "skip") {
+        const skipToTime =
+          (editingInstruction as SkipInstruction).skipToTime / 1000;
+        const skipHours = Math.floor(skipToTime / 3600);
+        const skipMinutes = Math.floor((skipToTime % 3600) / 60);
+        const skipSeconds = Math.floor(skipToTime % 60);
+
+        setValue("skipToHours", skipHours);
+        setValue("skipToMinutes", skipMinutes);
+        setValue("skipToSeconds", skipSeconds);
+      }
+    } else {
+      const totalSeconds = currentTime / 1000;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+
+      setValue("hours", hours);
+      setValue("minutes", minutes);
+      setValue("seconds", seconds);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, editingInstruction]);
+
+  const triggerTimeWatch = watch(["hours", "minutes", "seconds"]);
+
+  useEffect(() => {
+    const newTime =
+      (Number(triggerTimeWatch[0]) * 3600 +
+        Number(triggerTimeWatch[1]) * 60 +
+        Number(triggerTimeWatch[2])) *
+      1000;
+    dispatch(setCurrentTime(newTime));
+  }, [dispatch, triggerTimeWatch]);
+
+  const handleBack = () => {
+    dispatch(setEditingInstruction(null));
+  };
+
+  const handleSaveInstructions = () => {
     window.dispatchEvent(
       new CustomEvent("SAVE_INSTRUCTIONS", {
         detail: { instructions },
@@ -50,138 +139,153 @@ const InstructionEditor: React.FC = () => {
     );
   };
 
-  const onSubmitPause = (data: PauseFormData) => {
-    dispatch(
-      addInstruction({
-        id: Date.now().toString(),
-        type: "pause",
-        triggerTime: currentTime,
-        pauseDuration: data.pauseDuration,
-      })
-    );
-    resetPause();
-    setSelectedType(null);
-  };
+  const onSubmit = (data: any) => {
+    const triggerTime = parseTimeInput(data);
+    let newInstruction: Instruction;
 
-  const onSubmitSkip = (data: SkipFormData) => {
-    dispatch(
-      addInstruction({
-        id: Date.now().toString(),
+    if (selectedType === "pause") {
+      newInstruction = {
+        id: editingInstruction?.id || Date.now().toString(),
+        type: "pause",
+        triggerTime,
+        pauseDuration: Number(data.pauseDuration),
+      } as PauseInstruction;
+    } else if (selectedType === "skip") {
+      const skipToTime =
+        (Number(data.skipToHours) * 3600 +
+          Number(data.skipToMinutes) * 60 +
+          Number(data.skipToSeconds)) *
+        1000;
+
+      newInstruction = {
+        id: editingInstruction?.id || Date.now().toString(),
         type: "skip",
-        triggerTime: currentTime,
-        skipToTime: data.skipToTime,
+        triggerTime,
+        skipToTime,
+      } as SkipInstruction;
+    } else {
+      return;
+    }
+
+    if (isEditing) {
+      dispatch(updateInstruction(newInstruction));
+    } else {
+      dispatch(addInstruction(newInstruction));
+    }
+
+    // Update storage immediately after adding/updating instruction
+    window.dispatchEvent(
+      new CustomEvent("SAVE_INSTRUCTIONS", {
+        detail: {
+          instructions: isEditing
+            ? instructions.map((i) =>
+                i.id === newInstruction.id ? newInstruction : i
+              )
+            : [...instructions, newInstruction],
+        },
       })
     );
-    resetSkip();
-    setSelectedType(null);
+
+    reset();
+    dispatch(setEditingInstruction(null));
   };
 
   const renderForm = () => {
-    switch (selectedType) {
-      case "pause":
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="p-0 h-8 w-8"
-              >
-                <ArrowLeft size={20} />
-              </Button>
-              <h3 className="text-sm font-medium">Instruction List</h3>
-            </div>
-            <form
-              onSubmit={handlePauseSubmit(onSubmitPause)}
-              className="space-y-4"
-            >
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Pause Duration (ms)
-                </label>
-                <Input
-                  type="number"
-                  {...registerPause("pauseDuration", {
-                    required: true,
-                    min: 0,
-                  })}
-                />
-                {pauseErrors.pauseDuration && (
-                  <span className="text-xs text-destructive">
-                    This field is required
-                  </span>
-                )}
-              </div>
-              <Button type="submit" className="w-full">
-                Add Instruction
-              </Button>
-            </form>
+    if (!selectedType && !isEditing) {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium">Instructions</h3>
           </div>
-        );
+          <InstructionsList />
+        </div>
+      );
+    }
 
-      case "skip":
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="p-0 h-8 w-8"
-              >
-                <ArrowLeft size={20} />
-              </Button>
-              <h3 className="text-sm font-medium">Instruction List</h3>
-            </div>
-            <form
-              onSubmit={handleSkipSubmit(onSubmitSkip)}
-              className="space-y-4"
-            >
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Skip to Time (ms)
-                </label>
-                <Input
-                  type="number"
-                  {...registerSkip("skipToTime", { required: true, min: 0 })}
-                />
-                {skipErrors.skipToTime && (
-                  <span className="text-xs text-destructive">
-                    This field is required
-                  </span>
-                )}
-              </div>
-              <Button type="submit" className="w-full">
-                Add Instruction
-              </Button>
-            </form>
-          </div>
-        );
-      default:
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium">Instructions</h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSave}
-                className="flex items-center gap-2"
-              >
-                <Save size={16} />
-                Save Instructions
-              </Button>
-            </div>
-            <InstructionsList />
-            <div className="pt-4 border-t border-border">
-              <InstructionTypeSelect
-                onSelect={(type) => setSelectedType(type)}
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="p-0 h-8 w-8"
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          <h3 className="text-sm font-medium">
+            {isEditing ? "Edit Instruction" : "Add Instruction"}
+          </h3>
+        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground">
+              Trigger Time
+            </label>
+            <div className="flex space-x-2">
+              <Input
+                type="number"
+                placeholder="HH"
+                {...register("hours", { min: 0 })}
+              />
+              <Input
+                type="number"
+                placeholder="MM"
+                {...register("minutes", { min: 0, max: 59 })}
+              />
+              <Input
+                type="number"
+                placeholder="SS"
+                {...register("seconds", { min: 0, max: 59 })}
               />
             </div>
           </div>
-        );
-    }
+          {selectedType === "pause" && (
+            <div>
+              <label className="text-sm text-muted-foreground">
+                Pause Duration (seconds)
+              </label>
+              <Input
+                type="number"
+                {...register("pauseDuration", { required: true, min: 0 })}
+              />
+              {errors.pauseDuration && (
+                <span className="text-xs text-destructive">
+                  This field is required
+                </span>
+              )}
+            </div>
+          )}
+          {selectedType === "skip" && (
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">
+                Skip to Time
+              </label>
+              <div className="flex space-x-2">
+                <Input
+                  type="number"
+                  placeholder="HH"
+                  {...register("skipToHours", { min: 0 })}
+                />
+                <Input
+                  type="number"
+                  placeholder="MM"
+                  {...register("skipToMinutes", { min: 0, max: 59 })}
+                />
+                <Input
+                  type="number"
+                  placeholder="SS"
+                  {...register("skipToSeconds", { min: 0, max: 59 })}
+                />
+              </div>
+            </div>
+          )}
+          <Button type="submit" className="w-full">
+            {isEditing ? "Update Instruction" : "Add Instruction"}
+          </Button>
+        </form>
+      </div>
+    );
   };
 
   return <div className="p-4">{renderForm()}</div>;
