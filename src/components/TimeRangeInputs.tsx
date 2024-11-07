@@ -2,6 +2,7 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
 import { TimeInput } from "@/components/ui/TimeInput";
+import DeleteElementButton from "./DeleteElementButton";
 
 const TimeRangeInputs: React.FC = () => {
   const dispatch = useDispatch();
@@ -49,7 +50,10 @@ const TimeRangeInputs: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-medium text-foreground">Time Range</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-sm font-medium text-foreground">Time Range</h3>
+        <DeleteElementButton />
+      </div>
       <div className="d-flex">
         <div className="space-y-2">
           <label className="text-sm text-muted-foreground">Start Time</label>

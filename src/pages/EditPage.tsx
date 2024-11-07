@@ -60,7 +60,6 @@ const EditPage: React.FC = () => {
           <TimeRangeInputs />
           <ElementColorPicker />
           <div className="pt-4 border-t border-border space-y-4">
-            <DeleteElementButton className="w-full" />
             <Button onClick={saveElements} size="lg" className="w-full">
               Save All Changes
             </Button>

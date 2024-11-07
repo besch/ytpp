@@ -12,7 +12,6 @@ interface DeleteElementButtonProps {
 const DeleteElementButton: React.FC<DeleteElementButtonProps> = ({
   className,
 }) => {
-  const dispatch = useDispatch();
   const selectedElementId = useSelector(selectSelectedElementId);
 
   const handleDelete = () => {
@@ -36,7 +35,7 @@ const DeleteElementButton: React.FC<DeleteElementButtonProps> = ({
       disabled={!selectedElementId}
     >
       <Trash2 size={18} />
-      Delete Element
+      Delete
     </Button>
   );
 };
