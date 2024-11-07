@@ -1,11 +1,12 @@
 import { VideoManager } from "./content/VideoManager";
 import { OverlayManager } from "./content/OverlayManager";
 import { Instruction } from "@/types";
+import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 
 class ContentScript {
   private videoManager: VideoManager | null = null;
-  private elements: any[] = [];
   private isOverlayVisible: boolean = false;
+  private cleanupListeners: Array<() => void> = [];
 
   constructor() {
     this.initialize();
@@ -67,44 +68,56 @@ class ContentScript {
   }
 
   private setupCustomEventListeners(): void {
-    // Listen for add element events
-    window.addEventListener("ADD_ELEMENT", ((event: CustomEvent) => {
-      const { elementType, gifUrl } = event.detail;
-      OverlayManager.addElement(elementType, gifUrl);
-    }) as EventListener);
+    const listeners = [
+      addCustomEventListener("ADD_ELEMENT", ({ elementType, gifUrl }) => {
+        OverlayManager.addElement(elementType, gifUrl);
+      }),
 
-    // Listen for save elements events
-    window.addEventListener("SAVE_ELEMENTS", (() => {
-      const elements = OverlayManager.getElements();
-      chrome.storage.local.set({ elements }, () => {
-        // Dispatch success event back to React app
-        window.dispatchEvent(
-          new CustomEvent("SAVE_SUCCESS", {
-            detail: { message: "Elements saved successfully!" },
-          })
-        );
-      });
-    }) as EventListener);
+      addCustomEventListener("UPDATE_ELEMENT_COLOR", ({ color, type }) => {
+        OverlayManager.updateElementColor(color, type);
+      }),
 
-    // Listen for update element color events
-    window.addEventListener("UPDATE_ELEMENT_COLOR", ((event: CustomEvent) => {
-      const { color, type } = event.detail;
-      OverlayManager.updateElementColor(color, type);
-    }) as EventListener);
+      addCustomEventListener(
+        "UPDATE_ELEMENT_TIME",
+        ({ elementId, from, to }) => {
+          const selectedElement = OverlayManager.getSelectedElement();
+          if (selectedElement && selectedElement.data?.id === elementId) {
+            OverlayManager.updateElementTime(selectedElement, from, to);
+          }
+        }
+      ),
 
-    // Listen for update element time events
-    window.addEventListener("UPDATE_ELEMENT_TIME", ((event: CustomEvent) => {
-      const { elementId, from, to } = event.detail;
-      const selectedElement = OverlayManager.getSelectedElement();
-      if (selectedElement && selectedElement.data?.id === elementId) {
-        OverlayManager.updateElementTime(selectedElement, from, to);
-      }
-    }) as EventListener);
+      addCustomEventListener("DELETE_ELEMENT", () => {
+        OverlayManager.elementManager?.deleteSelectedElement();
+      }),
 
-    // Listen for delete element events
-    window.addEventListener("DELETE_ELEMENT", ((event: CustomEvent) => {
-      OverlayManager.elementManager?.deleteSelectedElement();
-    }) as EventListener);
+      addCustomEventListener("SAVE_ELEMENTS", () => {
+        const elements = OverlayManager.getElements();
+        chrome.storage.local.set({ elements }, () => {
+          dispatchCustomEvent("SAVE_SUCCESS", {
+            message: "Elements saved successfully!",
+          });
+        });
+      }),
+
+      addCustomEventListener("LOAD_ELEMENTS", () => {
+        this.loadElements();
+      }),
+
+      addCustomEventListener("LOAD_INSTRUCTIONS", () => {
+        this.loadInstructions();
+      }),
+
+      addCustomEventListener("GET_ELEMENTS", () => {
+        const elements = OverlayManager.getElements();
+        if (elements && elements.length > 0) {
+          dispatchCustomEvent("SET_ELEMENTS", { elements });
+        }
+      }),
+    ];
+
+    // Store cleanup functions
+    this.cleanupListeners = listeners;
   }
 
   private injectReactApp(): void {
@@ -143,27 +156,18 @@ class ContentScript {
     return true;
   }
 
-  private loadElements(): void {
-    const loadAndDispatchElements = () => {
-      chrome.storage.local.get(["elements"], (result) => {
-        this.elements = result.elements || [];
-        OverlayManager.loadElements(this.elements);
-        window.dispatchEvent(
-          new CustomEvent("SET_ELEMENTS", {
-            detail: { elements: this.elements },
-          })
-        );
-      });
-    };
+  private async loadElements(): Promise<void> {
+    try {
+      const { elements } = await chrome.storage.local.get("elements");
+      if (elements) {
+        await OverlayManager.elementManager?.loadElements(elements);
 
-    // Check if React app is already ready
-    if ((window as any).__REACT_APP_READY__) {
-      loadAndDispatchElements();
-    } else {
-      // Wait for React app ready event
-      window.addEventListener("REACT_APP_READY", loadAndDispatchElements, {
-        once: true,
-      });
+        // Force dispatch elements after loading
+        const currentElements = OverlayManager.getElements();
+        dispatchCustomEvent("SET_ELEMENTS", { elements: currentElements });
+      }
+    } catch (error) {
+      console.error("Error loading elements:", error);
     }
   }
 
@@ -194,29 +198,26 @@ class ContentScript {
 
   private initializeInstructionsHandling(): void {
     // Load instructions when app is ready
-    window.addEventListener(
-      "REACT_APP_READY",
-      this.loadInstructions.bind(this)
-    );
+    const cleanup1 = addCustomEventListener("REACT_APP_READY", () => {
+      this.loadInstructions();
+    });
 
     // Save instructions when requested
-    window.addEventListener("SAVE_INSTRUCTIONS", ((event: Event) => {
-      const customEvent = event as CustomEvent<{ instructions: Instruction[] }>;
-      this.saveInstructions(customEvent.detail.instructions);
-    }) as EventListener);
+    const cleanup2 = addCustomEventListener(
+      "SAVE_INSTRUCTIONS",
+      ({ instructions }) => {
+        this.saveInstructions(instructions);
+      }
+    );
+
+    this.cleanupListeners.push(cleanup1, cleanup2);
   }
 
   private async loadInstructions(): Promise<void> {
     try {
       const result = await chrome.storage.local.get("instructions");
       const instructions = result.instructions || [];
-
-      // Dispatch instructions to React app
-      window.dispatchEvent(
-        new CustomEvent("SET_INSTRUCTIONS", {
-          detail: { instructions },
-        })
-      );
+      dispatchCustomEvent("SET_INSTRUCTIONS", { instructions });
     } catch (error) {
       console.error("Failed to load instructions:", error);
     }
@@ -229,6 +230,11 @@ class ContentScript {
     } catch (error) {
       console.error("Failed to save instructions:", error);
     }
+  }
+
+  private cleanup(): void {
+    this.cleanupListeners.forEach((cleanup) => cleanup());
+    this.cleanupListeners = [];
   }
 }
 

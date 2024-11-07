@@ -1,28 +1,19 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setInstructions } from "@/store/timelineSlice";
-import { Instruction } from "@/types";
+import { addCustomEventListener } from "@/lib/eventSystem";
 
 export const useInstructionsEvents = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const handleSetInstructions = (
-      event: CustomEvent<{ instructions: Instruction[] }>
-    ) => {
-      dispatch(setInstructions(event.detail.instructions));
-    };
-
-    window.addEventListener(
+    const cleanup = addCustomEventListener(
       "SET_INSTRUCTIONS",
-      handleSetInstructions as EventListener
+      ({ instructions }) => {
+        dispatch(setInstructions(instructions));
+      }
     );
 
-    return () => {
-      window.removeEventListener(
-        "SET_INSTRUCTIONS",
-        handleSetInstructions as EventListener
-      );
-    };
+    return cleanup;
   }, [dispatch]);
 };

@@ -1,44 +1,38 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { setElements, setSelectedElementId } from "@/store/timelineSlice";
+import {
+  setActiveTab,
+  setElements,
+  setSelectedElementId,
+} from "@/store/timelineSlice";
+import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 
 export const useCanvasEvents = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const handleSetElements = (event: CustomEvent) => {
-      dispatch(setElements(event.detail.elements));
-    };
+    const cleanupFns = [
+      addCustomEventListener("SET_ELEMENTS", ({ elements }) => {
+        dispatch(setElements(elements));
+      }),
 
-    const handleElementSelected = (event: CustomEvent) => {
-      dispatch(setSelectedElementId(event.detail.element.id));
-    };
+      addCustomEventListener("ELEMENT_SELECTED", ({ element }) => {
+        if (element && element.id) {
+          dispatch(setSelectedElementId(element.id));
+          dispatch(setActiveTab("properties"));
+        }
+      }),
 
-    const handleSelectionCleared = () => {
-      dispatch(setSelectedElementId(null));
-    };
+      addCustomEventListener("SELECTION_CLEARED", () => {
+        dispatch(setSelectedElementId(null));
+      }),
+    ];
 
-    window.addEventListener("SET_ELEMENTS", handleSetElements as EventListener);
-    window.addEventListener(
-      "ELEMENT_SELECTED",
-      handleElementSelected as EventListener
-    );
-    window.addEventListener("SELECTION_CLEARED", handleSelectionCleared);
-
-    // Signal that React app is ready
+    // Signal that React app is ready and request initial elements
     (window as any).__REACT_APP_READY__ = true;
-    window.dispatchEvent(new CustomEvent("REACT_APP_READY"));
+    dispatchCustomEvent("REACT_APP_READY");
+    dispatchCustomEvent("GET_ELEMENTS");
 
-    return () => {
-      window.removeEventListener(
-        "SET_ELEMENTS",
-        handleSetElements as EventListener
-      );
-      window.removeEventListener(
-        "ELEMENT_SELECTED",
-        handleElementSelected as EventListener
-      );
-      window.removeEventListener("SELECTION_CLEARED", handleSelectionCleared);
-    };
+    return () => cleanupFns.forEach((cleanup) => cleanup());
   }, [dispatch]);
 };

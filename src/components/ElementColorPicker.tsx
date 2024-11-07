@@ -1,33 +1,42 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ChromePicker, ColorResult } from "react-color";
 import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 
-const ElementColorPicker: React.FC = () => {
+const ElementColorPicker: React.FC = React.memo(() => {
   const dispatch = useDispatch();
-  const selectedElement = useSelector(selectSelectedElement);
+  const selectedElement = useSelector(
+    selectSelectedElement,
+    (prev, next) =>
+      prev?.id === next?.id && prev?.style?.fill === next?.style?.fill
+  );
+
+  const handleColorChange = useCallback(
+    (color: ColorResult) => {
+      if (!selectedElement) return;
+
+      dispatch(
+        updateElement({
+          id: selectedElement.id,
+          style: {
+            ...selectedElement.style,
+            fill: color.hex,
+          },
+        })
+      );
+
+      dispatchCustomEvent("UPDATE_ELEMENT_COLOR", {
+        color: color.hex,
+        type: "fill",
+      });
+    },
+    [dispatch, selectedElement]
+  );
 
   if (!selectedElement) {
     return null;
   }
-
-  const handleColorChange = (color: ColorResult) => {
-    dispatch(
-      updateElement({
-        id: selectedElement.id,
-        style: {
-          ...selectedElement.style,
-          fill: color.hex,
-        },
-      })
-    );
-
-    dispatchCustomEvent("UPDATE_ELEMENT_COLOR", {
-      color: color.hex,
-      type: "fill",
-    });
-  };
 
   return (
     <div className="space-y-4">
@@ -42,6 +51,6 @@ const ElementColorPicker: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default ElementColorPicker;

@@ -89,13 +89,16 @@ const Timeline: React.FC = () => {
     const handleManualTimeUpdate = () => {
       const videoElement = document.querySelector("video");
       if (videoElement) {
-        dispatch(setCurrentTime(videoElement.currentTime * 1000));
+        const newTime = videoElement.currentTime * 1000;
+        if (Math.abs(newTime - currentTime) > 16) {
+          dispatch(setCurrentTime(newTime));
+        }
       }
     };
 
-    const interval = setInterval(handleManualTimeUpdate, 100);
+    const interval = setInterval(handleManualTimeUpdate, 250);
     return () => clearInterval(interval);
-  }, [dispatch]);
+  }, [dispatch, currentTime]);
 
   const seekToTime = (timeMs: number) => {
     dispatchCustomEvent("SEEK_TO_TIME", { timeMs });

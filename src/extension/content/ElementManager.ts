@@ -10,11 +10,47 @@ import {
   Line,
   FabricImage,
 } from "fabric";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 export class ElementManager {
   private animationIntervals: Map<string, number> = new Map();
+  private canvas: Canvas | null = null;
 
-  constructor(private canvas: Canvas, private videoElement: HTMLVideoElement) {}
+  constructor(canvas: Canvas, private videoElement: HTMLVideoElement) {
+    this.canvas = canvas;
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners(): void {
+    if (!this.canvas) return;
+
+    this.canvas.on("selection:created", this.handleObjectSelection);
+    this.canvas.on("selection:updated", this.handleObjectSelection);
+    this.canvas.on("selection:cleared", this.handleSelectionCleared);
+  }
+
+  public handleObjectSelection = (e: any): void => {
+    const selectedObject = e.selected?.[0] as CustomFabricObject;
+    console.log("Selected object:", selectedObject);
+
+    if (selectedObject && selectedObject.data) {
+      console.log("Dispatching ELEMENT_SELECTED with:", selectedObject.data);
+      dispatchCustomEvent("ELEMENT_SELECTED", {
+        element: {
+          id: selectedObject.data.id,
+          type: selectedObject.type,
+          timeRange: {
+            from: selectedObject.data.from || 0,
+            to: selectedObject.data.to || 0,
+          },
+          style: {
+            fill: String(selectedObject.fill || "#000000"),
+            stroke: String(selectedObject.stroke || "#000000"),
+          },
+        },
+      });
+    }
+  };
 
   public async addElement(elementType: string, gifUrl?: string): Promise<void> {
     if (!this.canvas || !this.videoElement) return;
@@ -188,11 +224,7 @@ export class ElementManager {
     this.canvas.requestRenderAll();
 
     const elements = this.getElements();
-    window.dispatchEvent(
-      new CustomEvent("SET_ELEMENTS", {
-        detail: { elements },
-      })
-    );
+    dispatchCustomEvent("SET_ELEMENTS", { elements });
 
     this.saveElementsToStorage();
   }
@@ -365,6 +397,9 @@ export class ElementManager {
     }
 
     this.canvas.requestRenderAll(); // Force canvas to re-render
+    dispatchCustomEvent("UPDATE_ELEMENT", {
+      element: this.getSelectedElement(),
+    });
   }
 
   public getSelectedElement(): any {
@@ -383,77 +418,18 @@ export class ElementManager {
       customObj.data.to = to;
       this.canvas?.renderAll();
       this.saveElementsToStorage();
+      dispatchCustomEvent("UPDATE_ELEMENT", { element: customObj });
     }
   }
 
   private saveElementsToStorage(): void {
     const elements = this.getElements();
     chrome.storage.local.set({ elements }, () => {
-      console.log("Elements saved to storage.");
+      dispatchCustomEvent("SAVE_SUCCESS", {
+        message: "Elements saved to storage",
+      });
     });
   }
-
-  public handleObjectSelection = (event: {
-    selected: CustomFabricObject[];
-  }): void => {
-    const selectedObject = event.selected[0];
-    if (selectedObject) {
-      const videoWidth = this.videoElement.clientWidth;
-      const videoHeight = this.videoElement.clientHeight;
-
-      if (!selectedObject.data) {
-        selectedObject.data = {
-          id: `element-${Date.now()}`,
-          from: 0,
-          to: 0,
-          originalLeft: selectedObject.left || 0,
-          originalTop: selectedObject.top || 0,
-          originalScaleX: selectedObject.scaleX || 1,
-          originalScaleY: selectedObject.scaleY || 1,
-          originalWidth: videoWidth,
-          originalHeight: videoHeight,
-          relativeX: ((selectedObject.left || 0) / videoWidth) * 100,
-          relativeY: ((selectedObject.top || 0) / videoHeight) * 100,
-          relativeWidth: ((selectedObject.width || 0) / videoWidth) * 100,
-          relativeHeight: ((selectedObject.height || 0) / videoHeight) * 100,
-          scaleMode: "responsive" as const,
-        };
-      }
-
-      window.dispatchEvent(
-        new CustomEvent("ELEMENT_SELECTED", {
-          detail: {
-            element: {
-              id: selectedObject.data.id,
-              type: selectedObject.type,
-              timeRange: {
-                from: selectedObject.data.from || 0,
-                to: selectedObject.data.to || 0,
-              },
-              style: {
-                fill: selectedObject.fill || "#000000",
-                stroke: selectedObject.stroke || "#000000",
-              },
-              properties: {
-                left: selectedObject.left,
-                top: selectedObject.top,
-                scaleX: selectedObject.scaleX,
-                scaleY: selectedObject.scaleY,
-                width: selectedObject.width,
-                height: selectedObject.height,
-                radius: (selectedObject as any).radius,
-                text: (selectedObject as any).text,
-              },
-            },
-          },
-        })
-      );
-    }
-  };
-
-  public handleSelectionCleared = (): void => {
-    window.dispatchEvent(new CustomEvent("SELECTION_CLEARED"));
-  };
 
   public deleteSelectedElement(): void {
     if (!this.canvas) return;
@@ -468,12 +444,9 @@ export class ElementManager {
       this.saveElementsToStorage();
 
       const elements = this.getElements();
-      window.dispatchEvent(
-        new CustomEvent("SET_ELEMENTS", {
-          detail: { elements },
-        })
-      );
+      dispatchCustomEvent("SET_ELEMENTS", { elements });
     }
+    dispatchCustomEvent("SELECTION_CLEARED");
   }
 
   public updateVisibility(currentTimeMs: number): void {
@@ -553,4 +526,8 @@ export class ElementManager {
 
     // ... existing dispose code ...
   }
+
+  public handleSelectionCleared = (): void => {
+    dispatchCustomEvent("SELECTION_CLEARED");
+  };
 }

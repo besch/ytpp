@@ -1,4 +1,5 @@
 import { Instruction } from "@/types";
+import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
@@ -6,12 +7,16 @@ export class VideoManager {
   private currentVideoPlayerVolume: number = 1;
   private timeUpdateListeners: Array<(currentTimeMs: number) => void> = [];
   private clickHandler: ((event: MouseEvent) => void) | null = null;
+  private cleanupListeners: Array<() => void> = [];
 
   constructor() {
-    window.addEventListener("SEEK_TO_TIME", ((event: Event) => {
-      const customEvent = event as CustomEvent<{ timeMs: number }>;
-      this.handleSeekToTime(customEvent);
-    }) as EventListener);
+    const cleanupListeners = [
+      addCustomEventListener("SEEK_TO_TIME", ({ timeMs }) => {
+        this.handleSeekToTime(timeMs);
+      }),
+    ];
+
+    this.cleanupListeners.push(...cleanupListeners);
   }
 
   public async findAndStoreVideoElement(): Promise<void> {
@@ -71,17 +76,8 @@ export class VideoManager {
     const video = event.target as HTMLVideoElement;
     const currentTimeMs = video.currentTime * 1000;
 
-    // Dispatch current time event
-    window.dispatchEvent(
-      new CustomEvent("VIDEO_TIME_UPDATE", {
-        detail: { currentTimeMs },
-      })
-    );
-
-    // Check for instructions with more precise timing
+    dispatchCustomEvent("VIDEO_TIME_UPDATE", { currentTimeMs });
     this.checkInstructions(currentTimeMs);
-
-    this.timeUpdateListeners.forEach((listener) => listener(currentTimeMs));
   };
 
   private async checkInstructions(currentTimeMs: number): Promise<void> {
@@ -204,23 +200,19 @@ export class VideoManager {
     }
   }
 
-  private handleSeekToTime = (event: CustomEvent<{ timeMs: number }>) => {
-    const { timeMs } = event.detail;
+  private handleSeekToTime = (timeMs: number): void => {
     if (this.videoElement) {
-      this.videoElement.currentTime = timeMs / 1000; // Convert ms to seconds
+      this.videoElement.currentTime = timeMs / 1000;
     }
   };
 
   public destroy() {
-    window.removeEventListener(
-      "SEEK_TO_TIME",
-      this.handleSeekToTime as EventListener
-    );
+    this.cleanupListeners.forEach((cleanup) => cleanup());
   }
 
   public seekTo(timeMs: number): void {
     if (this.videoElement) {
-      this.videoElement.currentTime = timeMs / 1000; // Convert ms to seconds
+      this.videoElement.currentTime = timeMs / 1000;
     }
   }
 }

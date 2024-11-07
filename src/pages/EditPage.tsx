@@ -31,14 +31,6 @@ const EditPage: React.FC = () => {
   const activeTab = useSelector(selectActiveTab);
   const selectedElement = useSelector(selectSelectedElement);
 
-  useEffect(() => {
-    if (selectedElement) {
-      dispatch(setActiveTab("properties"));
-    } else if (activeTab === "properties") {
-      dispatch(setActiveTab("elements"));
-    }
-  }, [selectedElement, activeTab, dispatch]);
-
   const saveElements = () => {
     dispatchCustomEvent("SAVE_ELEMENTS");
   };
