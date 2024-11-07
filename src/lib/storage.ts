@@ -15,4 +15,11 @@ export const storage = {
       });
     }
   },
+  clear: async (): Promise<void> => {
+    if (typeof chrome !== "undefined" && chrome.storage) {
+      return new Promise((resolve) => {
+        chrome.storage.local.clear(() => resolve());
+      });
+    }
+  },
 };

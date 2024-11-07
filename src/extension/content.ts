@@ -2,6 +2,7 @@ import { VideoManager } from "./content/VideoManager";
 import { OverlayManager } from "./content/OverlayManager";
 import { Instruction } from "@/types";
 import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
+import { storage } from "@/lib/storage";
 
 class ContentScript {
   private videoManager: VideoManager | null = null;
@@ -92,12 +93,7 @@ class ContentScript {
       }),
 
       addCustomEventListener("SAVE_ELEMENTS", () => {
-        const elements = OverlayManager.getElements();
-        chrome.storage.local.set({ elements }, () => {
-          dispatchCustomEvent("SAVE_SUCCESS", {
-            message: "Elements saved successfully!",
-          });
-        });
+        this.saveElements();
       }),
 
       addCustomEventListener("LOAD_ELEMENTS", () => {
@@ -158,7 +154,7 @@ class ContentScript {
 
   private async loadElements(): Promise<void> {
     try {
-      const { elements } = await chrome.storage.local.get("elements");
+      const elements = await storage.get<any[]>("elements");
       if (elements) {
         await OverlayManager.elementManager?.loadElements(elements);
 
@@ -184,16 +180,7 @@ class ContentScript {
 
   private saveElements(): void {
     const elements = OverlayManager.getElements();
-    chrome.storage.local.set({ elements });
-    alert("Elements saved successfully!");
-  }
-
-  private async getInstructions(): Promise<Instruction[]> {
-    return new Promise<Instruction[]>((resolve) => {
-      chrome.storage.local.get("instructions", (result) => {
-        resolve(result.instructions || []);
-      });
-    });
+    storage.set("elements", elements);
   }
 
   private initializeInstructionsHandling(): void {
@@ -215,8 +202,8 @@ class ContentScript {
 
   private async loadInstructions(): Promise<void> {
     try {
-      const result = await chrome.storage.local.get("instructions");
-      const instructions = result.instructions || [];
+      const instructions =
+        (await storage.get<Instruction[]>("instructions")) || [];
       dispatchCustomEvent("SET_INSTRUCTIONS", { instructions });
     } catch (error) {
       console.error("Failed to load instructions:", error);
@@ -225,7 +212,7 @@ class ContentScript {
 
   private async saveInstructions(instructions: Instruction[]): Promise<void> {
     try {
-      await chrome.storage.local.set({ instructions });
+      await storage.set("instructions", instructions);
       console.log("Instructions saved successfully");
     } catch (error) {
       console.error("Failed to save instructions:", error);

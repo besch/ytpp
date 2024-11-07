@@ -11,6 +11,7 @@ import {
   FabricImage,
 } from "fabric";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import { storage } from "@/lib/storage";
 
 export class ElementManager {
   private animationIntervals: Map<string, number> = new Map();
@@ -424,7 +425,7 @@ export class ElementManager {
 
   private saveElementsToStorage(): void {
     const elements = this.getElements();
-    chrome.storage.local.set({ elements }, () => {
+    storage.set("elements", elements).then(() => {
       dispatchCustomEvent("SAVE_SUCCESS", {
         message: "Elements saved to storage",
       });
@@ -523,8 +524,6 @@ export class ElementManager {
       clearInterval(intervalId);
     });
     this.animationIntervals.clear();
-
-    // ... existing dispose code ...
   }
 
   public handleSelectionCleared = (): void => {

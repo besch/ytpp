@@ -8,7 +8,7 @@ import {
   removeInstruction,
 } from "@/store/timelineSlice";
 import type { Instruction } from "@/types";
-import { formatTime } from "@/utils/time";
+import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 

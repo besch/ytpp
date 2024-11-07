@@ -5,7 +5,6 @@ class BackgroundService {
   }
 
   private async initialize(): Promise<void> {
-    await this.initializeStorage();
     this.setupClickHandler();
   }
 
@@ -38,7 +37,6 @@ class BackgroundService {
 
   private async onInstalled(): Promise<void> {
     // await chrome.storage.local.clear();
-    await this.initializeStorage();
   }
 
   private async onStartup(): Promise<void> {}
@@ -53,19 +51,6 @@ class BackgroundService {
         break;
     }
     return true;
-  }
-
-  private async initializeStorage(): Promise<void> {
-    const { scriptState } = await chrome.storage.local.get("scriptState");
-    chrome.storage.local.set({ scriptState: scriptState ?? {} });
-  }
-
-  private async getCurrentTabUrl(): Promise<string> {
-    return new Promise((resolve) => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        resolve(tabs[0]?.url || "");
-      });
-    });
   }
 }
 
