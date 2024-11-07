@@ -204,7 +204,7 @@ const Timeline: React.FC = () => {
                       left: 0,
                       top: "calc(50% + 5px)",
                       transform: "translateY(-50%)",
-                      zIndex: 10,
+                      zIndex: 1,
                     }}
                   />
                 )}
@@ -219,6 +219,7 @@ const Timeline: React.FC = () => {
                     position: "absolute",
                     left: 0,
                     transform: "translateX(-50%)",
+                    zIndex: 20,
                   }}
                 >
                   <div
