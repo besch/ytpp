@@ -43,7 +43,6 @@ const InstructionEditor: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
     setValue,
     reset,
   } = useForm<any>({

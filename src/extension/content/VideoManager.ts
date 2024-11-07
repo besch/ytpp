@@ -117,10 +117,8 @@ export class VideoManager {
 
   public handleInstructionPause = (pauseDuration: number): void => {
     if (this.videoElement && !this.videoElement.paused) {
-      console.log(`Pausing video for ${pauseDuration}ms`);
       this.videoElement.pause();
 
-      // Ensure the video stays paused for the full duration
       const resumeTime = setTimeout(() => {
         if (this.videoElement && this.videoElement.paused) {
           console.log("Resuming video after pause");
@@ -128,7 +126,7 @@ export class VideoManager {
             console.error("Error resuming video:", error);
           });
         }
-      }, pauseDuration);
+      }, pauseDuration * 1000);
 
       // Store the timeout to clear it if needed
       (this.videoElement as any)._pauseTimeout = resumeTime;

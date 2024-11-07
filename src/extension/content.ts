@@ -204,29 +204,6 @@ class ContentScript {
       const customEvent = event as CustomEvent<{ instructions: Instruction[] }>;
       this.saveInstructions(customEvent.detail.instructions);
     }) as EventListener);
-
-    // Listen for instructions events
-    window.addEventListener("CHECK_INSTRUCTIONS", (async (
-      event: CustomEvent<{ currentTimeMs: number }>
-    ) => {
-      const currentTimeMs = event.detail.currentTimeMs;
-      const instructions = await this.getInstructions();
-
-      // Find instruction that matches current time
-      const matchingInstruction = instructions.find(
-        (instruction) => Math.abs(instruction.triggerTime - currentTimeMs) < 50 // 50ms threshold
-      );
-
-      if (matchingInstruction && this.videoManager) {
-        if (matchingInstruction.type === "pause") {
-          this.videoManager.handleInstructionPause(
-            matchingInstruction.pauseDuration
-          );
-        } else if (matchingInstruction.type === "skip") {
-          this.videoManager.seekTo(matchingInstruction.skipToTime);
-        }
-      }
-    }) as unknown as EventListener);
   }
 
   private async loadInstructions(): Promise<void> {
