@@ -69,6 +69,10 @@ module.exports = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        ripple: {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "100%": { transform: "scale(4)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -78,6 +82,7 @@ module.exports = {
         "fade-in": "fadeIn 0.3s ease-in",
         spin: "spin 1s linear infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        ripple: "ripple 1s ease-out forwards",
       },
     },
   },

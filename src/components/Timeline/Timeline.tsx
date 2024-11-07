@@ -223,7 +223,7 @@ const Timeline: React.FC = () => {
                   }}
                 >
                   <div
-                    className={`w-4 h-4 rounded-full cursor-pointer
+                    className={`w-4 h-4 rounded-full cursor-pointer relative
                       border-2 border-background shadow-md
                       transition-all duration-200
                       ${
@@ -237,7 +237,11 @@ const Timeline: React.FC = () => {
                           : ""
                       }
                     `}
-                  />
+                  >
+                    {currentTime === instruction.triggerTime && (
+                      <span className="absolute inset-0 rounded-full bg-primary/30 animate-ripple" />
+                    )}
+                  </div>
                   <div
                     className="absolute opacity-0 group-hover:opacity-100
                       bottom-full mb-2 left-1/2 -translate-x-1/2
@@ -282,7 +286,7 @@ const Timeline: React.FC = () => {
         onClick={handleTimelineClick}
       >
         {/* Time markers */}
-        <div className="absolute top-0 left-0 right-0 h-6 flex justify-between px-2 text-xs text-muted-foreground">
+        <div className="absolute top-0 left-0 right-0 h-6 flex justify-between px-2 text-sm text-muted-foreground">
           {[0, 25, 50, 75, 100].map((percent) => (
             <div key={percent} className="relative">
               {formatTime((duration * percent) / 100)}
@@ -307,7 +311,7 @@ const Timeline: React.FC = () => {
         >
           <div
             className="absolute -top-6 left-1/2 -translate-x-1/2 
-            bg-primary px-2 py-1 rounded text-xs text-white
+            bg-primary px-2 py-1 rounded text-sm font-medium text-white
             shadow-lg"
           >
             {formatTime(currentTime)}
