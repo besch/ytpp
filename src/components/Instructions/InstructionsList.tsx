@@ -6,7 +6,7 @@ import {
   selectInstructions,
   setEditingInstruction,
   removeInstruction,
-} from "@/store/instructionsSlice";
+} from "@/store/timelineSlice";
 import type { Instruction } from "@/types";
 import { formatTime } from "@/utils/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";

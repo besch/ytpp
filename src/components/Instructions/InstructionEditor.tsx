@@ -4,15 +4,16 @@ import { useForm } from "react-hook-form";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { selectCurrentTime, setCurrentTime } from "@/store/timelineSlice";
 import {
+  selectCurrentTime,
+  setCurrentTime,
   addInstruction,
   updateInstruction,
   selectEditingInstruction,
   selectInstructions,
   setEditingInstruction,
   removeInstruction,
-} from "@/store/instructionsSlice";
+} from "@/store/timelineSlice";
 import {
   PauseInstruction,
   SkipInstruction,

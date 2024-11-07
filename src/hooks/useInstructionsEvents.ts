@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { setInstructions } from "@/store/instructionsSlice";
+import { setInstructions } from "@/store/timelineSlice";
 import { Instruction } from "@/types";
 
 export const useInstructionsEvents = () => {

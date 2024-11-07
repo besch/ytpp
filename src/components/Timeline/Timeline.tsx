@@ -4,12 +4,10 @@ import {
   selectCurrentTime,
   setActiveTab,
   setCurrentTime,
-} from "@/store/timelineSlice";
-import {
   selectInstructions,
   setSelectedInstructionId,
   setEditingInstruction,
-} from "@/store/instructionsSlice";
+} from "@/store/timelineSlice";
 import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
 import { RootState } from "@/store";
 

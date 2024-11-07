@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
+import { Instruction } from "@/types";
 
 interface ElementStyle {
   fill: string;
@@ -32,6 +33,9 @@ interface TimelineState {
   elements: Element[];
   selectedElementId: string | null;
   activeTab: string;
+  instructions: Instruction[];
+  editingInstruction: Instruction | null;
+  selectedInstructionId: string | null;
 }
 
 const initialState: TimelineState = {
@@ -39,6 +43,9 @@ const initialState: TimelineState = {
   elements: [],
   selectedElementId: null,
   activeTab: "elements",
+  instructions: [],
+  editingInstruction: null,
+  selectedInstructionId: null,
 };
 
 const timelineSlice = createSlice({
@@ -61,12 +68,42 @@ const timelineSlice = createSlice({
     },
     setSelectedElementId: (state, action: PayloadAction<string | null>) => {
       state.selectedElementId = action.payload;
+      state.selectedInstructionId = null;
     },
     setElements: (state, action: PayloadAction<Element[]>) => {
       state.elements = action.payload;
     },
     setActiveTab: (state, action: PayloadAction<string>) => {
       state.activeTab = action.payload;
+    },
+    addInstruction: (state, action: PayloadAction<Instruction>) => {
+      state.instructions.push(action.payload);
+    },
+    updateInstruction: (state, action: PayloadAction<Instruction>) => {
+      const index = state.instructions.findIndex(
+        (instruction) => instruction.id === action.payload.id
+      );
+      if (index !== -1) {
+        state.instructions[index] = action.payload;
+      }
+    },
+    removeInstruction: (state, action: PayloadAction<string>) => {
+      state.instructions = state.instructions.filter(
+        (instruction) => instruction.id !== action.payload
+      );
+    },
+    setEditingInstruction: (
+      state,
+      action: PayloadAction<Instruction | null>
+    ) => {
+      state.editingInstruction = action.payload;
+    },
+    setSelectedInstructionId: (state, action: PayloadAction<string | null>) => {
+      state.selectedInstructionId = action.payload;
+      state.selectedElementId = null;
+    },
+    setInstructions: (state, action: PayloadAction<Instruction[]>) => {
+      state.instructions = action.payload;
     },
   },
 });
@@ -78,6 +115,12 @@ export const {
   setSelectedElementId,
   setElements,
   setActiveTab,
+  addInstruction,
+  updateInstruction,
+  removeInstruction,
+  setEditingInstruction,
+  setSelectedInstructionId,
+  setInstructions,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>
@@ -92,5 +135,11 @@ export const selectSelectedElement = (state: RootState) => {
     : null;
 };
 export const selectActiveTab = (state: RootState) => state.timeline.activeTab;
+export const selectInstructions = (state: RootState) =>
+  state.timeline.instructions;
+export const selectEditingInstruction = (state: RootState) =>
+  state.timeline.editingInstruction;
+export const selectSelectedInstructionId = (state: RootState) =>
+  state.timeline.selectedInstructionId;
 
 export default timelineSlice.reducer;

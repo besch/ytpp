@@ -1,11 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
 import timelineReducer from "@/store/timelineSlice";
-import instructionsReducer from "@/store/instructionsSlice";
 
 export const store = configureStore({
   reducer: {
     timeline: timelineReducer,
-    instructions: instructionsReducer,
   },
 });
 
