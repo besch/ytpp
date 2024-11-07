@@ -144,8 +144,8 @@ export class ElementManager {
     // Store original dimensions and positions
     element.data = {
       id,
-      from: 0,
-      to: Number.MAX_SAFE_INTEGER,
+      from: this.videoElement.currentTime * 1000, // Convert to milliseconds
+      to: (this.videoElement.currentTime + 10) * 1000, // Add 10 seconds
       originalLeft: element.left || 0,
       originalTop: element.top || 0,
       originalScaleX: element.scaleX || 1,
