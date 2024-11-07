@@ -1,6 +1,7 @@
 import React from "react";
 import { Circle, Square, Type, Triangle, Image } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 const AddElements: React.FC = () => {
   const addElement = (elementType: string) => {
@@ -14,22 +15,14 @@ const AddElements: React.FC = () => {
           const reader = new FileReader();
           reader.onload = (e) => {
             const gifUrl = e.target?.result as string;
-            window.dispatchEvent(
-              new CustomEvent("ADD_ELEMENT", {
-                detail: { elementType: "gif", gifUrl },
-              })
-            );
+            dispatchCustomEvent("ADD_ELEMENT", { elementType: "gif", gifUrl });
           };
           reader.readAsDataURL(file);
         }
       };
       input.click();
     } else {
-      window.dispatchEvent(
-        new CustomEvent("ADD_ELEMENT", {
-          detail: { elementType },
-        })
-      );
+      dispatchCustomEvent("ADD_ELEMENT", { elementType });
     }
   };
 

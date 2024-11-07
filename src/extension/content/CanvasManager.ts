@@ -226,16 +226,15 @@ export class CanvasManager {
   private setupEditing(): void {
     if (!this.canvas) return;
 
-    // Prevent click events from reaching the video when interacting with canvas
+    // Add fabric.js event listeners
     this.canvas.on("mouse:down", this.handleCanvasMouseDown);
     this.canvas.on("mouse:up", this.handleCanvasMouseUp);
     this.canvas.on("mouse:move", this.handleCanvasMouseMove);
+    this.canvas.on("object:modified", this.handleObjectModified);
 
-    // Add event listener to the canvas element
+    // Add click handler to canvas element
     const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
     canvasElement.addEventListener("click", this.handleCanvasClick);
-
-    this.canvas.on("object:modified", this.handleObjectModified);
   }
 
   private handleCanvasClick = (e: MouseEvent): void => {
@@ -306,4 +305,17 @@ export class CanvasManager {
       }
     }
   };
+
+  // Add cleanup method for event listeners
+  public cleanup(): void {
+    if (this.canvas) {
+      this.canvas.off("mouse:down", this.handleCanvasMouseDown);
+      this.canvas.off("mouse:up", this.handleCanvasMouseUp);
+      this.canvas.off("mouse:move", this.handleCanvasMouseMove);
+      this.canvas.off("object:modified", this.handleObjectModified);
+
+      const canvasElement = this.canvas.getElement() as HTMLCanvasElement;
+      canvasElement.removeEventListener("click", this.handleCanvasClick);
+    }
+  }
 }

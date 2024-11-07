@@ -4,7 +4,6 @@ import ElementColorPicker from "@/components/ElementColorPicker";
 import TimeRangeInputs from "@/components/TimeRangeInputs";
 import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 import AddElements from "@/components/AddElements";
-import DeleteElementButton from "@/components/DeleteElementButton";
 import InstructionEditor from "@/components/Instructions/InstructionEditor";
 import { useInstructionsEvents } from "@/hooks/useInstructionsEvents";
 import { Layers, Clock, Settings } from "lucide-react";
@@ -15,6 +14,7 @@ import {
   selectActiveTab,
   setActiveTab,
 } from "@/store/timelineSlice";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 type Tab = {
   id: string;
@@ -40,7 +40,7 @@ const EditPage: React.FC = () => {
   }, [selectedElement, activeTab, dispatch]);
 
   const saveElements = () => {
-    window.dispatchEvent(new CustomEvent("SAVE_ELEMENTS"));
+    dispatchCustomEvent("SAVE_ELEMENTS");
   };
 
   const tabs: Tab[] = [

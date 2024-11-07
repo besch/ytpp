@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectCurrentTime, setCurrentTime } from "@/store/timelineSlice";
+import { addCustomEventListener } from "@/lib/eventSystem";
 
 const VideoTimeDisplay: React.FC = () => {
   const dispatch = useDispatch();
@@ -18,25 +19,18 @@ const VideoTimeDisplay: React.FC = () => {
   };
 
   useEffect(() => {
-    const handleTimeUpdate = (event: CustomEvent) => {
-      dispatch(setCurrentTime(event.detail.currentTimeMs));
-    };
-
-    window.addEventListener(
+    const cleanup = addCustomEventListener(
       "VIDEO_TIME_UPDATE",
-      handleTimeUpdate as EventListener
+      ({ currentTimeMs }) => {
+        dispatch(setCurrentTime(currentTimeMs));
+      }
     );
 
     const initialTime =
       (window as any).videoManager?.getCurrentVideoTimeMs() || 0;
     dispatch(setCurrentTime(initialTime));
 
-    return () => {
-      window.removeEventListener(
-        "VIDEO_TIME_UPDATE",
-        handleTimeUpdate as EventListener
-      );
-    };
+    return cleanup;
   }, [dispatch]);
 
   return (

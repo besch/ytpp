@@ -10,6 +10,7 @@ import {
 import type { Instruction } from "@/types";
 import { formatTime } from "@/utils/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
@@ -27,20 +28,16 @@ const InstructionsList: React.FC = () => {
 
   const handleEdit = (instruction: Instruction) => {
     dispatch(setEditingInstruction(instruction));
-    window.dispatchEvent(
-      new CustomEvent("SEEK_TO_TIME", {
-        detail: { timeMs: instruction.triggerTime },
-      })
-    );
+    dispatchCustomEvent("SEEK_TO_TIME", {
+      timeMs: instruction.triggerTime,
+    });
   };
 
   const handleDelete = (id: string) => {
     dispatch(removeInstruction(id));
-    window.dispatchEvent(
-      new CustomEvent("SAVE_INSTRUCTIONS", {
-        detail: { instructions },
-      })
-    );
+    dispatchCustomEvent("SAVE_INSTRUCTIONS", {
+      instructions,
+    });
   };
 
   if (showTypeSelect) {

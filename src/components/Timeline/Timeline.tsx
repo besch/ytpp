@@ -10,6 +10,7 @@ import {
 } from "@/store/timelineSlice";
 import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
 import { RootState } from "@/store";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
@@ -97,11 +98,7 @@ const Timeline: React.FC = () => {
   }, [dispatch]);
 
   const seekToTime = (timeMs: number) => {
-    window.dispatchEvent(
-      new CustomEvent<{ timeMs: number }>("SEEK_TO_TIME", {
-        detail: { timeMs },
-      })
-    );
+    dispatchCustomEvent("SEEK_TO_TIME", { timeMs });
     dispatch(setCurrentTime(timeMs));
   };
 
@@ -130,7 +127,6 @@ const Timeline: React.FC = () => {
     e.stopPropagation();
     seekToTime(instruction.triggerTime);
     dispatch(setSelectedInstructionId(instruction.id));
-    // Navigate to Instructions tab and open the edit form
     dispatch(setActiveTab("instructions"));
     dispatch(setEditingInstruction(instruction));
   };

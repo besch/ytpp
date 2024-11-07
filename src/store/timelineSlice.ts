@@ -67,8 +67,8 @@ const timelineSlice = createSlice({
       }
     },
     setSelectedElementId: (state, action: PayloadAction<string | null>) => {
-      state.selectedElementId = action.payload;
       state.selectedInstructionId = null;
+      state.selectedElementId = action.payload;
     },
     setElements: (state, action: PayloadAction<Element[]>) => {
       state.elements = action.payload;

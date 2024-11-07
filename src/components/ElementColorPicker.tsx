@@ -2,6 +2,7 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ChromePicker, ColorResult } from "react-color";
 import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 const ElementColorPicker: React.FC = () => {
   const dispatch = useDispatch();
@@ -22,14 +23,10 @@ const ElementColorPicker: React.FC = () => {
       })
     );
 
-    window.dispatchEvent(
-      new CustomEvent("UPDATE_ELEMENT_COLOR", {
-        detail: {
-          color: color.hex,
-          type: "fill",
-        },
-      })
-    );
+    dispatchCustomEvent("UPDATE_ELEMENT_COLOR", {
+      color: color.hex,
+      type: "fill",
+    });
   };
 
   return (

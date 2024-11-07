@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedElementId, setElements } from "@/store/timelineSlice";
 import Button from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 interface DeleteElementButtonProps {
   className?: string;
@@ -17,14 +18,8 @@ const DeleteElementButton: React.FC<DeleteElementButtonProps> = ({
   const handleDelete = () => {
     if (!selectedElementId) return;
 
-    window.dispatchEvent(
-      new CustomEvent("DELETE_ELEMENT", {
-        detail: { elementId: selectedElementId },
-      })
-    );
-
-    // Update elements in Redux store
-    window.dispatchEvent(new CustomEvent("GET_ELEMENTS"));
+    dispatchCustomEvent("DELETE_ELEMENT", { elementId: selectedElementId });
+    dispatchCustomEvent("GET_ELEMENTS");
   };
 
   return (

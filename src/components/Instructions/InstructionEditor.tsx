@@ -22,6 +22,7 @@ import {
 } from "@/types";
 import InstructionsList from "./InstructionsList";
 import { TimeInput } from "../ui/TimeInput";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -130,11 +131,9 @@ const InstructionEditor: React.FC = () => {
   };
 
   const handleSaveInstructions = () => {
-    window.dispatchEvent(
-      new CustomEvent("SAVE_INSTRUCTIONS", {
-        detail: { instructions },
-      })
-    );
+    dispatchCustomEvent("SAVE_INSTRUCTIONS", {
+      instructions,
+    });
   };
 
   const onSubmit = (data: any) => {
@@ -174,17 +173,13 @@ const InstructionEditor: React.FC = () => {
     dispatch(setCurrentTime(triggerTime));
 
     // Update storage immediately after adding/updating instruction
-    window.dispatchEvent(
-      new CustomEvent("SAVE_INSTRUCTIONS", {
-        detail: {
-          instructions: isEditing
-            ? instructions.map((i) =>
-                i.id === newInstruction.id ? newInstruction : i
-              )
-            : [...instructions, newInstruction],
-        },
-      })
-    );
+    dispatchCustomEvent("SAVE_INSTRUCTIONS", {
+      instructions: isEditing
+        ? instructions.map((i) =>
+            i.id === newInstruction.id ? newInstruction : i
+          )
+        : [...instructions, newInstruction],
+    });
 
     reset();
     dispatch(setEditingInstruction(null));

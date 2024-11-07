@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
 import { TimeInput } from "@/components/ui/TimeInput";
 import DeleteElementButton from "./DeleteElementButton";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 const TimeRangeInputs: React.FC = () => {
   const dispatch = useDispatch();
@@ -18,15 +19,11 @@ const TimeRangeInputs: React.FC = () => {
       })
     );
 
-    window.dispatchEvent(
-      new CustomEvent("UPDATE_ELEMENT_TIME", {
-        detail: {
-          elementId: selectedElement.id,
-          from: value,
-          to: selectedElement.timeRange.to,
-        },
-      })
-    );
+    dispatchCustomEvent("UPDATE_ELEMENT_TIME", {
+      elementId: selectedElement.id,
+      from: value,
+      to: selectedElement.timeRange.to,
+    });
   };
 
   const handleToChange = (value: number) => {
@@ -37,15 +34,11 @@ const TimeRangeInputs: React.FC = () => {
       })
     );
 
-    window.dispatchEvent(
-      new CustomEvent("UPDATE_ELEMENT_TIME", {
-        detail: {
-          elementId: selectedElement.id,
-          from: selectedElement.timeRange.from,
-          to: value,
-        },
-      })
-    );
+    dispatchCustomEvent("UPDATE_ELEMENT_TIME", {
+      elementId: selectedElement.id,
+      from: selectedElement.timeRange.from,
+      to: value,
+    });
   };
 
   return (
