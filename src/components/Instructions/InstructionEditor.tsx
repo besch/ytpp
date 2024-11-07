@@ -17,9 +17,10 @@ import {
   PauseInstruction,
   SkipInstruction,
   Instruction,
-  TimeInput,
+  TimeInput as TimeInputType,
 } from "@/types";
 import InstructionsList from "./InstructionsList";
+import { TimeInput } from "../ui/TimeInput";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -30,7 +31,7 @@ const InstructionEditor: React.FC = () => {
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
 
-  const parseTimeInput = (data: TimeInput) => {
+  const parseTimeInput = (data: TimeInputType) => {
     return (
       (Number(data.hours) * 3600 +
         Number(data.minutes) * 60 +
@@ -45,6 +46,7 @@ const InstructionEditor: React.FC = () => {
     formState: { errors },
     setValue,
     reset,
+    watch,
   } = useForm<any>({
     defaultValues: {
       hours: 0,
@@ -187,6 +189,28 @@ const InstructionEditor: React.FC = () => {
     dispatch(setEditingInstruction(null));
   };
 
+  const handleTimeChange = (time: number) => {
+    const totalSeconds = time / 1000;
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+
+    setValue("hours", hours);
+    setValue("minutes", minutes);
+    setValue("seconds", seconds);
+  };
+
+  const handleSkipToTimeChange = (time: number) => {
+    const totalSeconds = time / 1000;
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+
+    setValue("skipToHours", hours);
+    setValue("skipToMinutes", minutes);
+    setValue("skipToSeconds", seconds);
+  };
+
   const renderForm = () => {
     if (!selectedType && !isEditing) {
       return (
@@ -237,24 +261,16 @@ const InstructionEditor: React.FC = () => {
             <label className="text-sm text-muted-foreground">
               Trigger Time
             </label>
-            <div className="flex space-x-2">
-              <Input
-                type="number"
-                placeholder="HH"
-                {...register("hours", { min: 0 })}
-              />
-              <Input
-                type="number"
-                placeholder="MM"
-                {...register("minutes", { min: 0, max: 59 })}
-              />
-              <Input
-                type="number"
-                placeholder="SS"
-                {...register("seconds", { min: 0, max: 59 })}
-              />
-            </div>
+            <TimeInput
+              value={parseTimeInput({
+                hours: watch("hours"),
+                minutes: watch("minutes"),
+                seconds: watch("seconds"),
+              })}
+              onChange={handleTimeChange}
+            />
           </div>
+
           {selectedType === "pause" && (
             <div>
               <label className="text-sm text-muted-foreground">
@@ -271,30 +287,23 @@ const InstructionEditor: React.FC = () => {
               )}
             </div>
           )}
+
           {selectedType === "skip" && (
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">
                 Skip to Time
               </label>
-              <div className="flex space-x-2">
-                <Input
-                  type="number"
-                  placeholder="HH"
-                  {...register("skipToHours", { min: 0 })}
-                />
-                <Input
-                  type="number"
-                  placeholder="MM"
-                  {...register("skipToMinutes", { min: 0, max: 59 })}
-                />
-                <Input
-                  type="number"
-                  placeholder="SS"
-                  {...register("skipToSeconds", { min: 0, max: 59 })}
-                />
-              </div>
+              <TimeInput
+                value={parseTimeInput({
+                  hours: watch("skipToHours"),
+                  minutes: watch("skipToMinutes"),
+                  seconds: watch("skipToSeconds"),
+                })}
+                onChange={handleSkipToTimeChange}
+              />
             </div>
           )}
+
           <Button type="submit" className="w-full">
             {isEditing ? "Update Instruction" : "Add Instruction"}
           </Button>

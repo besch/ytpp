@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
-import Input from "@/components/ui/Input";
+import { TimeInput } from "@/components/ui/TimeInput";
 
 const TimeRangeInputs: React.FC = () => {
   const dispatch = useDispatch();
@@ -9,8 +9,7 @@ const TimeRangeInputs: React.FC = () => {
 
   if (!selectedElement) return null;
 
-  const handleFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
+  const handleFromChange = (value: number) => {
     dispatch(
       updateElement({
         id: selectedElement.id,
@@ -29,8 +28,7 @@ const TimeRangeInputs: React.FC = () => {
     );
   };
 
-  const handleToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
+  const handleToChange = (value: number) => {
     dispatch(
       updateElement({
         id: selectedElement.id,
@@ -52,26 +50,20 @@ const TimeRangeInputs: React.FC = () => {
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-medium text-foreground">Time Range</h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="d-flex">
         <div className="space-y-2">
-          <label className="text-sm text-muted-foreground">
-            Start Time (ms)
-          </label>
-          <Input
-            type="number"
+          <label className="text-sm text-muted-foreground">Start Time</label>
+          <TimeInput
             value={selectedElement.timeRange.from}
             onChange={handleFromChange}
-            min="0"
             className="w-full"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm text-muted-foreground">End Time (ms)</label>
-          <Input
-            type="number"
+          <label className="text-sm text-muted-foreground">End Time</label>
+          <TimeInput
             value={selectedElement.timeRange.to}
             onChange={handleToChange}
-            min="0"
             className="w-full"
           />
         </div>
