@@ -185,7 +185,6 @@ const Timeline: React.FC = () => {
                           100
                         }px`
                       : "auto",
-                  left: instruction.type === "skip" ? 0 : "50%",
                 }}
               >
                 {isPause && (
@@ -203,21 +202,24 @@ const Timeline: React.FC = () => {
                     style={{
                       width: "100%",
                       left: 0,
-                      top: "50%",
+                      top: "calc(50% + 5px)",
                       transform: "translateY(-50%)",
                       zIndex: 10,
                     }}
                   />
                 )}
                 <div
-                  className={`relative group ${
-                    instruction.type === "skip" ? "" : "-translate-x-1/2"
-                  }
+                  className={`relative group 
                     ${
                       currentTime === instruction.triggerTime ? "scale-110" : ""
                     }
                     transition-all duration-200`}
                   onClick={(e) => handleInstructionClick(e, instruction)}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    transform: "translateX(-50%)",
+                  }}
                 >
                   <div
                     className={`w-4 h-4 rounded-full cursor-pointer
