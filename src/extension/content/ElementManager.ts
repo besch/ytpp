@@ -32,10 +32,8 @@ export class ElementManager {
 
   public handleObjectSelection = (e: any): void => {
     const selectedObject = e.selected?.[0] as CustomFabricObject;
-    console.log("Selected object:", selectedObject);
 
     if (selectedObject && selectedObject.data) {
-      console.log("Dispatching ELEMENT_SELECTED with:", selectedObject.data);
       dispatchCustomEvent("ELEMENT_SELECTED", {
         element: {
           id: selectedObject.data.id,
@@ -254,6 +252,9 @@ export class ElementManager {
           height: customObj.height,
           radius: (customObj as any).radius, // for circles
           text: (customObj as any).text, // for textboxes
+          isGif: customObj.data?.isGif || false,
+          gifSrc: customObj.data?.gifSrc || null,
+          scaleMode: customObj.data?.scaleMode || "responsive",
         },
       };
     });
