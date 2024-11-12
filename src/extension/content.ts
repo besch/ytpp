@@ -168,8 +168,7 @@ class ContentScript {
   }
 
   private handleTimeUpdate = (currentTimeMs: number): void => {
-    const elements = OverlayManager.elementManager?.getElements() || [];
-    OverlayManager.update(currentTimeMs, elements);
+    OverlayManager.update(currentTimeMs);
   };
 
   private startPlay(): void {

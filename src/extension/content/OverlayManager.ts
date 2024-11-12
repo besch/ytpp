@@ -34,6 +34,10 @@ export class OverlayManager {
           this.elementManager.handleSelectionCleared
         );
       }
+
+      videoElement.addEventListener("timeupdate", () => {
+        this.update(videoElement.currentTime * 1000);
+      });
     }
   }
 
@@ -57,7 +61,7 @@ export class OverlayManager {
     this.elementManager?.loadElements(elements);
   }
 
-  public static update(currentTimeMs: number, elements: any[]): void {
+  public static update(currentTimeMs: number): void {
     if (this.elementManager) {
       this.elementManager.updateVisibility(currentTimeMs);
     }

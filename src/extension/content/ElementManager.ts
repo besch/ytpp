@@ -462,24 +462,22 @@ export class ElementManager {
       const isVisible =
         currentTimeMs >= obj.data.from && currentTimeMs <= obj.data.to;
 
-      if (obj.visible !== isVisible) {
-        obj.visible = isVisible;
+      obj.visible = isVisible;
 
-        // Handle GIF animation when visibility changes
-        if (isVisible && obj.data.isGif) {
-          this.startGifAnimation(obj);
-        } else if (!isVisible && obj.data.isGif) {
-          this.stopGifAnimation(obj.data.id);
-        }
+      if (isVisible) {
+        obj.set({
+          left: obj.data.originalLeft,
+          top: obj.data.originalTop,
+          scaleX: obj.data.originalScaleX,
+          scaleY: obj.data.originalScaleY,
+        });
+      }
 
-        if (isVisible) {
-          obj.set({
-            left: obj.data.originalLeft,
-            top: obj.data.originalTop,
-            scaleX: obj.data.originalScaleX,
-            scaleY: obj.data.originalScaleY,
-          });
-        }
+      // Handle GIF animation when visibility changes
+      if (isVisible && obj.data.isGif) {
+        this.startGifAnimation(obj);
+      } else if (!isVisible && obj.data.isGif) {
+        this.stopGifAnimation(obj.data.id);
       }
     });
 

@@ -78,6 +78,9 @@ export class VideoManager {
 
     dispatchCustomEvent("VIDEO_TIME_UPDATE", { currentTimeMs });
     this.checkInstructions(currentTimeMs);
+
+    // Call updateVisibility on ElementManager
+    this.timeUpdateListeners.forEach((listener) => listener(currentTimeMs));
   };
 
   private async checkInstructions(currentTimeMs: number): Promise<void> {
