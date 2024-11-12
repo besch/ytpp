@@ -1,3 +1,5 @@
+Youtube Uncensored
+
  youtube not allowing to reupload updated video to the same url where it was before to keep likes, views etc. 
  I am creating chrome extension that can extend video.
 I can add timeline instuctions e.g to pause video at certain time for several seconds, 
@@ -24,7 +26,9 @@ create a summary where user can watch 10 video fragments for few seconds instead
 new tab in EditPage to show gif comments
 interaction with videos dynamically, display prompts or quizzes during pause instruction
 video owner or other users can augment the same video, allow multiple video augmentation, share augmented version
-
+embed another youtube video into canvas to give a context or timeline from other yotube videos
+bypass youtube copywrite
+bypass censored content
 
 
 
