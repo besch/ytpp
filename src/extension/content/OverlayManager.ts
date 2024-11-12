@@ -5,14 +5,11 @@ import { CustomFabricObject } from "@/types";
 export class OverlayManager {
   private static canvasManager: CanvasManager | null = null;
   public static elementManager: ElementManager | null = null;
-  private static videoElement: HTMLVideoElement | null = null;
-  private static isOverlayVisible: boolean = false;
 
   public static createOverlay(
     videoElement: HTMLVideoElement,
     isEditing: boolean
   ): void {
-    this.videoElement = videoElement;
     if (this.canvasManager) {
       this.removeOverlay();
     }
@@ -46,8 +43,6 @@ export class OverlayManager {
       this.canvasManager = null;
     }
     this.elementManager = null;
-    this.videoElement = null;
-    this.isOverlayVisible = false;
   }
 
   public static addElement(elementType: string, gifUrl?: string): void {
