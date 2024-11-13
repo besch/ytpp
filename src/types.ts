@@ -48,6 +48,10 @@ export interface BaseInstruction {
 export interface PauseInstruction extends BaseInstruction {
   type: "pause";
   pauseDuration: number;
+  overlayVideo?: {
+    url: string;
+    duration: number;
+  };
 }
 
 export interface SkipInstruction extends BaseInstruction {

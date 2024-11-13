@@ -1,25 +1,37 @@
 export const storage = {
-  get: async <T>(key: string): Promise<T | undefined> => {
-    if (typeof chrome !== "undefined" && chrome.storage) {
-      return new Promise((resolve) => {
-        chrome.storage.local.get(key, (result) => resolve(result[key]));
+  set: async (key: string, value: any): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.set({ [key]: value }, () => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve();
+        }
       });
-    }
-    return undefined;
+    });
   },
 
-  set: async <T>(key: string, value: T): Promise<void> => {
-    if (typeof chrome !== "undefined" && chrome.storage) {
-      return new Promise((resolve) => {
-        chrome.storage.local.set({ [key]: value }, () => resolve());
+  get: async <T>(key: string): Promise<T | null> => {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.get([key], (result) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(result[key] as T);
+        }
       });
-    }
+    });
   },
-  clear: async (): Promise<void> => {
-    if (typeof chrome !== "undefined" && chrome.storage) {
-      return new Promise((resolve) => {
-        chrome.storage.local.clear(() => resolve());
+
+  remove: async (key: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.remove([key], () => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve();
+        }
       });
-    }
+    });
   },
 };

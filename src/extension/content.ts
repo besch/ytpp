@@ -19,7 +19,7 @@ class ContentScript {
     this.setupUnloadListener();
     this.setupCustomEventListeners();
 
-    // Don't inject React app immediately
+    // Initialize VideoManager
     this.videoManager = new VideoManager();
     this.videoManager.findAndStoreVideoElement();
     this.startPlay();

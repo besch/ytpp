@@ -36,6 +36,7 @@ const getInstructionLabel = (instruction: Instruction): string => {
 const Timeline: React.FC = () => {
   const dispatch = useDispatch();
   const timelineRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const currentTime = useSelector(selectCurrentTime);
   const instructions: Instruction[] = useSelector((state: RootState) =>
     selectInstructions(state)
@@ -43,41 +44,45 @@ const Timeline: React.FC = () => {
   const [duration, setDuration] = useState<number>(0);
 
   useEffect(() => {
-    const videoElement = document.querySelector("video");
-    if (videoElement) {
-      setDuration(videoElement.duration * 1000);
+    videoRef.current = document.querySelector(
+      "video:not(.youtube-uncensored-video)"
+    ) as HTMLVideoElement;
 
-      const initialTimeMs = videoElement.currentTime * 1000;
-      dispatch(setCurrentTime(initialTimeMs));
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration * 1000);
+      dispatch(setCurrentTime(videoRef.current.currentTime * 1000));
 
       const handleLoadedMetadata = () => {
-        setDuration(videoElement.duration * 1000);
-        const currentTimeMs = videoElement.currentTime * 1000;
-        dispatch(setCurrentTime(currentTimeMs));
+        if (!videoRef.current) return;
+        setDuration(videoRef.current.duration * 1000);
+        dispatch(setCurrentTime(videoRef.current.currentTime * 1000));
       };
 
       const handleTimeUpdate = () => {
-        const currentTimeMs = videoElement.currentTime * 1000;
+        if (!videoRef.current) return;
+        const currentTimeMs = videoRef.current.currentTime * 1000;
         requestAnimationFrame(() => {
           dispatch(setCurrentTime(currentTimeMs));
         });
       };
 
       const handleDurationChange = () => {
-        setDuration(videoElement.duration * 1000);
+        if (!videoRef.current) return;
+        setDuration(videoRef.current.duration * 1000);
       };
 
-      videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
-      videoElement.addEventListener("timeupdate", handleTimeUpdate);
-      videoElement.addEventListener("durationchange", handleDurationChange);
+      videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
+      videoRef.current.addEventListener("timeupdate", handleTimeUpdate);
+      videoRef.current.addEventListener("durationchange", handleDurationChange);
 
       return () => {
-        videoElement.removeEventListener(
+        if (!videoRef.current) return;
+        videoRef.current.removeEventListener(
           "loadedmetadata",
           handleLoadedMetadata
         );
-        videoElement.removeEventListener("timeupdate", handleTimeUpdate);
-        videoElement.removeEventListener(
+        videoRef.current.removeEventListener("timeupdate", handleTimeUpdate);
+        videoRef.current.removeEventListener(
           "durationchange",
           handleDurationChange
         );
@@ -87,12 +92,10 @@ const Timeline: React.FC = () => {
 
   useEffect(() => {
     const handleManualTimeUpdate = () => {
-      const videoElement = document.querySelector("video");
-      if (videoElement) {
-        const newTime = videoElement.currentTime * 1000;
-        if (Math.abs(newTime - currentTime) > 16) {
-          dispatch(setCurrentTime(newTime));
-        }
+      if (!videoRef.current) return;
+      const newTime = videoRef.current.currentTime * 1000;
+      if (Math.abs(newTime - currentTime) > 16) {
+        dispatch(setCurrentTime(newTime));
       }
     };
 

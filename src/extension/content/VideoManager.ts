@@ -1,5 +1,6 @@
-import { Instruction } from "@/types";
+import { Instruction, PauseInstruction } from "@/types";
 import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
+import { VideoOverlayManager } from "./VideoOverlayManager";
 
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
@@ -8,6 +9,7 @@ export class VideoManager {
   private timeUpdateListeners: Array<(currentTimeMs: number) => void> = [];
   private clickHandler: ((event: MouseEvent) => void) | null = null;
   private cleanupListeners: Array<() => void> = [];
+  private videoOverlayManager: VideoOverlayManager | null = null;
 
   constructor() {
     const cleanupListeners = [
@@ -20,11 +22,17 @@ export class VideoManager {
   }
 
   public async findAndStoreVideoElement(): Promise<void> {
-    this.videoElement = document.querySelector("video");
+    this.videoElement = document.querySelector(
+      "video:not(.youtube-uncensored-video)"
+    );
 
     if (this.videoElement) {
       this.handleVideo(this.videoElement);
       (window as any).videoManager = this;
+
+      // Initialize VideoOverlayManager with the video element
+      this.videoOverlayManager = new VideoOverlayManager(this.videoElement);
+
       return Promise.resolve();
     }
     return Promise.resolve();
@@ -62,6 +70,10 @@ export class VideoManager {
       );
     }
     this.removeVideoClickPrevention();
+
+    // Destroy VideoOverlayManager
+    this.videoOverlayManager?.destroy();
+    this.videoOverlayManager = null;
   }
 
   private handleVideoPlay = (): void => {};
@@ -86,7 +98,7 @@ export class VideoManager {
   private async checkInstructions(currentTimeMs: number): Promise<void> {
     try {
       const result = await chrome.storage.local.get("instructions");
-      const instructions = result.instructions || [];
+      const instructions: Instruction[] = result.instructions || [];
 
       const matchingInstruction = instructions.find(
         (instruction: Instruction) =>
@@ -96,7 +108,7 @@ export class VideoManager {
       if (matchingInstruction && this.videoElement?.paused === false) {
         switch (matchingInstruction.type) {
           case "pause":
-            this.handleInstructionPause(matchingInstruction.pauseDuration);
+            this.handleInstructionPause(matchingInstruction);
             break;
           case "skip":
             this.handleInstructionSkip(matchingInstruction.skipToTime);
@@ -114,21 +126,43 @@ export class VideoManager {
     }
   };
 
-  public handleInstructionPause = (pauseDuration: number): void => {
-    if (this.videoElement && !this.videoElement.paused) {
+  private handleInstructionPause = (instruction: Instruction): void => {
+    if (
+      instruction.type === "pause" &&
+      this.videoElement &&
+      !this.videoElement.paused
+    ) {
       this.videoElement.pause();
 
-      const resumeTime = setTimeout(() => {
-        if (this.videoElement && this.videoElement.paused) {
-          console.log("Resuming video after pause");
-          this.videoElement.play().catch((error) => {
-            console.error("Error resuming video:", error);
-          });
-        }
-      }, pauseDuration * 1000);
+      const pauseDuration =
+        (instruction as PauseInstruction).overlayVideo?.duration || 0;
 
-      // Store the timeout to clear it if needed
-      (this.videoElement as any)._pauseTimeout = resumeTime;
+      if (
+        (instruction as PauseInstruction).overlayVideo?.url &&
+        this.videoOverlayManager
+      ) {
+        this.videoOverlayManager
+          .playOverlayVideo((instruction as PauseInstruction).overlayVideo!.url)
+          .then(() => {
+            // Resume video after overlay video ends
+            this.videoElement?.play().catch((error) => {
+              console.error("Error resuming video:", error);
+            });
+          });
+      } else {
+        // If no overlay video, resume after pauseDuration
+        const resumeTime = setTimeout(() => {
+          if (this.videoElement && this.videoElement.paused) {
+            console.log("Resuming video after pause");
+            this.videoElement.play().catch((error) => {
+              console.error("Error resuming video:", error);
+            });
+          }
+        }, pauseDuration * 1000);
+
+        // Store the timeout to clear it if needed
+        (this.videoElement as any)._pauseTimeout = resumeTime;
+      }
     }
   };
 

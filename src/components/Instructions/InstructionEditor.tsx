@@ -23,6 +23,8 @@ import {
 import InstructionsList from "./InstructionsList";
 import { TimeInput } from "../ui/TimeInput";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import VideoUpload from "@/components/VideoUpload";
+import { storage } from "@/lib/storage"; // Ensure you have a storage utility
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -136,16 +138,34 @@ const InstructionEditor: React.FC = () => {
     });
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     const triggerTime = parseTimeInput(data);
+    const instructionId = editingInstruction?.id || Date.now().toString();
     let newInstruction: Instruction;
 
     if (selectedType === "pause") {
+      let overlayVideo = null;
+      if (data.overlayVideo) {
+        // Convert the uploaded video file to a Blob URL and store it
+        const response = await fetch(data.overlayVideo.url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        overlayVideo = {
+          url: blobUrl,
+          duration: data.pauseDuration,
+        };
+
+        // Save the overlay video URL to storage with instructionId
+        await storage.set(`overlayVideo_${instructionId}`, overlayVideo);
+      }
+
       newInstruction = {
-        id: editingInstruction?.id || Date.now().toString(),
+        id: instructionId,
         type: "pause",
         triggerTime,
         pauseDuration: Number(data.pauseDuration),
+        overlayVideo, // Attach the overlay video
       } as PauseInstruction;
     } else if (selectedType === "skip") {
       const skipToTime =
@@ -155,13 +175,13 @@ const InstructionEditor: React.FC = () => {
         1000;
 
       newInstruction = {
-        id: editingInstruction?.id || Date.now().toString(),
+        id: instructionId,
         type: "skip",
         triggerTime,
         skipToTime,
       } as SkipInstruction;
     } else {
-      return;
+      return; // Exit if type is neither 'pause' nor 'skip'
     }
 
     if (isEditing) {
@@ -173,13 +193,13 @@ const InstructionEditor: React.FC = () => {
     dispatch(setCurrentTime(triggerTime));
 
     // Update storage immediately after adding/updating instruction
-    dispatchCustomEvent("SAVE_INSTRUCTIONS", {
-      instructions: isEditing
-        ? instructions.map((i) =>
-            i.id === newInstruction.id ? newInstruction : i
-          )
-        : [...instructions, newInstruction],
-    });
+    const updatedInstructions = isEditing
+      ? instructions.map((i) =>
+          i.id === newInstruction.id ? newInstruction : i
+        )
+      : [...instructions, newInstruction];
+
+    await storage.set("instructions", updatedInstructions);
 
     reset();
     dispatch(setEditingInstruction(null));
@@ -268,19 +288,34 @@ const InstructionEditor: React.FC = () => {
           </div>
 
           {selectedType === "pause" && (
-            <div>
-              <label className="text-sm text-muted-foreground">
-                Pause Duration (seconds)
-              </label>
-              <Input
-                type="number"
-                {...register("pauseDuration", { required: true, min: 0 })}
-              />
-              {errors.pauseDuration && (
-                <span className="text-xs text-destructive">
-                  This field is required
-                </span>
-              )}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-muted-foreground">
+                  Pause Duration (seconds)
+                </label>
+                <Input
+                  type="number"
+                  {...register("pauseDuration", { required: true, min: 0 })}
+                />
+                {errors.pauseDuration && (
+                  <span className="text-xs text-destructive">
+                    This field is required
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">
+                  Overlay Video
+                </label>
+                <VideoUpload
+                  onVideoSelected={(videoData) => {
+                    setValue("pauseDuration", Math.ceil(videoData.duration));
+                    setValue("overlayVideo", videoData);
+                  }}
+                  currentVideo={watch("overlayVideo")}
+                />
+              </div>
             </div>
           )}
 
