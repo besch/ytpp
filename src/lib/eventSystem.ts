@@ -32,6 +32,7 @@ type EventPayload = {
   LOAD_ELEMENTS: void;
   LOAD_INSTRUCTIONS: void;
   CONTENT_SCRIPT_LOADED: void;
+  TOGGLE_CANVAS: { visible: boolean };
 };
 
 export const dispatchCustomEvent = <K extends keyof EventPayload>(

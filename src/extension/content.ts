@@ -110,6 +110,10 @@ class ContentScript {
           dispatchCustomEvent("SET_ELEMENTS", { elements });
         }
       }),
+
+      addCustomEventListener("TOGGLE_CANVAS", ({ visible }) => {
+        OverlayManager.setCanvasVisibility(visible);
+      }),
     ];
 
     // Store cleanup functions

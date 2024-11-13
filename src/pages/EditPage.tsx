@@ -6,13 +6,15 @@ import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 import AddElements from "@/components/AddElements";
 import InstructionEditor from "@/components/Instructions/InstructionEditor";
 import { useInstructionsEvents } from "@/hooks/useInstructionsEvents";
-import { Layers, Clock, Settings } from "lucide-react";
+import { Layers, Clock, Settings, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSelector, useDispatch } from "react-redux";
 import {
   selectSelectedElement,
   selectActiveTab,
   setActiveTab,
+  selectCanvasVisibility,
+  setCanvasVisibility,
 } from "@/store/timelineSlice";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 
@@ -30,9 +32,15 @@ const EditPage: React.FC = () => {
   const dispatch = useDispatch();
   const activeTab = useSelector(selectActiveTab);
   const selectedElement = useSelector(selectSelectedElement);
+  const isCanvasVisible = useSelector(selectCanvasVisibility);
 
   const saveElements = () => {
     dispatchCustomEvent("SAVE_ELEMENTS");
+  };
+
+  const toggleCanvas = () => {
+    dispatch(setCanvasVisibility(!isCanvasVisible));
+    dispatchCustomEvent("TOGGLE_CANVAS", { visible: !isCanvasVisible });
   };
 
   const tabs: Tab[] = [
@@ -69,6 +77,26 @@ const EditPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 bg-background p-6 rounded-lg shadow-lg border border-border h-full">
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleCanvas}
+          className="flex items-center gap-2"
+        >
+          {isCanvasVisible ? (
+            <>
+              <EyeOff size={16} />
+              Hide Canvas
+            </>
+          ) : (
+            <>
+              <Eye size={16} />
+              Show Canvas
+            </>
+          )}
+        </Button>
+      </div>
       <div className="flex gap-6 flex-1 min-h-0">
         {/* Vertical Tabs */}
         <div className="flex flex-col gap-2 border-r border-border pr-4">

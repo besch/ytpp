@@ -36,6 +36,7 @@ interface TimelineState {
   instructions: Instruction[];
   editingInstruction: Instruction | null;
   selectedInstructionId: string | null;
+  isCanvasVisible: boolean;
 }
 
 const initialState: TimelineState = {
@@ -46,6 +47,7 @@ const initialState: TimelineState = {
   instructions: [],
   editingInstruction: null,
   selectedInstructionId: null,
+  isCanvasVisible: false,
 };
 
 const timelineSlice = createSlice({
@@ -105,6 +107,9 @@ const timelineSlice = createSlice({
     setInstructions: (state, action: PayloadAction<Instruction[]>) => {
       state.instructions = action.payload;
     },
+    setCanvasVisibility: (state, action: PayloadAction<boolean>) => {
+      state.isCanvasVisible = action.payload;
+    },
   },
 });
 
@@ -121,6 +126,7 @@ export const {
   setEditingInstruction,
   setSelectedInstructionId,
   setInstructions,
+  setCanvasVisibility,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>
@@ -141,5 +147,7 @@ export const selectEditingInstruction = (state: RootState) =>
   state.timeline.editingInstruction;
 export const selectSelectedInstructionId = (state: RootState) =>
   state.timeline.selectedInstructionId;
+export const selectCanvasVisibility = (state: RootState) =>
+  state.timeline.isCanvasVisible;
 
 export default timelineSlice.reducer;

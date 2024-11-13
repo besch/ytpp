@@ -19,6 +19,12 @@ export class OverlayManager {
 
     const canvas = this.canvasManager.getCanvas();
     if (canvas) {
+      const canvasElement = canvas.getElement() as HTMLCanvasElement;
+      const wrapper = canvasElement.parentElement;
+      if (wrapper) {
+        wrapper.style.display = "none";
+      }
+
       this.elementManager = new ElementManager(canvas, videoElement);
       if (isEditing) {
         canvas.on(
@@ -84,5 +90,18 @@ export class OverlayManager {
     to: number
   ): void {
     this.elementManager?.updateElementTime(element, from, to);
+  }
+
+  public static setCanvasVisibility(visible: boolean): void {
+    if (this.canvasManager) {
+      const canvas = this.canvasManager.getCanvas();
+      if (canvas) {
+        const canvasElement = canvas.getElement() as HTMLCanvasElement;
+        const wrapper = canvasElement.parentElement;
+        if (wrapper) {
+          wrapper.style.display = visible ? "block" : "none";
+        }
+      }
+    }
   }
 }
