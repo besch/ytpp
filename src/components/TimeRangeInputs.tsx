@@ -1,25 +1,26 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
+import {
+  selectSelectedElement,
+  selectCurrentTimeline,
+  updateElement,
+} from "@/store/timelineSlice";
 import { TimeInput } from "@/components/ui/TimeInput";
 import DeleteElementButton from "./DeleteElementButton";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 const TimeRangeInputs: React.FC = () => {
   const dispatch = useDispatch();
+  const currentTimeline = useSelector(selectCurrentTimeline);
   const selectedElement = useSelector(selectSelectedElement);
 
   if (!selectedElement) return null;
 
   const handleFromChange = (value: number) => {
-    dispatch(
-      updateElement({
-        id: selectedElement.id,
-        timeRange: { from: value, to: selectedElement.timeRange.to },
-      })
-    );
+    if (!currentTimeline?.id || !selectedElement) return;
 
     dispatchCustomEvent("UPDATE_ELEMENT_TIME", {
+      timelineId: currentTimeline.id,
       elementId: selectedElement.id,
       from: value,
       to: selectedElement.timeRange.to,
@@ -27,14 +28,10 @@ const TimeRangeInputs: React.FC = () => {
   };
 
   const handleToChange = (value: number) => {
-    dispatch(
-      updateElement({
-        id: selectedElement.id,
-        timeRange: { from: selectedElement.timeRange.from, to: value },
-      })
-    );
+    if (!currentTimeline?.id || !selectedElement) return;
 
     dispatchCustomEvent("UPDATE_ELEMENT_TIME", {
+      timelineId: currentTimeline.id,
       elementId: selectedElement.id,
       from: selectedElement.timeRange.from,
       to: value,

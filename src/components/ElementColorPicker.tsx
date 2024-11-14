@@ -3,35 +3,25 @@ import { useSelector, useDispatch } from "react-redux";
 import { ChromePicker, ColorResult } from "react-color";
 import { selectSelectedElement, updateElement } from "@/store/timelineSlice";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import { selectCurrentTimeline } from "@/store/timelineSlice";
 
 const ElementColorPicker: React.FC = React.memo(() => {
   const dispatch = useDispatch();
-  const selectedElement = useSelector(
-    selectSelectedElement,
-    (prev, next) =>
-      prev?.id === next?.id && prev?.style?.fill === next?.style?.fill
-  );
+  const currentTimeline = useSelector(selectCurrentTimeline);
+  const selectedElement = useSelector(selectSelectedElement);
 
   const handleColorChange = useCallback(
     (color: ColorResult) => {
-      if (!selectedElement) return;
-
-      dispatch(
-        updateElement({
-          id: selectedElement.id,
-          style: {
-            ...selectedElement.style,
-            fill: color.hex,
-          },
-        })
-      );
+      if (!selectedElement || !currentTimeline?.id) return;
 
       dispatchCustomEvent("UPDATE_ELEMENT_COLOR", {
+        timelineId: currentTimeline.id,
+        elementId: selectedElement.id,
         color: color.hex,
         type: "fill",
       });
     },
-    [dispatch, selectedElement]
+    [currentTimeline?.id, selectedElement]
   );
 
   if (!selectedElement) {

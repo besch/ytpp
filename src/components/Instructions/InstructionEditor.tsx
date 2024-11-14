@@ -19,14 +19,27 @@ import {
   SkipInstruction,
   Instruction,
   TimeInput as TimeInputType,
+  Timeline,
 } from "@/types";
 import InstructionsList from "./InstructionsList";
 import { TimeInput } from "../ui/TimeInput";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 import VideoUpload from "@/components/VideoUpload";
-import { storage } from "@/lib/storage"; // Ensure you have a storage utility
+import { api } from "@/lib/api";
 
-const InstructionEditor: React.FC = () => {
+interface InstructionEditorProps {
+  timelineId: string;
+  videoId: string;
+  currentTimeline: Timeline;
+  onTimelineUpdate: (timeline: Timeline) => void;
+}
+
+const InstructionEditor: React.FC<InstructionEditorProps> = ({
+  timelineId,
+  videoId,
+  currentTimeline,
+  onTimelineUpdate,
+}) => {
   const dispatch = useDispatch();
   const currentTime = useSelector(selectCurrentTime);
   const editingInstruction = useSelector(selectEditingInstruction);
@@ -132,10 +145,22 @@ const InstructionEditor: React.FC = () => {
     dispatch(setEditingInstruction(null));
   };
 
-  const handleSaveInstructions = () => {
-    dispatchCustomEvent("SAVE_INSTRUCTIONS", {
-      instructions,
-    });
+  const handleSaveInstructions = async () => {
+    try {
+      const updatedTimeline = await api.timelines.update(timelineId, {
+        instructions: instructions.map((instruction) => ({
+          ...instruction,
+          videoId, // Ensure videoId is added to each instruction
+        })),
+      });
+
+      onTimelineUpdate(updatedTimeline);
+      dispatchCustomEvent("SAVE_SUCCESS", {
+        message: "Instructions saved successfully",
+      });
+    } catch (error) {
+      console.error("Failed to save instructions:", error);
+    }
   };
 
   const onSubmit = async (data: any) => {
@@ -146,61 +171,84 @@ const InstructionEditor: React.FC = () => {
     if (selectedType === "pause") {
       let overlayVideo = null;
       if (data.overlayVideo) {
-        // Convert the uploaded video file to a Blob URL and store it
-        const response = await fetch(data.overlayVideo.url);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
+        try {
+          const file = new File(
+            [data.overlayVideo],
+            `overlay-${Date.now()}.mp4`,
+            {
+              type: data.overlayVideo.type,
+            }
+          );
 
-        overlayVideo = {
-          url: blobUrl,
-          duration: data.pauseDuration,
-        };
+          const mediaFile = await api.timelines.uploadMedia(
+            file,
+            timelineId,
+            instructionId
+          );
 
-        // Save the overlay video URL to storage with instructionId
-        await storage.set(`overlayVideo_${instructionId}`, overlayVideo);
+          overlayVideo = {
+            id: mediaFile.id,
+            url: mediaFile.url,
+            duration: data.pauseDuration,
+          };
+        } catch (error) {
+          console.error("Failed to upload overlay video:", error);
+          return;
+        }
       }
 
       newInstruction = {
         id: instructionId,
+        videoId,
         type: "pause",
         triggerTime,
         pauseDuration: Number(data.pauseDuration),
-        overlayVideo, // Attach the overlay video
+        overlayVideo,
       } as PauseInstruction;
     } else if (selectedType === "skip") {
-      const skipToTime =
-        (Number(data.skipToHours) * 3600 +
-          Number(data.skipToMinutes) * 60 +
-          Number(data.skipToSeconds)) *
-        1000;
-
       newInstruction = {
         id: instructionId,
+        videoId,
         type: "skip",
         triggerTime,
-        skipToTime,
+        skipToTime: parseTimeInput({
+          hours: data.skipToHours,
+          minutes: data.skipToMinutes,
+          seconds: data.skipToSeconds,
+        }),
       } as SkipInstruction;
     } else {
-      return; // Exit if type is neither 'pause' nor 'skip'
+      return;
     }
 
+    let updatedInstructions: Instruction[];
     if (isEditing) {
+      updatedInstructions = instructions.map((i) =>
+        i.id === newInstruction.id ? newInstruction : i
+      );
       dispatch(updateInstruction(newInstruction));
     } else {
+      updatedInstructions = [...instructions, newInstruction];
       dispatch(addInstruction(newInstruction));
     }
 
+    try {
+      const updatedTimeline = await api.timelines.update(timelineId, {
+        instructions: updatedInstructions,
+      });
+
+      onTimelineUpdate(updatedTimeline);
+      dispatchCustomEvent("SAVE_SUCCESS", {
+        message: "Instruction saved successfully",
+      });
+    } catch (error) {
+      console.error("Failed to save instruction:", error);
+      dispatchCustomEvent("SAVE_ERROR", {
+        message: "Failed to save instruction",
+      });
+    }
+
     dispatch(setCurrentTime(triggerTime));
-
-    // Update storage immediately after adding/updating instruction
-    const updatedInstructions = isEditing
-      ? instructions.map((i) =>
-          i.id === newInstruction.id ? newInstruction : i
-        )
-      : [...instructions, newInstruction];
-
-    await storage.set("instructions", updatedInstructions);
-
     reset();
     dispatch(setEditingInstruction(null));
   };

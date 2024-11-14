@@ -1,56 +1,52 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
-import { Instruction } from "@/types";
-
-interface ElementStyle {
-  fill: string;
-  stroke?: string;
-}
-
-interface Element {
-  id: string;
-  type: string;
-  style: ElementStyle;
-  timeRange: {
-    from: number;
-    to: number;
-  };
-  properties: {
-    scaleMode: "fixed" | "responsive";
-    originalWidth: number;
-    originalHeight: number;
-    originalX: number;
-    originalY: number;
-    relativeX?: number; // Percentage of video width
-    relativeY?: number; // Percentage of video height
-    relativeWidth?: number; // Percentage of video width
-    relativeHeight?: number; // Percentage of video height
-  };
-}
+import { Timeline, Instruction, ElementStyle } from "@/types";
 
 interface TimelineState {
   currentTime: number;
-  elements: Element[];
   selectedElementId: string | null;
   activeTab: string;
-  instructions: Instruction[];
   editingInstruction: Instruction | null;
   selectedInstructionId: string | null;
   isCanvasVisible: boolean;
+  timelines: Timeline[];
+  currentTimeline: Timeline | null;
+  loading: boolean;
+  error: string | null;
 }
 
 const initialState: TimelineState = {
   currentTime: 0,
-  elements: [],
   selectedElementId: null,
   activeTab: "elements",
-  instructions: [],
   editingInstruction: null,
   selectedInstructionId: null,
-  isCanvasVisible: false,
+  isCanvasVisible: true,
+  timelines: [],
+  currentTimeline: null,
+  loading: false,
+  error: null,
 };
 
-const timelineSlice = createSlice({
+interface ElementUpdate {
+  id: string;
+  timeRange?: {
+    from: number;
+    to: number;
+  };
+  style?: ElementStyle;
+  properties?: {
+    left: number;
+    top: number;
+    scaleX: number;
+    scaleY: number;
+    width: number;
+    height: number;
+    scaleMode: "responsive" | "fixed";
+  };
+}
+
+export const timelineSlice = createSlice({
   name: "timeline",
   initialState,
   reducers: {
@@ -58,14 +54,21 @@ const timelineSlice = createSlice({
       state.currentTime = action.payload;
     },
     addElement: (state, action: PayloadAction<Element>) => {
-      state.elements.push(action.payload);
+      if (state.currentTimeline) {
+        state.currentTimeline.elements.push(action.payload);
+      }
     },
-    updateElement: (state, action: PayloadAction<Partial<Element>>) => {
-      const index = state.elements.findIndex(
-        (el) => el.id === action.payload.id
-      );
-      if (index !== -1) {
-        state.elements[index] = { ...state.elements[index], ...action.payload };
+    updateElement: (state, action: PayloadAction<ElementUpdate>) => {
+      if (state.currentTimeline) {
+        const index = state.currentTimeline.elements.findIndex(
+          (el) => el.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.currentTimeline.elements[index] = {
+            ...state.currentTimeline.elements[index],
+            ...action.payload,
+          };
+        }
       }
     },
     setSelectedElementId: (state, action: PayloadAction<string | null>) => {
@@ -73,26 +76,35 @@ const timelineSlice = createSlice({
       state.selectedElementId = action.payload;
     },
     setElements: (state, action: PayloadAction<Element[]>) => {
-      state.elements = action.payload;
+      if (state.currentTimeline) {
+        state.currentTimeline.elements = action.payload;
+      }
     },
     setActiveTab: (state, action: PayloadAction<string>) => {
       state.activeTab = action.payload;
     },
     addInstruction: (state, action: PayloadAction<Instruction>) => {
-      state.instructions.push(action.payload);
+      if (state.currentTimeline) {
+        state.currentTimeline.instructions.push(action.payload);
+      }
     },
     updateInstruction: (state, action: PayloadAction<Instruction>) => {
-      const index = state.instructions.findIndex(
-        (instruction) => instruction.id === action.payload.id
-      );
-      if (index !== -1) {
-        state.instructions[index] = action.payload;
+      if (state.currentTimeline) {
+        const index = state.currentTimeline.instructions.findIndex(
+          (instruction) => instruction.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.currentTimeline.instructions[index] = action.payload;
+        }
       }
     },
     removeInstruction: (state, action: PayloadAction<string>) => {
-      state.instructions = state.instructions.filter(
-        (instruction) => instruction.id !== action.payload
-      );
+      if (state.currentTimeline) {
+        state.currentTimeline.instructions =
+          state.currentTimeline.instructions.filter(
+            (instruction) => instruction.id !== action.payload
+          );
+      }
     },
     setEditingInstruction: (
       state,
@@ -105,10 +117,36 @@ const timelineSlice = createSlice({
       state.selectedElementId = null;
     },
     setInstructions: (state, action: PayloadAction<Instruction[]>) => {
-      state.instructions = action.payload;
+      if (state.currentTimeline) {
+        state.currentTimeline.instructions = action.payload;
+      }
     },
     setCanvasVisibility: (state, action: PayloadAction<boolean>) => {
       state.isCanvasVisible = action.payload;
+    },
+    setTimelines: (state, action: PayloadAction<Timeline[]>) => {
+      state.timelines = action.payload;
+    },
+    setCurrentTimeline: (state, action: PayloadAction<Timeline>) => {
+      state.currentTimeline = {
+        ...action.payload,
+        created_at: action.payload.created_at || new Date().toISOString(),
+        updated_at: action.payload.updated_at || new Date().toISOString(),
+        media_files: action.payload.media_files || [],
+      };
+      state.activeTab = "elements";
+    },
+    timelineDeleted: (state, action: PayloadAction<string>) => {
+      state.timelines = state.timelines.filter((t) => t.id !== action.payload);
+      if (state.currentTimeline?.id === action.payload) {
+        state.currentTimeline = null;
+      }
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
     },
   },
 });
@@ -127,27 +165,41 @@ export const {
   setSelectedInstructionId,
   setInstructions,
   setCanvasVisibility,
+  setTimelines,
+  setCurrentTimeline,
+  timelineDeleted,
+  setLoading,
+  setError,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>
   state.timeline.currentTime;
-export const selectElements = (state: RootState) => state.timeline.elements;
+export const selectElements = (state: RootState) =>
+  state.timeline.currentTimeline?.elements ?? [];
 export const selectSelectedElementId = (state: RootState) =>
   state.timeline.selectedElementId;
 export const selectSelectedElement = (state: RootState) => {
   const selectedId = state.timeline.selectedElementId;
   return selectedId
-    ? state.timeline.elements.find((el) => el.id === selectedId)
+    ? state.timeline.currentTimeline?.elements.find(
+        (el) => el.id === selectedId
+      )
     : null;
 };
 export const selectActiveTab = (state: RootState) => state.timeline.activeTab;
 export const selectInstructions = (state: RootState) =>
-  state.timeline.instructions;
+  state.timeline.currentTimeline?.instructions ?? [];
 export const selectEditingInstruction = (state: RootState) =>
   state.timeline.editingInstruction;
 export const selectSelectedInstructionId = (state: RootState) =>
   state.timeline.selectedInstructionId;
 export const selectCanvasVisibility = (state: RootState) =>
   state.timeline.isCanvasVisible;
+export const selectTimelines = (state: RootState) => state.timeline.timelines;
+export const selectCurrentTimeline = (state: RootState) =>
+  state.timeline.currentTimeline;
+export const selectTimelineLoading = (state: RootState) =>
+  state.timeline.loading;
+export const selectTimelineError = (state: RootState) => state.timeline.error;
 
 export default timelineSlice.reducer;

@@ -15,8 +15,11 @@ import {
   setActiveTab,
   selectCanvasVisibility,
   setCanvasVisibility,
+  selectCurrentTimeline,
 } from "@/store/timelineSlice";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import TimelineList from "@/components/Timeline/TimelineList";
+import { Timeline } from "@/types";
 
 type Tab = {
   id: string;
@@ -33,6 +36,9 @@ const EditPage: React.FC = () => {
   const activeTab = useSelector(selectActiveTab);
   const selectedElement = useSelector(selectSelectedElement);
   const isCanvasVisible = useSelector(selectCanvasVisibility);
+  const currentTimeline = useSelector(selectCurrentTimeline);
+  const videoId =
+    new URLSearchParams(window.location.search).get("v") || "default";
 
   const saveElements = () => {
     dispatchCustomEvent("SAVE_ELEMENTS");
@@ -42,6 +48,18 @@ const EditPage: React.FC = () => {
     dispatch(setCanvasVisibility(!isCanvasVisible));
     dispatchCustomEvent("TOGGLE_CANVAS", { visible: !isCanvasVisible });
   };
+
+  const handleTimelineUpdate = (timeline: Timeline) => {
+    dispatchCustomEvent("SET_CURRENT_TIMELINE", { timeline });
+  };
+
+  if (!currentTimeline) {
+    return (
+      <div className="flex flex-col gap-6 bg-background p-6 rounded-lg shadow-lg border border-border h-full">
+        <TimelineList />
+      </div>
+    );
+  }
 
   const tabs: Tab[] = [
     {
@@ -71,7 +89,14 @@ const EditPage: React.FC = () => {
       id: "instructions",
       label: "Instructions",
       icon: Clock,
-      content: <InstructionEditor />,
+      content: (
+        <InstructionEditor
+          timelineId={currentTimeline.id}
+          videoId={videoId}
+          currentTimeline={currentTimeline}
+          onTimelineUpdate={handleTimelineUpdate}
+        />
+      ),
     },
   ];
 

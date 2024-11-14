@@ -1,17 +1,30 @@
 import { VideoManager } from "./content/VideoManager";
 import { OverlayManager } from "./content/OverlayManager";
-import { Instruction } from "@/types";
+import { Instruction, Timeline } from "@/types";
 import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 import { storage } from "@/lib/storage";
+import { api } from "@/lib/api";
 
 class ContentScript {
   private videoManager: VideoManager | null = null;
   private isOverlayVisible: boolean = false;
   private cleanupListeners: Array<() => void> = [];
+  private timelineId: string = "";
+  private currentTimeline: Timeline | null = null;
 
   constructor() {
+    this.timelineId = this.extractTimelineId();
     this.initialize();
-    this.initializeInstructionsHandling();
+  }
+
+  private extractVideoId(): string {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("v") || "default";
+  }
+
+  private extractTimelineId(): string {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("timelineId") || "default";
   }
 
   private initialize(): void {
@@ -40,7 +53,7 @@ class ContentScript {
         this.injectReactApp();
         OverlayManager.createOverlay(
           this.videoManager.getVideoElement()!,
-          true
+          this.timelineId
         );
         this.loadElements();
       }
@@ -100,9 +113,9 @@ class ContentScript {
         this.loadElements();
       }),
 
-      addCustomEventListener("LOAD_INSTRUCTIONS", () => {
-        this.loadInstructions();
-      }),
+      // addCustomEventListener("LOAD_INSTRUCTIONS", () => {
+      //   this.loadInstructions();
+      // }),
 
       addCustomEventListener("GET_ELEMENTS", () => {
         const elements = OverlayManager.getElements();
@@ -113,6 +126,22 @@ class ContentScript {
 
       addCustomEventListener("TOGGLE_CANVAS", ({ visible }) => {
         OverlayManager.setCanvasVisibility(visible);
+      }),
+
+      addCustomEventListener("INITIALIZE_TIMELINE", async () => {
+        await this.initializeTimeline();
+      }),
+
+      addCustomEventListener("LOAD_TIMELINE", async ({ timelineId }) => {
+        await this.loadTimeline(timelineId);
+      }),
+
+      addCustomEventListener("DELETE_TIMELINE", async ({ timelineId }) => {
+        await this.deleteTimeline(timelineId);
+      }),
+
+      addCustomEventListener("GET_TIMELINES", async () => {
+        await this.loadTimelinesList();
       }),
     ];
 
@@ -158,9 +187,14 @@ class ContentScript {
 
   private async loadElements(): Promise<void> {
     try {
-      const elements = await storage.get<any[]>("elements");
-      if (elements) {
-        await OverlayManager.elementManager?.loadElements(elements);
+      if (!this.currentTimeline?.id) {
+        console.warn("No timeline selected");
+        return;
+      }
+
+      const timeline = await api.timelines.get(this.currentTimeline.id);
+      if (timeline?.elements) {
+        await OverlayManager.elementManager?.loadElements(timeline.elements);
 
         // Force dispatch elements after loading
         const currentElements = OverlayManager.getElements();
@@ -186,45 +220,87 @@ class ContentScript {
     storage.set("elements", elements);
   }
 
-  private initializeInstructionsHandling(): void {
-    // Load instructions when app is ready
-    const cleanup1 = addCustomEventListener("REACT_APP_READY", () => {
-      this.loadInstructions();
-    });
-
-    // Save instructions when requested
-    const cleanup2 = addCustomEventListener(
-      "SAVE_INSTRUCTIONS",
-      ({ instructions }) => {
-        this.saveInstructions(instructions);
-      }
-    );
-
-    this.cleanupListeners.push(cleanup1, cleanup2);
-  }
-
-  private async loadInstructions(): Promise<void> {
+  private async initializeTimeline(): Promise<void> {
     try {
-      const instructions =
-        (await storage.get<Instruction[]>("instructions")) || [];
-      dispatchCustomEvent("SET_INSTRUCTIONS", { instructions });
+      const timeline = await api.timelines.create({
+        title: `Timeline ${new Date().toLocaleString()}`,
+        elements: [],
+        instructions: [],
+      });
+
+      await this.loadTimeline(timeline.id);
+      dispatchCustomEvent("TIMELINE_INITIALIZED", { timeline });
     } catch (error) {
-      console.error("Failed to load instructions:", error);
+      console.error("Failed to initialize timeline:", error);
     }
   }
 
-  private async saveInstructions(instructions: Instruction[]): Promise<void> {
+  private async saveTimeline(): Promise<void> {
+    if (!this.currentTimeline) return;
+
     try {
-      await storage.set("instructions", instructions);
-      console.log("Instructions saved successfully");
+      const elements = OverlayManager.getElements();
+      const instructions = this.currentTimeline.instructions.map(
+        (instruction) => ({
+          ...instruction,
+        })
+      );
+
+      this.currentTimeline = await api.timelines.update(
+        this.currentTimeline.id,
+        { elements, instructions }
+      );
+
+      dispatchCustomEvent("SAVE_SUCCESS", {
+        message: "Timeline saved successfully",
+      });
     } catch (error) {
-      console.error("Failed to save instructions:", error);
+      console.error("Failed to save timeline:", error);
     }
   }
 
   private cleanup(): void {
     this.cleanupListeners.forEach((cleanup) => cleanup());
     this.cleanupListeners = [];
+  }
+
+  private handleTimelineUpdate = (updatedTimeline: Timeline) => {
+    this.currentTimeline = updatedTimeline;
+  };
+
+  private async loadTimelinesList(): Promise<void> {
+    try {
+      const timelines = await api.timelines.getAll();
+      dispatchCustomEvent("SET_TIMELINES", { timelines });
+    } catch (error) {
+      console.error("Failed to load timelines:", error);
+    }
+  }
+
+  private async loadTimeline(timelineId: string): Promise<void> {
+    try {
+      const timeline = await api.timelines.get(timelineId);
+
+      // Load timeline elements into overlay
+      if (timeline.elements) {
+        await OverlayManager.elementManager?.loadElements(timeline.elements);
+      }
+
+      // Update React app state
+      dispatchCustomEvent("SET_CURRENT_TIMELINE", { timeline });
+    } catch (error) {
+      console.error("Failed to load timeline:", error);
+    }
+  }
+
+  private async deleteTimeline(timelineId: string): Promise<void> {
+    try {
+      await api.timelines.delete(timelineId);
+      await this.loadTimelinesList(); // Refresh the list
+      dispatchCustomEvent("TIMELINE_DELETED", { timelineId });
+    } catch (error) {
+      console.error("Failed to delete timeline:", error);
+    }
   }
 }
 

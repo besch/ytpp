@@ -2,9 +2,15 @@ import React from "react";
 import { Circle, Square, Type, Triangle, Image } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import { useSelector } from "react-redux";
+import { selectCurrentTimeline } from "@/store/timelineSlice";
 
 const AddElements: React.FC = () => {
+  const currentTimeline = useSelector(selectCurrentTimeline);
+
   const addElement = (elementType: string) => {
+    if (!currentTimeline?.id) return;
+
     if (elementType === "gif") {
       const input = document.createElement("input");
       input.type = "file";
@@ -15,14 +21,21 @@ const AddElements: React.FC = () => {
           const reader = new FileReader();
           reader.onload = (e) => {
             const gifUrl = e.target?.result as string;
-            dispatchCustomEvent("ADD_ELEMENT", { elementType: "gif", gifUrl });
+            dispatchCustomEvent("ADD_ELEMENT", {
+              timelineId: currentTimeline.id,
+              elementType: "gif",
+              gifUrl,
+            });
           };
           reader.readAsDataURL(file);
         }
       };
       input.click();
     } else {
-      dispatchCustomEvent("ADD_ELEMENT", { elementType });
+      dispatchCustomEvent("ADD_ELEMENT", {
+        timelineId: currentTimeline.id,
+        elementType,
+      });
     }
   };
 

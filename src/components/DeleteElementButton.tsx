@@ -1,7 +1,11 @@
 import React from "react";
 import { Trash2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
-import { selectSelectedElementId, setElements } from "@/store/timelineSlice";
+import {
+  selectSelectedElementId,
+  setElements,
+  selectCurrentTimeline,
+} from "@/store/timelineSlice";
 import Button from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
@@ -13,13 +17,16 @@ interface DeleteElementButtonProps {
 const DeleteElementButton: React.FC<DeleteElementButtonProps> = ({
   className,
 }) => {
+  const currentTimeline = useSelector(selectCurrentTimeline);
   const selectedElementId = useSelector(selectSelectedElementId);
 
   const handleDelete = () => {
-    if (!selectedElementId) return;
+    if (!selectedElementId || !currentTimeline?.id) return;
 
-    dispatchCustomEvent("DELETE_ELEMENT", { elementId: selectedElementId });
-    dispatchCustomEvent("GET_ELEMENTS");
+    dispatchCustomEvent("DELETE_ELEMENT", {
+      timelineId: currentTimeline.id,
+      elementId: selectedElementId,
+    });
   };
 
   return (

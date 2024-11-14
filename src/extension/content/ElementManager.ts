@@ -1,4 +1,4 @@
-import { CustomFabricObject } from "@/types";
+import { CustomFabricObject, MediaFile, Timeline } from "@/types";
 import {
   Canvas,
   FabricObject,
@@ -7,18 +7,23 @@ import {
   Textbox,
   Shadow,
   Triangle,
-  Line,
   FabricImage,
 } from "fabric";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
-import { storage } from "@/lib/storage";
+import { api } from "@/lib/api";
 
 export class ElementManager {
   private animationIntervals: Map<string, number> = new Map();
   private canvas: Canvas | null = null;
+  private timelineId: string;
 
-  constructor(canvas: Canvas, private videoElement: HTMLVideoElement) {
+  constructor(
+    canvas: Canvas,
+    private videoElement: HTMLVideoElement,
+    timelineId: string
+  ) {
     this.canvas = canvas;
+    this.timelineId = timelineId;
     this.setupEventListeners();
   }
 
@@ -73,6 +78,24 @@ export class ElementManager {
       }),
     };
 
+    // Handle GIF upload first if it's a GIF element
+    let mediaFile: MediaFile | null = null;
+    if (elementType === "gif" && gifUrl) {
+      try {
+        const response = await fetch(gifUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `gif-${Date.now()}.gif`, {
+          type: "image/gif",
+        });
+        mediaFile = await api.timelines.uploadMedia(file, this.timelineId);
+        gifUrl = mediaFile.url; // Use the cloud storage URL
+      } catch (error) {
+        console.error("Failed to upload GIF:", error);
+        return;
+      }
+    }
+
+    // Create element based on type
     switch (elementType) {
       case "circle":
         const radius = Math.min(videoWidth, videoHeight) * 0.1;
@@ -133,7 +156,6 @@ export class ElementManager {
       case "gif":
         if (!gifUrl) return;
 
-        // Create image element to load the GIF
         const img = new Image();
         img.src = gifUrl;
 
@@ -148,9 +170,8 @@ export class ElementManager {
           objectFit: "contain",
         }) as CustomFabricObject;
 
-        // Store GIF-specific data
         element.data = {
-          id: `element-${Date.now()}`,
+          id,
           from: 0,
           to: Number.MAX_SAFE_INTEGER,
           originalLeft: element.left || 0,
@@ -168,7 +189,6 @@ export class ElementManager {
           gifSrc: gifUrl,
         };
 
-        // Start GIF animation
         this.startGifAnimation(element);
         break;
 
@@ -176,48 +196,7 @@ export class ElementManager {
         return;
     }
 
-    // Store original dimensions and positions
-    element.data = {
-      id,
-      from: this.videoElement.currentTime * 1000, // Convert to milliseconds
-      to: (this.videoElement.currentTime + 10) * 1000, // Add 10 seconds
-      originalLeft: element.left || 0,
-      originalTop: element.top || 0,
-      originalScaleX: element.scaleX || 1,
-      originalScaleY: element.scaleY || 1,
-      originalWidth: videoWidth,
-      originalHeight: videoHeight,
-      relativeX: ((element.left || 0) / videoWidth) * 100,
-      relativeY: ((element.top || 0) / videoHeight) * 100,
-      relativeWidth: ((element.width || 0) / videoWidth) * 100,
-      relativeHeight: ((element.height || 0) / videoHeight) * 100,
-      scaleMode: "responsive",
-    };
-
-    // For circles, store the radius as a percentage of the smaller dimension
-    if (element instanceof Circle) {
-      const circleElement = element as CustomFabricObject & Circle;
-      const smallerDimension = Math.min(videoWidth, videoHeight);
-      circleElement.data = {
-        ...circleElement.data!,
-        relativeRadius: ((circleElement.radius || 0) / smallerDimension) * 100,
-        originalRadius: circleElement.radius || 0,
-      };
-    }
-
-    // For textboxes, store the font size as a percentage of the smaller dimension
-    if (element instanceof Textbox) {
-      const textElement = element as CustomFabricObject & Textbox;
-      const smallerDimension = Math.min(videoWidth, videoHeight);
-      textElement.data = {
-        ...textElement.data!,
-        relativeFontSize:
-          ((textElement.fontSize || 20) / smallerDimension) * 100,
-        originalFontSize: textElement.fontSize || 20,
-        relativeWidth: ((textElement.width || 0) / videoWidth) * 100,
-      };
-    }
-
+    // Add element to canvas and save
     this.canvas.add(element);
     this.canvas.setActiveObject(element);
     this.canvas.requestRenderAll();
@@ -225,14 +204,87 @@ export class ElementManager {
     const elements = this.getElements();
     dispatchCustomEvent("SET_ELEMENTS", { elements });
 
-    this.saveElementsToStorage();
+    await this.saveElements();
+  }
+
+  public async loadElements(elements: any[]): Promise<void> {
+    if (!this.canvas || !this.videoElement) return;
+
+    const videoWidth = this.videoElement.clientWidth;
+    const videoHeight = this.videoElement.clientHeight;
+
+    // Clear existing elements
+    this.canvas.clear();
+
+    for (const elementData of elements) {
+      let element: CustomFabricObject | null = null;
+
+      // Handle GIF elements specially
+      if (elementData.type === "image" && elementData.data?.isGif) {
+        const img = new Image();
+        img.src = elementData.data.gifSrc;
+
+        await new Promise((resolve) => {
+          img.onload = resolve;
+        });
+
+        element = new FabricImage(img, elementData) as CustomFabricObject;
+        this.startGifAnimation(element);
+      } else {
+        // Handle other element types
+        switch (elementData.type) {
+          case "rect":
+            element = new Rect(elementData) as CustomFabricObject;
+            break;
+          case "circle":
+            element = new Circle(elementData) as CustomFabricObject;
+            break;
+          case "textbox":
+            element = new Textbox(
+              elementData.text || "",
+              elementData
+            ) as CustomFabricObject;
+            break;
+          case "triangle":
+            element = new Triangle(elementData) as CustomFabricObject;
+            break;
+        }
+      }
+
+      if (element) {
+        element.data = {
+          ...elementData.data,
+          originalWidth: videoWidth,
+          originalHeight: videoHeight,
+        };
+        this.canvas.add(element);
+      }
+    }
+
+    this.canvas.renderAll();
+  }
+
+  private async saveElements(): Promise<void> {
+    const elements = this.getElements();
+    try {
+      const timeline = await api.timelines.update(this.timelineId, {
+        elements,
+      });
+
+      dispatchCustomEvent("SAVE_SUCCESS", {
+        message: "Elements saved successfully",
+      });
+    } catch (error) {
+      console.error("Failed to save elements:", error);
+    }
   }
 
   public getElements(): any[] {
     if (!this.canvas) return [];
-    const elements = this.canvas.getObjects().map((obj) => {
+
+    return this.canvas.getObjects().map((obj) => {
       const customObj = obj as CustomFabricObject;
-      return {
+      const baseElement = {
         id: customObj.data?.id || `element-${Date.now()}`,
         type: customObj.type,
         style: {
@@ -250,99 +302,20 @@ export class ElementManager {
           scaleY: customObj.scaleY,
           width: customObj.width,
           height: customObj.height,
-          radius: (customObj as any).radius, // for circles
-          text: (customObj as any).text, // for textboxes
-          isGif: customObj.data?.isGif || false,
-          gifSrc: customObj.data?.gifSrc || null,
           scaleMode: customObj.data?.scaleMode || "responsive",
         },
+        data: customObj.data,
       };
+
+      // // Add type-specific properties
+      // if (customObj.type === "circle") {
+      //   baseElement.properties.radius = (customObj as any).radius;
+      // } else if (customObj.type === "textbox") {
+      //   baseElement.properties.text = (customObj as any).text;
+      // }
+
+      return baseElement;
     });
-    return elements;
-  }
-
-  public async loadElements(elements: any[]): Promise<void> {
-    if (!this.canvas || !this.videoElement) return;
-
-    const videoWidth = this.videoElement.clientWidth;
-    const videoHeight = this.videoElement.clientHeight;
-
-    for (const elementData of elements) {
-      let element: CustomFabricObject | null = null; // Initialize as null
-      const props = {
-        ...elementData.properties,
-        fill: elementData.style.fill,
-        stroke: elementData.style.stroke,
-      };
-
-      switch (elementData.type) {
-        case "rect":
-          element = new Rect(props) as CustomFabricObject;
-          break;
-        case "circle":
-          element = new Circle(props) as CustomFabricObject;
-          break;
-        case "textbox":
-          element = new Textbox(props.text || "", props) as CustomFabricObject;
-          break;
-        case "triangle":
-          element = new Triangle(props) as CustomFabricObject;
-          break;
-        case "image":
-          if (elementData.properties.gifSrc) {
-            const img = new Image();
-            img.src = elementData.properties.gifSrc;
-
-            await new Promise((resolve) => {
-              img.onload = resolve;
-            });
-
-            element = new FabricImage(img, props) as CustomFabricObject;
-          }
-          break;
-        default:
-          continue;
-      }
-
-      // Only proceed if element was successfully created
-      if (element) {
-        element.data = {
-          id: elementData.id,
-          from: elementData.timeRange.from,
-          to: elementData.timeRange.to,
-          originalLeft: props.left,
-          originalTop: props.top,
-          originalScaleX: props.scaleX || 1,
-          originalScaleY: props.scaleY || 1,
-          currentScaleX: props.scaleX || 1,
-          currentScaleY: props.scaleY || 1,
-          originalWidth: videoWidth,
-          originalHeight: videoHeight,
-          relativeX: ((props.left || 0) / videoWidth) * 100,
-          relativeY: ((props.top || 0) / videoHeight) * 100,
-          relativeWidth: ((props.width || 0) / videoWidth) * 100,
-          relativeHeight: ((props.height || 0) / videoHeight) * 100,
-          scaleMode:
-            elementData.properties.scaleMode || ("responsive" as const),
-        };
-
-        // Add GIF-specific properties if it's a GIF
-        if (elementData.type === "image" && elementData.properties.gifSrc) {
-          element.data = {
-            ...element.data,
-            isGif: true,
-            gifSrc: elementData.properties.gifSrc,
-          };
-        }
-
-        this.canvas.add(element);
-
-        if (element && element.data?.isGif) {
-          this.startGifAnimation(element);
-        }
-      }
-    }
-    this.canvas.renderAll();
   }
 
   public update(currentTimeMs: number, elements: any[]): void {
@@ -400,7 +373,8 @@ export class ElementManager {
 
     this.canvas.requestRenderAll(); // Force canvas to re-render
     dispatchCustomEvent("UPDATE_ELEMENT", {
-      element: this.getSelectedElement(),
+      timelineId: this.timelineId,
+      element: this.getSelectedElement() as CustomFabricObject,
     });
   }
 
@@ -419,18 +393,12 @@ export class ElementManager {
       customObj.data.from = from;
       customObj.data.to = to;
       this.canvas?.renderAll();
-      this.saveElementsToStorage();
-      dispatchCustomEvent("UPDATE_ELEMENT", { element: customObj });
-    }
-  }
-
-  private saveElementsToStorage(): void {
-    const elements = this.getElements();
-    storage.set("elements", elements).then(() => {
-      dispatchCustomEvent("SAVE_SUCCESS", {
-        message: "Elements saved to storage",
+      this.saveElements();
+      dispatchCustomEvent("UPDATE_ELEMENT", {
+        timelineId: this.timelineId,
+        element: customObj,
       });
-    });
+    }
   }
 
   public deleteSelectedElement(): void {
@@ -443,7 +411,7 @@ export class ElementManager {
       }
       this.canvas.remove(activeObject);
       this.canvas.renderAll();
-      this.saveElementsToStorage();
+      this.saveElements();
 
       const elements = this.getElements();
       dispatchCustomEvent("SET_ELEMENTS", { elements });
@@ -523,9 +491,34 @@ export class ElementManager {
       clearInterval(intervalId);
     });
     this.animationIntervals.clear();
+
+    // Remove event listeners
+    if (this.canvas) {
+      this.canvas.off("selection:created", this.handleObjectSelection);
+      this.canvas.off("selection:updated", this.handleObjectSelection);
+      this.canvas.off("selection:cleared", this.handleSelectionCleared);
+    }
   }
 
   public handleSelectionCleared = (): void => {
     dispatchCustomEvent("SELECTION_CLEARED");
   };
+
+  // private async createImageElement(
+  //   url: string,
+  //   elementData: CustomFabricImageOptions
+  // ): Promise<CustomFabricObject> {
+  //   return new Promise((resolve, reject) => {
+  //     Image.fromURL(
+  //       url,
+  //       (img: FabricImage) => {
+  //         const element = img as unknown as CustomFabricObject;
+  //         element.data = elementData.data;
+  //         this.startGifAnimation(element);
+  //         resolve(element);
+  //       },
+  //       elementData
+  //     );
+  //   });
+  // }
 }

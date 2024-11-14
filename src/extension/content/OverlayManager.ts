@@ -8,13 +8,13 @@ export class OverlayManager {
 
   public static createOverlay(
     videoElement: HTMLVideoElement,
-    isEditing: boolean
+    timelineId: string
   ): void {
     if (this.canvasManager) {
       this.removeOverlay();
     }
 
-    this.canvasManager = new CanvasManager(isEditing);
+    this.canvasManager = new CanvasManager(false);
     this.canvasManager.initialize(videoElement);
 
     const canvas = this.canvasManager.getCanvas();
@@ -25,21 +25,11 @@ export class OverlayManager {
         wrapper.style.display = "none";
       }
 
-      this.elementManager = new ElementManager(canvas, videoElement);
-      if (isEditing) {
-        canvas.on(
-          "selection:created",
-          this.elementManager.handleObjectSelection
-        );
-        canvas.on(
-          "selection:updated",
-          this.elementManager.handleObjectSelection
-        );
-        canvas.on(
-          "selection:cleared",
-          this.elementManager.handleSelectionCleared
-        );
-      }
+      this.elementManager = new ElementManager(
+        canvas,
+        videoElement,
+        timelineId
+      );
 
       videoElement.addEventListener("timeupdate", () => {
         this.update(videoElement.currentTime * 1000);
