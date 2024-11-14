@@ -1,15 +1,9 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-} from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import Navigation from "@/pages/Navigation";
 import TimelineList from "@/components/Timeline/TimelineList";
 import TimelineEditor from "@/components/Timeline/TimelineEditor";
 import { useCanvasEvents } from "./hooks/useCanvasEvents";
-import { useInstructionsEvents } from "./hooks/useInstructionsEvents";
 
 const App: React.FC = () => {
   useCanvasEvents();
