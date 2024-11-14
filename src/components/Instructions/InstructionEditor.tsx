@@ -275,6 +275,10 @@ const InstructionEditor: React.FC<InstructionEditorProps> = ({
     setValue("skipToSeconds", seconds);
   };
 
+  const handleDeleteOverlayVideo = () => {
+    setValue("overlayVideo", null); // Clear the overlay video from the form
+  };
+
   const renderForm = () => {
     if (!selectedType && !isEditing) {
       return (
@@ -356,13 +360,26 @@ const InstructionEditor: React.FC<InstructionEditorProps> = ({
                 <label className="text-sm text-muted-foreground mb-2 block">
                   Overlay Video
                 </label>
-                <VideoUpload
-                  onVideoSelected={(videoData) => {
-                    setValue("pauseDuration", Math.ceil(videoData.duration));
-                    setValue("overlayVideo", videoData);
-                  }}
-                  currentVideo={watch("overlayVideo")}
-                />
+                {watch("overlayVideo") ? (
+                  <div className="flex items-center gap-2">
+                    <span>{watch("overlayVideo").name}</span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteOverlayVideo}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                ) : (
+                  <VideoUpload
+                    onVideoSelected={(videoData) => {
+                      setValue("pauseDuration", Math.ceil(videoData.duration));
+                      setValue("overlayVideo", videoData);
+                    }}
+                    currentVideo={watch("overlayVideo")}
+                  />
+                )}
               </div>
             </div>
           )}

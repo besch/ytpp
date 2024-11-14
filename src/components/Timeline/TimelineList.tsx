@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ArrowLeft, Plus, Trash2, Edit2 } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -8,6 +8,7 @@ import {
   selectTimelineLoading,
   selectTimelineError,
   setCurrentTimeline,
+  setTimelines,
 } from "@/store/timelineSlice";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 import { Timeline } from "@/types";
@@ -20,6 +21,20 @@ const TimelineList: React.FC = () => {
   const error = useSelector(selectTimelineError);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
+
+  useEffect(() => {
+    const fetchTimelines = async () => {
+      console.log("here");
+      try {
+        const fetchedTimelines = await api.timelines.getAll();
+        dispatch(setTimelines(fetchedTimelines));
+      } catch (error) {
+        console.error("Failed to fetch timelines:", error);
+      }
+    };
+
+    fetchTimelines();
+  }, [dispatch]);
 
   const handleCreateTimeline = async () => {
     try {
