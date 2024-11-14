@@ -8,15 +8,15 @@ const Navigation: React.FC = () => {
   return (
     <nav className="flex justify-between items-center p-4 bg-background border-b border-border">
       <div className="flex items-center space-x-4">
-        <img
+        {/* <img
           src="assets/icons/logo-onedub.png"
           className="w-[125px]"
           alt="Logo"
-        />
+        /> */}
       </div>
       <div className="flex space-x-6 items-center">
-        <Edit onClick={() => navigate("/edit")} size={24} />
-        <Play onClick={() => navigate("/play")} size={24} />
+        {/* <Edit onClick={() => navigate("/edit")} size={24} />
+        <Play onClick={() => navigate("/play")} size={24} /> */}
       </div>
     </nav>
   );

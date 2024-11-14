@@ -127,14 +127,8 @@ export const timelineSlice = createSlice({
     setTimelines: (state, action: PayloadAction<Timeline[]>) => {
       state.timelines = action.payload;
     },
-    setCurrentTimeline: (state, action: PayloadAction<Timeline>) => {
-      state.currentTimeline = {
-        ...action.payload,
-        created_at: action.payload.created_at || new Date().toISOString(),
-        updated_at: action.payload.updated_at || new Date().toISOString(),
-        media_files: action.payload.media_files || [],
-      };
-      state.activeTab = "elements";
+    setCurrentTimeline: (state, action: PayloadAction<Timeline | null>) => {
+      state.currentTimeline = action.payload;
     },
     timelineDeleted: (state, action: PayloadAction<string>) => {
       state.timelines = state.timelines.filter((t) => t.id !== action.payload);

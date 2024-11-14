@@ -9,13 +9,18 @@ import {
   selectTimelineError,
   setCurrentTimeline,
   setTimelines,
+  timelineDeleted,
+  setLoading,
+  setError,
 } from "@/store/timelineSlice";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 import { Timeline } from "@/types";
 import { api } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
 
 const TimelineList: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const timelines = useSelector(selectTimelines);
   const loading = useSelector(selectTimelineLoading);
   const error = useSelector(selectTimelineError);
@@ -24,7 +29,6 @@ const TimelineList: React.FC = () => {
 
   useEffect(() => {
     const fetchTimelines = async () => {
-      console.log("here");
       try {
         const fetchedTimelines = await api.timelines.getAll();
         dispatch(setTimelines(fetchedTimelines));
@@ -45,20 +49,30 @@ const TimelineList: React.FC = () => {
         instructions: [],
       });
       dispatch(setCurrentTimeline(newTimeline));
-      dispatchCustomEvent("GET_TIMELINES");
+      navigate(`/timeline/${newTimeline.id}`);
     } catch (error) {
       console.error("Failed to create timeline:", error);
     }
   };
 
-  const handleEditTimeline = (timelineId: string) => {
-    dispatchCustomEvent("LOAD_TIMELINE", { timelineId: String(timelineId) });
+  const handleEditTimeline = async (timeline: Timeline) => {
+    dispatch(setCurrentTimeline(timeline));
+    navigate(`/timeline/${timeline.id}`);
   };
 
-  const handleDeleteTimeline = (timelineId: string) => {
-    dispatchCustomEvent("DELETE_TIMELINE", {
-      timelineId: String(timelineId),
-    });
+  const handleDeleteTimeline = async (timelineId: string) => {
+    try {
+      dispatch(setLoading(true));
+      await api.timelines.delete(timelineId);
+      dispatch(timelineDeleted(timelineId));
+      const updatedTimelines = await api.timelines.getAll();
+      dispatch(setTimelines(updatedTimelines));
+    } catch (error) {
+      console.error("Failed to delete timeline:", error);
+      dispatch(setError("Failed to delete timeline. Please try again."));
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   const startEditingTitle = (timeline: Timeline) => {
@@ -69,7 +83,8 @@ const TimelineList: React.FC = () => {
   const handleTitleUpdate = async (timelineId: string) => {
     try {
       await api.timelines.update(timelineId, { title: newTitle });
-      dispatchCustomEvent("GET_TIMELINES");
+      const updatedTimelines = await api.timelines.getAll();
+      dispatch(setTimelines(updatedTimelines));
       setEditingTitleId(null);
     } catch (error) {
       console.error("Failed to update timeline title:", error);
@@ -138,16 +153,20 @@ const TimelineList: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleEditTimeline(String(timeline.id))}
+                onClick={() => handleEditTimeline(timeline)}
+                className="flex items-center gap-2"
               >
                 <Edit2 size={16} />
+                Edit
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleDeleteTimeline(String(timeline.id))}
+                className="flex items-center gap-2 text-destructive hover:text-destructive"
               >
                 <Trash2 size={16} />
+                Delete
               </Button>
             </div>
           </div>

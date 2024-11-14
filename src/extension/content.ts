@@ -17,11 +17,6 @@ class ContentScript {
     this.initialize();
   }
 
-  private extractVideoId(): string {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get("v") || "default";
-  }
-
   private extractTimelineId(): string {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get("timelineId") || "default";

@@ -13,42 +13,28 @@ import {
   selectInstructions,
   setEditingInstruction,
   removeInstruction,
+  selectCurrentTimeline,
+  setCurrentTimeline,
 } from "@/store/timelineSlice";
-import {
-  PauseInstruction,
-  SkipInstruction,
-  Instruction,
-  TimeInput as TimeInputType,
-  Timeline,
-} from "@/types";
-import InstructionsList from "./InstructionsList";
 import { TimeInput } from "../ui/TimeInput";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 import VideoUpload from "@/components/VideoUpload";
 import { api } from "@/lib/api";
+import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
+import InstructionsList from "./InstructionsList";
+import { TimeInput as TimeInputInterface } from "@/types";
 
-interface InstructionEditorProps {
-  timelineId: string;
-  videoId: string;
-  currentTimeline: Timeline;
-  onTimelineUpdate: (timeline: Timeline) => void;
-}
-
-const InstructionEditor: React.FC<InstructionEditorProps> = ({
-  timelineId,
-  videoId,
-  currentTimeline,
-  onTimelineUpdate,
-}) => {
+const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
   const currentTime = useSelector(selectCurrentTime);
   const editingInstruction = useSelector(selectEditingInstruction);
   const instructions = useSelector(selectInstructions);
+  const currentTimeline = useSelector(selectCurrentTimeline);
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
 
-  const parseTimeInput = (data: TimeInputType) => {
+  const parseTimeInput = (data: TimeInputInterface) => {
     return (
       (Number(data.hours) * 3600 +
         Number(data.minutes) * 60 +
@@ -146,15 +132,18 @@ const InstructionEditor: React.FC<InstructionEditorProps> = ({
   };
 
   const handleSaveInstructions = async () => {
+    if (!currentTimeline) return;
+
     try {
-      const updatedTimeline = await api.timelines.update(timelineId, {
+      const updatedTimeline = await api.timelines.update(currentTimeline.id, {
         instructions: instructions.map((instruction) => ({
           ...instruction,
-          videoId, // Ensure videoId is added to each instruction
+          videoId:
+            new URLSearchParams(window.location.search).get("v") || "default", // Get videoId from URL
         })),
       });
 
-      onTimelineUpdate(updatedTimeline);
+      dispatch(setCurrentTimeline(updatedTimeline));
       dispatchCustomEvent("SAVE_SUCCESS", {
         message: "Instructions saved successfully",
       });
@@ -182,7 +171,7 @@ const InstructionEditor: React.FC<InstructionEditorProps> = ({
 
           const mediaFile = await api.timelines.uploadMedia(
             file,
-            timelineId,
+            currentTimeline!.id,
             instructionId
           );
 
@@ -199,7 +188,8 @@ const InstructionEditor: React.FC<InstructionEditorProps> = ({
 
       newInstruction = {
         id: instructionId,
-        videoId,
+        videoId:
+          new URLSearchParams(window.location.search).get("v") || "default",
         type: "pause",
         triggerTime,
         pauseDuration: Number(data.pauseDuration),
@@ -208,7 +198,8 @@ const InstructionEditor: React.FC<InstructionEditorProps> = ({
     } else if (selectedType === "skip") {
       newInstruction = {
         id: instructionId,
-        videoId,
+        videoId:
+          new URLSearchParams(window.location.search).get("v") || "default",
         type: "skip",
         triggerTime,
         skipToTime: parseTimeInput({
@@ -233,11 +224,11 @@ const InstructionEditor: React.FC<InstructionEditorProps> = ({
     }
 
     try {
-      const updatedTimeline = await api.timelines.update(timelineId, {
+      const updatedTimeline = await api.timelines.update(currentTimeline!.id, {
         instructions: updatedInstructions,
       });
 
-      onTimelineUpdate(updatedTimeline);
+      dispatch(setCurrentTimeline(updatedTimeline));
       dispatchCustomEvent("SAVE_SUCCESS", {
         message: "Instruction saved successfully",
       });

@@ -2,9 +2,10 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import { store } from "@/store";
-import EditPage from "@/pages/EditPage";
 import Timeline from "@/components/Timeline/Timeline";
 import "../index.css";
+import App from "@/App";
+import { MemoryRouter as Router } from "react-router-dom";
 
 function init() {
   // Create container for Timeline
@@ -53,9 +54,11 @@ function init() {
     const root = createRoot(container);
     root.render(
       <React.StrictMode>
-        <Provider store={store}>
-          <EditPage />
-        </Provider>
+        <Router>
+          <Provider store={store}>
+            <App />
+          </Provider>
+        </Router>
       </React.StrictMode>
     );
   } catch (error) {

@@ -37,8 +37,6 @@ const EditPage: React.FC = () => {
   const selectedElement = useSelector(selectSelectedElement);
   const isCanvasVisible = useSelector(selectCanvasVisibility);
   const currentTimeline = useSelector(selectCurrentTimeline);
-  const videoId =
-    new URLSearchParams(window.location.search).get("v") || "default";
 
   const saveElements = () => {
     dispatchCustomEvent("SAVE_ELEMENTS");
@@ -89,14 +87,7 @@ const EditPage: React.FC = () => {
       id: "instructions",
       label: "Instructions",
       icon: Clock,
-      content: (
-        <InstructionEditor
-          timelineId={currentTimeline.id}
-          videoId={videoId}
-          currentTimeline={currentTimeline}
-          onTimelineUpdate={handleTimelineUpdate}
-        />
-      ),
+      content: <InstructionEditor />,
     },
   ];
 
