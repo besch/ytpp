@@ -8,8 +8,12 @@ import {
 import Navigation from "@/pages/Navigation";
 import TimelineList from "@/components/Timeline/TimelineList";
 import TimelineEditor from "@/components/Timeline/TimelineEditor";
+import { useCanvasEvents } from "./hooks/useCanvasEvents";
+import { useInstructionsEvents } from "./hooks/useInstructionsEvents";
 
 const App: React.FC = () => {
+  useCanvasEvents();
+
   return (
     <div className="h-[600px] min-h-[600px] flex overflow-hidden transition-all duration-300 ease-in-out w-[300px] min-w-[300px]">
       <div className="w-[350px] h-full flex flex-col overflow-hidden">
