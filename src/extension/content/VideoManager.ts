@@ -10,6 +10,7 @@ export class VideoManager {
   private clickHandler: ((event: MouseEvent) => void) | null = null;
   private cleanupListeners: Array<() => void> = [];
   private videoOverlayManager: VideoOverlayManager | null = null;
+  private instructions: Instruction[] = [];
 
   constructor() {
     const cleanupListeners = [
@@ -96,27 +97,20 @@ export class VideoManager {
   };
 
   private async checkInstructions(currentTimeMs: number): Promise<void> {
-    try {
-      const result = await chrome.storage.local.get("instructions");
-      const instructions: Instruction[] = result.instructions || [];
+    const matchingInstruction = this.instructions.find(
+      (instruction: Instruction) =>
+        Math.abs(currentTimeMs - instruction.triggerTime) < 100
+    );
 
-      const matchingInstruction = instructions.find(
-        (instruction: Instruction) =>
-          Math.abs(currentTimeMs - instruction.triggerTime) < 100
-      );
-
-      if (matchingInstruction && this.videoElement?.paused === false) {
-        switch (matchingInstruction.type) {
-          case "pause":
-            this.handleInstructionPause(matchingInstruction);
-            break;
-          case "skip":
-            this.handleInstructionSkip(matchingInstruction.skipToTime);
-            break;
-        }
+    if (matchingInstruction && this.videoElement?.paused === false) {
+      switch (matchingInstruction.type) {
+        case "pause":
+          this.handleInstructionPause(matchingInstruction);
+          break;
+        case "skip":
+          this.handleInstructionSkip(matchingInstruction.skipToTime);
+          break;
       }
-    } catch (error) {
-      console.error("Error checking instructions:", error);
     }
   }
 
@@ -135,7 +129,7 @@ export class VideoManager {
       this.videoElement.pause();
 
       const pauseDuration =
-        (instruction as PauseInstruction).overlayVideo?.duration || 0;
+        (instruction as PauseInstruction).pauseDuration || 0;
 
       if (
         (instruction as PauseInstruction).overlayVideo?.url &&
@@ -251,5 +245,10 @@ export class VideoManager {
     if (this.videoElement) {
       this.videoElement.currentTime = timeMs / 1000;
     }
+  }
+
+  public setInstructions(instructions: Instruction[]): void {
+    console.log("setInstructions", instructions);
+    this.instructions = instructions;
   }
 }
