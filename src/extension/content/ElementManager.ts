@@ -78,23 +78,6 @@ export class ElementManager {
       }),
     };
 
-    // Handle GIF upload first if it's a GIF element
-    let mediaFile: MediaFile | null = null;
-    if (elementType === "gif" && gifUrl) {
-      try {
-        const response = await fetch(gifUrl);
-        const blob = await response.blob();
-        const file = new File([blob], `gif-${Date.now()}.gif`, {
-          type: "image/gif",
-        });
-        mediaFile = await api.timelines.uploadMedia(file, this.timelineId);
-        gifUrl = mediaFile.url; // Use the cloud storage URL
-      } catch (error) {
-        console.error("Failed to upload GIF:", error);
-        return;
-      }
-    }
-
     // Create element based on type
     switch (elementType) {
       case "circle":

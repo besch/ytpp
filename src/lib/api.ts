@@ -63,5 +63,16 @@ export const api = {
       );
       return response.data;
     },
+
+    deleteMedia: async (mediaId: string): Promise<void> => {
+      await axios.delete(`${API_BASE_URL}/timelines/media/${mediaId}`);
+    },
+
+    getMedia: async (timelineId: string): Promise<MediaFile[]> => {
+      const response = await axios.get(
+        `${API_BASE_URL}/timelines/media/${timelineId}`
+      );
+      return response.data;
+    },
   },
 };

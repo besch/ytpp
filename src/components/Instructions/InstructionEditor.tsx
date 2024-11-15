@@ -74,10 +74,17 @@ const InstructionEditor: React.FC = () => {
       setValue("seconds", seconds);
 
       if (editingInstruction.type === "pause") {
-        setValue(
-          "pauseDuration",
-          (editingInstruction as PauseInstruction).pauseDuration
-        );
+        const pauseInstruction = editingInstruction as PauseInstruction;
+        setValue("pauseDuration", pauseInstruction.pauseDuration);
+        if (pauseInstruction.overlayVideo) {
+          setValue("overlayVideo", {
+            url: pauseInstruction.overlayVideo.url,
+            duration: pauseInstruction.overlayVideo.duration,
+            name: `Overlay Video (${Math.round(
+              pauseInstruction.overlayVideo.duration
+            )}s)`,
+          });
+        }
       } else if (editingInstruction.type === "skip") {
         const skipToTime =
           (editingInstruction as SkipInstruction).skipToTime / 1000;
@@ -127,6 +134,23 @@ const InstructionEditor: React.FC = () => {
     }
   }, [currentTime, isEditing, selectedType, setValue]);
 
+  // Add this effect to load media file data when editing
+  useEffect(() => {
+    if (isEditing && editingInstruction?.type === "pause") {
+      const pauseInstruction = editingInstruction as PauseInstruction;
+      if (pauseInstruction.overlayVideo) {
+        setValue("overlayVideo", {
+          id: pauseInstruction.overlayVideo.id,
+          url: pauseInstruction.overlayVideo.url,
+          duration: pauseInstruction.overlayVideo.duration,
+          name: `Overlay Video (${Math.round(
+            pauseInstruction.overlayVideo.duration
+          )}s)`,
+        });
+      }
+    }
+  }, [isEditing, editingInstruction, setValue]);
+
   const handleBack = () => {
     dispatch(setEditingInstruction(null));
   };
@@ -159,8 +183,8 @@ const InstructionEditor: React.FC = () => {
       if (data.overlayVideo) {
         try {
           const file = new File(
-            [data.overlayVideo],
-            `overlay-${Date.now()}.mp4`,
+            [data.overlayVideo.file],
+            data.overlayVideo.name,
             {
               type: data.overlayVideo.type,
             }
@@ -173,7 +197,7 @@ const InstructionEditor: React.FC = () => {
           );
 
           overlayVideo = {
-            id: mediaFile.id,
+            id: Date.now().toString(),
             url: mediaFile.url,
             duration: data.pauseDuration,
           };
@@ -261,8 +285,28 @@ const InstructionEditor: React.FC = () => {
     setValue("skipToSeconds", seconds);
   };
 
-  const handleDeleteOverlayVideo = () => {
-    setValue("overlayVideo", null); // Clear the overlay video from the form
+  const handleDeleteOverlayVideo = async () => {
+    if (watch("overlayVideo")?.id) {
+      try {
+        await api.timelines.deleteMedia(watch("overlayVideo").id);
+        setValue("overlayVideo", null);
+
+        // Update the instruction in the store
+        if (editingInstruction?.id) {
+          const updatedInstruction = {
+            ...editingInstruction,
+            overlayVideo: null,
+          } as PauseInstruction;
+
+          dispatch(updateInstruction(updatedInstruction));
+          await handleSaveInstructions();
+        }
+      } catch (error) {
+        console.error("Failed to delete overlay video:", error);
+      }
+    } else {
+      setValue("overlayVideo", null);
+    }
   };
 
   const renderForm = () => {
@@ -347,21 +391,39 @@ const InstructionEditor: React.FC = () => {
                   Overlay Video
                 </label>
                 {watch("overlayVideo") ? (
-                  <div className="flex items-center gap-2">
-                    <span>{watch("overlayVideo").name}</span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleDeleteOverlayVideo}
-                    >
-                      Delete
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span>{watch("overlayVideo").name}</span>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDeleteOverlayVideo}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                    <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
+                      <video
+                        src={watch("overlayVideo").url}
+                        className="w-full h-full object-contain"
+                        controls
+                        preload="metadata"
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
                   </div>
                 ) : (
                   <VideoUpload
                     onVideoSelected={(videoData) => {
                       setValue("pauseDuration", Math.ceil(videoData.duration));
-                      setValue("overlayVideo", videoData);
+                      setValue("overlayVideo", {
+                        file: videoData.file,
+                        url: videoData.url,
+                        duration: videoData.duration,
+                        name: videoData.name,
+                        type: videoData.type,
+                      });
                     }}
                     currentVideo={watch("overlayVideo")}
                   />
