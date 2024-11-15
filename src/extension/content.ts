@@ -85,19 +85,19 @@ class ContentScript {
         OverlayManager.updateElementColor(color, type);
       }),
 
-      addCustomEventListener(
-        "UPDATE_ELEMENT_TIME",
-        ({ elementId, from, to }) => {
-          const selectedElement = OverlayManager.getSelectedElement();
-          if (selectedElement && selectedElement.data?.id === elementId) {
-            OverlayManager.updateElementTime(selectedElement, from, to);
-          }
-        }
-      ),
+      // addCustomEventListener(
+      //   "UPDATE_ELEMENT_TIME",
+      //   ({ elementId, from, to }) => {
+      //     const selectedElement = OverlayManager.getSelectedElement();
+      //     if (selectedElement && selectedElement.data?.id === elementId) {
+      //       OverlayManager.updateElementTime(selectedElement, from, to);
+      //     }
+      //   }
+      // ),
 
-      addCustomEventListener("DELETE_ELEMENT", () => {
-        OverlayManager.elementManager?.deleteSelectedElement();
-      }),
+      // addCustomEventListener("DELETE_ELEMENT", () => {
+      //   OverlayManager.elementManager?.deleteSelectedElement();
+      // }),
 
       addCustomEventListener("TOGGLE_CANVAS", ({ visible }) => {
         OverlayManager.setCanvasVisibility(visible);
@@ -105,9 +105,11 @@ class ContentScript {
 
       addCustomEventListener("SET_TIMELINE", ({ timeline }) => {
         if (timeline) {
-          // Update the overlay with new timeline data
+          this.currentTimeline = timeline;
+          // Update elements in OverlayManager
           OverlayManager.loadElements(timeline.elements || []);
-          // Handle instructions if needed
+          // Update instructions in VideoManager
+          this.videoManager?.setInstructions(timeline.instructions || []);
         }
       }),
     ];

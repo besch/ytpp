@@ -202,7 +202,7 @@ export class ElementManager {
     this.canvas.requestRenderAll();
 
     const elements = this.getElements();
-    dispatchCustomEvent("SET_ELEMENTS", { elements });
+    // dispatchCustomEvent("SET_ELEMENTS", { elements });
 
     await this.saveElements();
   }
@@ -269,10 +269,6 @@ export class ElementManager {
     try {
       const timeline = await api.timelines.update(this.timelineId, {
         elements,
-      });
-
-      dispatchCustomEvent("SAVE_SUCCESS", {
-        message: "Elements saved successfully",
       });
     } catch (error) {
       console.error("Failed to save elements:", error);
@@ -414,7 +410,6 @@ export class ElementManager {
       this.saveElements();
 
       const elements = this.getElements();
-      dispatchCustomEvent("SET_ELEMENTS", { elements });
     }
     dispatchCustomEvent("SELECTION_CLEARED");
   }

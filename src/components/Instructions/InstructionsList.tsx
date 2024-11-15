@@ -35,9 +35,9 @@ const InstructionsList: React.FC = () => {
 
   const handleDelete = (id: string) => {
     dispatch(removeInstruction(id));
-    dispatchCustomEvent("SAVE_INSTRUCTIONS", {
-      instructions,
-    });
+    // dispatchCustomEvent("SAVE_INSTRUCTIONS", {
+    //   instructions,
+    // });
   };
 
   if (showTypeSelect) {
