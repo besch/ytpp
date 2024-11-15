@@ -4,10 +4,12 @@ import {
   selectSelectedElement,
   selectCurrentTimeline,
   updateElement,
+  setCurrentTimeline,
 } from "@/store/timelineSlice";
 import { TimeInput } from "@/components/ui/TimeInput";
 import DeleteElementButton from "./DeleteElementButton";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import { api } from "@/lib/api";
 
 const TimeRangeInputs: React.FC = () => {
   const dispatch = useDispatch();
@@ -16,26 +18,64 @@ const TimeRangeInputs: React.FC = () => {
 
   if (!selectedElement) return null;
 
-  const handleFromChange = (value: number) => {
+  const handleFromChange = async (value: number) => {
     if (!currentTimeline?.id || !selectedElement) return;
 
-    dispatchCustomEvent("UPDATE_ELEMENT_TIME", {
-      timelineId: currentTimeline.id,
-      elementId: selectedElement.id,
-      from: value,
-      to: selectedElement.timeRange.to,
-    });
+    const updatedElement = {
+      ...selectedElement,
+      timeRange: {
+        ...selectedElement.timeRange,
+        from: value,
+      },
+    };
+
+    const updatedTimeline = {
+      ...currentTimeline,
+      elements: currentTimeline.elements.map((el) =>
+        el.id === selectedElement.id ? updatedElement : el
+      ),
+    };
+
+    try {
+      const savedTimeline = await api.timelines.update(
+        currentTimeline.id,
+        updatedTimeline
+      );
+      dispatch(setCurrentTimeline(savedTimeline));
+      dispatchCustomEvent("SET_TIMELINE", { timeline: savedTimeline });
+    } catch (error) {
+      console.error("Failed to update timeline:", error);
+    }
   };
 
-  const handleToChange = (value: number) => {
+  const handleToChange = async (value: number) => {
     if (!currentTimeline?.id || !selectedElement) return;
 
-    dispatchCustomEvent("UPDATE_ELEMENT_TIME", {
-      timelineId: currentTimeline.id,
-      elementId: selectedElement.id,
-      from: selectedElement.timeRange.from,
-      to: value,
-    });
+    const updatedElement = {
+      ...selectedElement,
+      timeRange: {
+        ...selectedElement.timeRange,
+        to: value,
+      },
+    };
+
+    const updatedTimeline = {
+      ...currentTimeline,
+      elements: currentTimeline.elements.map((el) =>
+        el.id === selectedElement.id ? updatedElement : el
+      ),
+    };
+
+    try {
+      const savedTimeline = await api.timelines.update(
+        currentTimeline.id,
+        updatedTimeline
+      );
+      dispatch(setCurrentTimeline(savedTimeline));
+      dispatchCustomEvent("SET_TIMELINE", { timeline: savedTimeline });
+    } catch (error) {
+      console.error("Failed to update timeline:", error);
+    }
   };
 
   return (

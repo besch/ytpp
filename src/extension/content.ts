@@ -50,7 +50,6 @@ class ContentScript {
           this.videoManager.getVideoElement()!,
           this.timelineId
         );
-        this.loadElements();
       }
       this.isOverlayVisible = !this.isOverlayVisible;
     }
@@ -100,47 +99,19 @@ class ContentScript {
         OverlayManager.elementManager?.deleteSelectedElement();
       }),
 
-      addCustomEventListener("SAVE_ELEMENTS", () => {
-        this.saveElements();
-      }),
-
-      addCustomEventListener("LOAD_ELEMENTS", () => {
-        this.loadElements();
-      }),
-
-      // addCustomEventListener("LOAD_INSTRUCTIONS", () => {
-      //   this.loadInstructions();
-      // }),
-
-      addCustomEventListener("GET_ELEMENTS", () => {
-        const elements = OverlayManager.getElements();
-        if (elements && elements.length > 0) {
-          dispatchCustomEvent("SET_ELEMENTS", { elements });
-        }
-      }),
-
       addCustomEventListener("TOGGLE_CANVAS", ({ visible }) => {
         OverlayManager.setCanvasVisibility(visible);
       }),
 
-      addCustomEventListener("INITIALIZE_TIMELINE", async () => {
-        await this.initializeTimeline();
-      }),
-
-      addCustomEventListener("LOAD_TIMELINE", async ({ timelineId }) => {
-        await this.loadTimeline(timelineId);
-      }),
-
-      addCustomEventListener("DELETE_TIMELINE", async ({ timelineId }) => {
-        await this.deleteTimeline(timelineId);
-      }),
-
-      addCustomEventListener("GET_TIMELINES", async () => {
-        await this.loadTimelinesList();
+      addCustomEventListener("SET_TIMELINE", ({ timeline }) => {
+        if (timeline) {
+          // Update the overlay with new timeline data
+          OverlayManager.loadElements(timeline.elements || []);
+          // Handle instructions if needed
+        }
       }),
     ];
 
-    // Store cleanup functions
     this.cleanupListeners = listeners;
   }
 
@@ -174,30 +145,8 @@ class ContentScript {
       sendResponse({ success: true });
     } else if (message.action === "ADD_ELEMENT") {
       OverlayManager.addElement(message.elementType);
-    } else if (message.action === "SAVE_ELEMENTS") {
-      this.saveElements();
     }
     return true;
-  }
-
-  private async loadElements(): Promise<void> {
-    try {
-      if (!this.currentTimeline?.id) {
-        console.warn("No timeline selected");
-        return;
-      }
-
-      const timeline = await api.timelines.get(this.currentTimeline.id);
-      if (timeline?.elements) {
-        await OverlayManager.elementManager?.loadElements(timeline.elements);
-
-        // Force dispatch elements after loading
-        const currentElements = OverlayManager.getElements();
-        dispatchCustomEvent("SET_ELEMENTS", { elements: currentElements });
-      }
-    } catch (error) {
-      console.error("Error loading elements:", error);
-    }
   }
 
   private handleTimeUpdate = (currentTimeMs: number): void => {
@@ -210,50 +159,6 @@ class ContentScript {
     }
   }
 
-  private saveElements(): void {
-    const elements = OverlayManager.getElements();
-    storage.set("elements", elements);
-  }
-
-  private async initializeTimeline(): Promise<void> {
-    try {
-      const timeline = await api.timelines.create({
-        title: `Timeline ${new Date().toLocaleString()}`,
-        elements: [],
-        instructions: [],
-      });
-
-      await this.loadTimeline(timeline.id);
-      dispatchCustomEvent("TIMELINE_INITIALIZED", { timeline });
-    } catch (error) {
-      console.error("Failed to initialize timeline:", error);
-    }
-  }
-
-  private async saveTimeline(): Promise<void> {
-    if (!this.currentTimeline) return;
-
-    try {
-      const elements = OverlayManager.getElements();
-      const instructions = this.currentTimeline.instructions.map(
-        (instruction) => ({
-          ...instruction,
-        })
-      );
-
-      this.currentTimeline = await api.timelines.update(
-        this.currentTimeline.id,
-        { elements, instructions }
-      );
-
-      dispatchCustomEvent("SAVE_SUCCESS", {
-        message: "Timeline saved successfully",
-      });
-    } catch (error) {
-      console.error("Failed to save timeline:", error);
-    }
-  }
-
   private cleanup(): void {
     this.cleanupListeners.forEach((cleanup) => cleanup());
     this.cleanupListeners = [];
@@ -262,41 +167,6 @@ class ContentScript {
   private handleTimelineUpdate = (updatedTimeline: Timeline) => {
     this.currentTimeline = updatedTimeline;
   };
-
-  private async loadTimelinesList(): Promise<void> {
-    try {
-      const timelines = await api.timelines.getAll();
-      dispatchCustomEvent("SET_TIMELINES", { timelines });
-    } catch (error) {
-      console.error("Failed to load timelines:", error);
-    }
-  }
-
-  private async loadTimeline(timelineId: string): Promise<void> {
-    try {
-      const timeline = await api.timelines.get(timelineId);
-
-      // Load timeline elements into overlay
-      if (timeline.elements) {
-        await OverlayManager.elementManager?.loadElements(timeline.elements);
-      }
-
-      // Update React app state
-      dispatchCustomEvent("SET_CURRENT_TIMELINE", { timeline });
-    } catch (error) {
-      console.error("Failed to load timeline:", error);
-    }
-  }
-
-  private async deleteTimeline(timelineId: string): Promise<void> {
-    try {
-      await api.timelines.delete(timelineId);
-      await this.loadTimelinesList(); // Refresh the list
-      dispatchCustomEvent("TIMELINE_DELETED", { timelineId });
-    } catch (error) {
-      console.error("Failed to delete timeline:", error);
-    }
-  }
 }
 
 export const contentScript = new ContentScript();

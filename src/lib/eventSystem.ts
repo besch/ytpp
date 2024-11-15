@@ -27,51 +27,14 @@ interface EventPayloads {
     color: string;
     type: "fill" | "stroke" | "text";
   };
-  UPDATE_ELEMENT_TIME: {
-    timelineId: string;
-    elementId: string;
-    from: number;
-    to: number;
-  };
-  DELETE_ELEMENT: {
-    timelineId: string;
-    elementId: string;
-  };
-  SAVE_ELEMENTS: undefined;
-  LOAD_ELEMENTS: undefined;
-  LOAD_INSTRUCTIONS: undefined;
-  GET_ELEMENTS: undefined;
-  SET_ELEMENTS: {
-    elements: any[];
-  };
   TOGGLE_CANVAS: {
     visible: boolean;
   };
-  INITIALIZE_TIMELINE: undefined;
-  LOAD_TIMELINE: {
-    timelineId: string;
-  };
-  DELETE_TIMELINE: {
-    timelineId: string;
-  };
-  GET_TIMELINES: undefined;
-  SET_TIMELINES: {
-    timelines: Timeline[];
+  SET_TIMELINE: {
+    timeline: Timeline | null;
   };
   SET_CURRENT_TIMELINE: {
     timeline: Timeline;
-  };
-  TIMELINE_INITIALIZED: {
-    timeline: Timeline;
-  };
-  TIMELINE_DELETED: {
-    timelineId: string;
-  };
-  SAVE_SUCCESS: {
-    message: string;
-  };
-  SAVE_ERROR: {
-    message: string;
   };
   ELEMENT_SELECTED: {
     element: ElementPayload;
@@ -83,9 +46,6 @@ interface EventPayloads {
   };
   SEEK_TO_TIME: {
     timeMs: number;
-  };
-  SAVE_INSTRUCTIONS: {
-    instructions: Instruction[];
   };
   VIDEO_TIME_UPDATE: {
     currentTimeMs: number;

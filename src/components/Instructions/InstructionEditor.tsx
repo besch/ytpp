@@ -144,9 +144,6 @@ const InstructionEditor: React.FC = () => {
       });
 
       dispatch(setCurrentTimeline(updatedTimeline));
-      dispatchCustomEvent("SAVE_SUCCESS", {
-        message: "Instructions saved successfully",
-      });
     } catch (error) {
       console.error("Failed to save instructions:", error);
     }
@@ -217,26 +214,24 @@ const InstructionEditor: React.FC = () => {
       updatedInstructions = instructions.map((i) =>
         i.id === newInstruction.id ? newInstruction : i
       );
-      dispatch(updateInstruction(newInstruction));
     } else {
       updatedInstructions = [...instructions, newInstruction];
-      dispatch(addInstruction(newInstruction));
     }
 
     try {
-      const updatedTimeline = await api.timelines.update(currentTimeline!.id, {
+      const updatedTimeline = {
+        ...currentTimeline!,
         instructions: updatedInstructions,
-      });
+      };
 
-      dispatch(setCurrentTimeline(updatedTimeline));
-      dispatchCustomEvent("SAVE_SUCCESS", {
-        message: "Instruction saved successfully",
-      });
+      const savedTimeline = await api.timelines.update(
+        currentTimeline!.id,
+        updatedTimeline
+      );
+      dispatch(setCurrentTimeline(savedTimeline));
+      dispatchCustomEvent("SET_TIMELINE", { timeline: savedTimeline });
     } catch (error) {
       console.error("Failed to save instruction:", error);
-      dispatchCustomEvent("SAVE_ERROR", {
-        message: "Failed to save instruction",
-      });
     }
 
     dispatch(setCurrentTime(triggerTime));

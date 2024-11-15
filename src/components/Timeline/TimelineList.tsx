@@ -57,6 +57,7 @@ const TimelineList: React.FC = () => {
 
   const handleEditTimeline = async (timeline: Timeline) => {
     dispatch(setCurrentTimeline(timeline));
+    dispatchCustomEvent("SET_TIMELINE", { timeline });
     navigate(`/timeline/${timeline.id}`);
   };
 

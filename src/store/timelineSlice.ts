@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
 import { Timeline, Instruction, ElementStyle } from "@/types";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 interface TimelineState {
   currentTime: number;
@@ -129,6 +130,7 @@ export const timelineSlice = createSlice({
     },
     setCurrentTimeline: (state, action: PayloadAction<Timeline | null>) => {
       state.currentTimeline = action.payload;
+      dispatchCustomEvent("SET_TIMELINE", { timeline: action.payload });
     },
     timelineDeleted: (state, action: PayloadAction<string>) => {
       state.timelines = state.timelines.filter((t) => t.id !== action.payload);
