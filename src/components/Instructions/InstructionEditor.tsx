@@ -76,7 +76,6 @@ const InstructionEditor: React.FC = () => {
         setValue("pauseDuration", pauseInstruction.pauseDuration);
         if (pauseInstruction.overlayVideo) {
           setValue("overlayVideo", {
-            id: pauseInstruction.overlayVideo.id,
             url: pauseInstruction.overlayVideo.url,
             duration: pauseInstruction.overlayVideo.duration,
             name: `Overlay Video (${Math.round(
@@ -139,7 +138,6 @@ const InstructionEditor: React.FC = () => {
       const pauseInstruction = editingInstruction as PauseInstruction;
       if (pauseInstruction.overlayVideo) {
         setValue("overlayVideo", {
-          id: pauseInstruction.overlayVideo.id,
           url: pauseInstruction.overlayVideo.url,
           duration: pauseInstruction.overlayVideo.duration,
           name: `Overlay Video (${Math.round(
@@ -172,13 +170,12 @@ const InstructionEditor: React.FC = () => {
       dispatchCustomEvent("SET_TIMELINE", { timeline: savedTimeline });
     } catch (error) {
       console.error("Failed to save instructions:", error);
-      alert("Failed to save instructions. Please try again.");
     }
   };
 
   const onSubmit = async (data: any) => {
     const triggerTime = parseTimeInput(data);
-    const instructionId = editingInstruction?.id || Date.now().toString();
+    // Remove instructionId as it's no longer needed
     let newInstruction: Instruction;
 
     if (selectedType === "pause") {
@@ -193,26 +190,24 @@ const InstructionEditor: React.FC = () => {
             }
           );
 
-          const mediaFile = await api.timelines.uploadMedia(
+          const mediaURL = await api.timelines.uploadMedia(
             file,
-            currentTimeline!.id,
-            instructionId
+            currentTimeline!.id
           );
 
           overlayVideo = {
-            id: mediaFile.id, // Use the correct mediaFile.id
-            url: mediaFile.url,
-            duration: data.pauseDuration,
+            url: mediaURL.url,
+            duration: Number(data.pauseDuration),
+            name: `Overlay Video (${Math.round(data.pauseDuration)}s)`,
           };
         } catch (error) {
           console.error("Failed to upload overlay video:", error);
-          alert("Failed to upload overlay video. Please try again.");
           return;
         }
       }
 
       newInstruction = {
-        id: instructionId,
+        id: editingInstruction?.id || Date.now().toString(),
         type: "pause",
         triggerTime,
         pauseDuration: Number(data.pauseDuration),
@@ -220,7 +215,7 @@ const InstructionEditor: React.FC = () => {
       } as PauseInstruction;
     } else if (selectedType === "skip") {
       newInstruction = {
-        id: instructionId,
+        id: editingInstruction?.id || Date.now().toString(),
         type: "skip",
         triggerTime,
         skipToTime: parseTimeInput({
@@ -243,7 +238,6 @@ const InstructionEditor: React.FC = () => {
     }
 
     try {
-      // Use handleSaveInstructions with updatedInstructions
       await handleSaveInstructions(updatedInstructions);
     } catch (error) {
       console.error("Failed to save instruction:", error);
@@ -255,15 +249,14 @@ const InstructionEditor: React.FC = () => {
     dispatch(setEditingInstruction(null));
   };
 
-  // **Modify handleDeleteOverlayVideo to use updatedInstructions**
   const handleDeleteOverlayVideo = async () => {
-    const mediaId = watch("overlayVideo")?.id;
-    if (mediaId) {
+    const mediaURL = watch("overlayVideo")?.url;
+    if (mediaURL) {
       try {
-        await api.timelines.deleteMedia(mediaId);
+        await api.timelines.deleteMedia(mediaURL);
         setValue("overlayVideo", null);
 
-        // Define updatedInstructions by setting overlayVideo to null
+        // Update instructions by setting overlayVideo to null
         if (editingInstruction?.id) {
           const updatedInstructions = instructions.map((instruction) =>
             instruction.id === editingInstruction.id
@@ -276,7 +269,6 @@ const InstructionEditor: React.FC = () => {
         }
       } catch (error) {
         console.error("Failed to delete overlay video:", error);
-        alert("Failed to delete overlay video. Please try again.");
       }
     } else {
       setValue("overlayVideo", null);

@@ -76,9 +76,9 @@ export interface PauseInstruction extends BaseInstruction {
   type: "pause";
   pauseDuration: number;
   overlayVideo?: {
-    id: string;
     url: string;
     duration: number;
+    name?: string;
   } | null;
 }
 

@@ -42,15 +42,11 @@ export const api = {
 
     uploadMedia: async (
       file: File,
-      timelineId: string,
-      instructionId?: string
-    ): Promise<MediaFile> => {
+      timelineId: string
+    ): Promise<{ url: string }> => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("timelineId", timelineId);
-      if (instructionId) {
-        formData.append("instructionId", instructionId);
-      }
 
       const response = await axios.post(
         `${API_BASE_URL}/timelines/media`,
@@ -64,8 +60,10 @@ export const api = {
       return response.data;
     },
 
-    deleteMedia: async (mediaId: string): Promise<void> => {
-      await axios.delete(`${API_BASE_URL}/timelines/media/${mediaId}`);
+    deleteMedia: async (url: string): Promise<void> => {
+      await axios.delete(`${API_BASE_URL}/timelines/media`, {
+        data: { url },
+      });
     },
 
     getMedia: async (timelineId: string): Promise<MediaFile[]> => {
