@@ -99,9 +99,7 @@ export const timelineSlice = createSlice({
         );
         if (index !== -1) {
           state.currentTimeline.instructions[index] = action.payload;
-          // dispatchCustomEvent("SET_TIMELINE", {
-          //   timeline: state.currentTimeline,
-          // });
+          // Ensure immutability if necessary
         }
       }
     },

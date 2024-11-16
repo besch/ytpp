@@ -7,12 +7,10 @@ import Input from "@/components/ui/Input";
 import {
   selectCurrentTime,
   setCurrentTime,
-  addInstruction,
-  updateInstruction,
-  selectEditingInstruction,
-  selectInstructions,
   setEditingInstruction,
   removeInstruction,
+  selectEditingInstruction,
+  selectInstructions,
   selectCurrentTimeline,
   setCurrentTimeline,
 } from "@/store/timelineSlice";
@@ -78,6 +76,7 @@ const InstructionEditor: React.FC = () => {
         setValue("pauseDuration", pauseInstruction.pauseDuration);
         if (pauseInstruction.overlayVideo) {
           setValue("overlayVideo", {
+            id: pauseInstruction.overlayVideo.id,
             url: pauseInstruction.overlayVideo.url,
             duration: pauseInstruction.overlayVideo.duration,
             name: `Overlay Video (${Math.round(
@@ -155,17 +154,25 @@ const InstructionEditor: React.FC = () => {
     dispatch(setEditingInstruction(null));
   };
 
-  const handleSaveInstructions = async () => {
+  // **Modify handleSaveInstructions to accept updated instructions**
+  const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
     if (!currentTimeline) return;
 
     try {
-      const updatedTimeline = await api.timelines.update(currentTimeline.id, {
-        instructions,
-      });
+      const updatedTimeline = {
+        ...currentTimeline,
+        instructions: updatedInstructions,
+      };
 
-      dispatch(setCurrentTimeline(updatedTimeline));
+      const savedTimeline = await api.timelines.update(
+        currentTimeline.id,
+        updatedTimeline
+      );
+      dispatch(setCurrentTimeline(savedTimeline));
+      dispatchCustomEvent("SET_TIMELINE", { timeline: savedTimeline });
     } catch (error) {
       console.error("Failed to save instructions:", error);
+      alert("Failed to save instructions. Please try again.");
     }
   };
 
@@ -193,12 +200,13 @@ const InstructionEditor: React.FC = () => {
           );
 
           overlayVideo = {
-            id: Date.now().toString(),
+            id: mediaFile.id, // Use the correct mediaFile.id
             url: mediaFile.url,
             duration: data.pauseDuration,
           };
         } catch (error) {
           console.error("Failed to upload overlay video:", error);
+          alert("Failed to upload overlay video. Please try again.");
           return;
         }
       }
@@ -235,24 +243,44 @@ const InstructionEditor: React.FC = () => {
     }
 
     try {
-      const updatedTimeline = {
-        ...currentTimeline!,
-        instructions: updatedInstructions,
-      };
-
-      const savedTimeline = await api.timelines.update(
-        currentTimeline!.id,
-        updatedTimeline
-      );
-      dispatch(setCurrentTimeline(savedTimeline));
-      dispatchCustomEvent("SET_TIMELINE", { timeline: savedTimeline });
+      // Use handleSaveInstructions with updatedInstructions
+      await handleSaveInstructions(updatedInstructions);
     } catch (error) {
       console.error("Failed to save instruction:", error);
+      return;
     }
 
     dispatch(setCurrentTime(triggerTime));
     reset();
     dispatch(setEditingInstruction(null));
+  };
+
+  // **Modify handleDeleteOverlayVideo to use updatedInstructions**
+  const handleDeleteOverlayVideo = async () => {
+    const mediaId = watch("overlayVideo")?.id;
+    if (mediaId) {
+      try {
+        await api.timelines.deleteMedia(mediaId);
+        setValue("overlayVideo", null);
+
+        // Define updatedInstructions by setting overlayVideo to null
+        if (editingInstruction?.id) {
+          const updatedInstructions = instructions.map((instruction) =>
+            instruction.id === editingInstruction.id
+              ? { ...instruction, overlayVideo: null }
+              : instruction
+          );
+
+          // Use handleSaveInstructions with updatedInstructions
+          await handleSaveInstructions(updatedInstructions);
+        }
+      } catch (error) {
+        console.error("Failed to delete overlay video:", error);
+        alert("Failed to delete overlay video. Please try again.");
+      }
+    } else {
+      setValue("overlayVideo", null);
+    }
   };
 
   const handleTimeChange = (time: number) => {
@@ -277,28 +305,8 @@ const InstructionEditor: React.FC = () => {
     setValue("skipToSeconds", seconds);
   };
 
-  const handleDeleteOverlayVideo = async () => {
-    if (watch("overlayVideo")?.id) {
-      try {
-        await api.timelines.deleteMedia(watch("overlayVideo").id);
-        setValue("overlayVideo", null);
-
-        // Update the instruction in the store
-        if (editingInstruction?.id) {
-          const updatedInstruction = {
-            ...editingInstruction,
-            overlayVideo: null,
-          } as PauseInstruction;
-
-          dispatch(updateInstruction(updatedInstruction));
-          await handleSaveInstructions();
-        }
-      } catch (error) {
-        console.error("Failed to delete overlay video:", error);
-      }
-    } else {
-      setValue("overlayVideo", null);
-    }
+  const handleDeleteOverlayVideoWithNoMedia = () => {
+    setValue("overlayVideo", null);
   };
 
   const renderForm = () => {
@@ -331,12 +339,21 @@ const InstructionEditor: React.FC = () => {
           </div>
           {isEditing && (
             <Button
+              type="button"
               variant="destructive"
               size="sm"
               onClick={() => {
                 if (editingInstruction?.id) {
-                  dispatch(removeInstruction(editingInstruction.id));
-                  handleSaveInstructions();
+                  const instructionId = editingInstruction.id;
+
+                  // Define updatedInstructions after removal
+                  const updatedInstructions = instructions.filter(
+                    (instruction) => instruction.id !== instructionId
+                  );
+
+                  // Save the updated instructions to the backend
+                  handleSaveInstructions(updatedInstructions);
+
                   dispatch(setEditingInstruction(null));
                 }
               }}
@@ -387,6 +404,7 @@ const InstructionEditor: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span>{watch("overlayVideo").name}</span>
                       <Button
+                        type="button"
                         variant="destructive"
                         size="sm"
                         onClick={handleDeleteOverlayVideo}
