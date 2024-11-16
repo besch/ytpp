@@ -160,11 +160,7 @@ const InstructionEditor: React.FC = () => {
 
     try {
       const updatedTimeline = await api.timelines.update(currentTimeline.id, {
-        instructions: instructions.map((instruction) => ({
-          ...instruction,
-          videoId:
-            new URLSearchParams(window.location.search).get("v") || "default", // Get videoId from URL
-        })),
+        instructions,
       });
 
       dispatch(setCurrentTimeline(updatedTimeline));
@@ -209,8 +205,6 @@ const InstructionEditor: React.FC = () => {
 
       newInstruction = {
         id: instructionId,
-        videoId:
-          new URLSearchParams(window.location.search).get("v") || "default",
         type: "pause",
         triggerTime,
         pauseDuration: Number(data.pauseDuration),
@@ -219,8 +213,6 @@ const InstructionEditor: React.FC = () => {
     } else if (selectedType === "skip") {
       newInstruction = {
         id: instructionId,
-        videoId:
-          new URLSearchParams(window.location.search).get("v") || "default",
         type: "skip",
         triggerTime,
         skipToTime: parseTimeInput({
