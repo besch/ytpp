@@ -48,28 +48,22 @@ export const api = {
       formData.append("file", file);
       formData.append("timelineId", timelineId);
 
-      const response = await axios.post(
-        `${API_BASE_URL}/timelines/media`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}/media`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       return response.data;
     },
 
     deleteMedia: async (url: string): Promise<void> => {
-      await axios.delete(`${API_BASE_URL}/timelines/media`, {
+      await axios.delete(`${API_BASE_URL}/media`, {
         data: { url },
       });
     },
 
     getMedia: async (timelineId: string): Promise<MediaFile[]> => {
-      const response = await axios.get(
-        `${API_BASE_URL}/timelines/media/${timelineId}`
-      );
+      const response = await axios.get(`${API_BASE_URL}/media/${timelineId}`);
       return response.data;
     },
   },
