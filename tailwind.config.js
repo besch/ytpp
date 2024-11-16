@@ -9,80 +9,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "hsl(222.2 84% 4.9%)",
-        foreground: "hsl(210 40% 98%)",
-        primary: {
-          DEFAULT: "hsl(210, 100%, 50%)",
-          foreground: "hsl(0, 0%, 100%)",
-        },
-        secondary: {
-          DEFAULT: "hsl(280, 100%, 50%)",
-          foreground: "hsl(0, 0%, 100%)",
-        },
-        destructive: {
-          DEFAULT: "hsl(0, 62.8%, 30.6%)",
-          foreground: "hsl(210 40% 98%)",
-        },
-        accent: {
-          DEFAULT: "hsl(216, 34%, 17%)",
-          foreground: "hsl(210 40% 98%)",
-        },
-        muted: {
-          DEFAULT: "hsl(217.2 32.6% 17.5%)",
-          foreground: "hsl(215 20.2% 65.1%)",
-        },
-        border: "hsl(217.2 32.6% 17.5%)",
-        input: "hsl(217.2 32.6% 17.5%)",
-        ring: "hsl(212.7 26.8% 83.9%)",
+        primary: "#2563EB",
+        secondary: "#9333EA",
+        background: "#1F2937",
+        foreground: "#F9FAFB",
+        muted: "#4B5563",
+        card: "#374151",
+        border: "#334155",
+        destructive: "#DC2626",
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+      spacing: {
+        1: "0.25rem",
+        2: "0.5rem",
+        10: "2.5rem",
       },
-      keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-        flashBlueRed: {
-          "0%, 100%": { color: "hsl(var(--primary))" },
-          "50%": { color: "hsl(var(--destructive))" },
-        },
-        flashRed: {
-          "0%, 100%": { color: "hsl(var(--destructive))" },
-          "50%": { color: "hsl(var(--background))" },
-        },
-        fadeIn: {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
-        },
-        spin: {
-          from: { transform: "rotate(0deg)" },
-          to: { transform: "rotate(360deg)" },
-        },
-        pulse: {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.5" },
-        },
-        ripple: {
-          "0%": { transform: "scale(1)", opacity: "1" },
-          "100%": { transform: "scale(4)", opacity: "0" },
-        },
-      },
-      animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-        "flash-blue-red": "flashBlueRed 1s linear infinite",
-        "flash-red": "flashRed 1s linear infinite",
-        "fade-in": "fadeIn 0.3s ease-in",
-        spin: "spin 1s linear infinite",
-        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        ripple: "ripple 1s ease-out forwards",
+      fontSize: {
+        sm: ["0.875rem", { lineHeight: "1.25rem" }],
+        xl: ["1.25rem", { lineHeight: "1.75rem" }],
       },
     },
   },

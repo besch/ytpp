@@ -9,18 +9,16 @@ const App: React.FC = () => {
   useCanvasEvents();
 
   return (
-    <div className="h-[600px] min-h-[600px] flex overflow-hidden transition-all duration-300 ease-in-out w-[300px] min-w-[300px]">
-      <div className="w-[350px] h-full flex flex-col overflow-hidden">
-        <div className="flex-grow h-[450px] bg-background text-foreground flex flex-col overflow-hidden">
-          <Navigation />
-          <div className="flex-grow overflow-auto">
-            <Routes>
-              <Route path="/" element={<TimelineList />} />
-              <Route path="/timeline/:id" element={<TimelineEditor />} />
-              <Route path="/timeline/new" element={<TimelineEditor />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
+    <div className="h-full flex overflow-hidden">
+      <div className="w-full h-full flex flex-col bg-background text-foreground">
+        <Navigation />
+        <div className="flex-grow overflow-auto">
+          <Routes>
+            <Route path="/" element={<TimelineList />} />
+            <Route path="/timeline/:id" element={<TimelineEditor />} />
+            <Route path="/timeline/new" element={<TimelineEditor />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
       </div>
     </div>

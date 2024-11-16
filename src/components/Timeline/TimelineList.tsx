@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { ArrowLeft, Plus, Trash2, Edit2 } from "lucide-react";
+import { Plus, Trash2, Edit2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import {
@@ -92,87 +92,92 @@ const TimelineList: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <div className="text-center py-4">Loading timelines...</div>;
-  }
-
-  if (error) {
-    return <div className="text-destructive text-center py-4">{error}</div>;
-  }
-
   return (
-    <div className="space-y-4">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Your Timelines</h2>
-        <Button onClick={handleCreateTimeline} size="sm">
+        <h2 className="text-xl font-semibold">Your Timelines</h2>
+        <Button onClick={handleCreateTimeline}>
           <Plus size={16} className="mr-2" />
           New Timeline
         </Button>
       </div>
 
-      <div className="space-y-2">
-        {timelines.map((timeline) => (
-          <div
-            key={timeline.id}
-            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-          >
-            {editingTitleId === timeline.id ? (
-              <div className="flex items-center gap-2 flex-1 mr-2">
-                <Input
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleTitleUpdate(timeline.id);
-                    }
-                  }}
-                  className="h-8"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => handleTitleUpdate(timeline.id)}
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingTitleId(null)}
-                >
-                  Cancel
-                </Button>
+      {error && (
+        <div className="text-destructive text-center py-4">{error}</div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-4">Loading timelines...</div>
+      ) : timelines.length > 0 ? (
+        <div className="space-y-2">
+          {timelines.map((timeline) => (
+            <div
+              key={timeline.id}
+              className="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-muted cursor-pointer"
+              onClick={() => handleEditTimeline(timeline)}
+            >
+              <div className="flex-1">
+                {editingTitleId === timeline.id ? (
+                  <Input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleTitleUpdate(timeline.id);
+                      }
+                    }}
+                    className="h-9"
+                  />
+                ) : (
+                  <p className="font-medium">{timeline.title}</p>
+                )}
               </div>
-            ) : (
-              <span
-                className="font-medium cursor-pointer hover:text-primary"
-                onClick={() => startEditingTitle(timeline)}
-              >
-                {timeline.title}
-              </span>
-            )}
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditTimeline(timeline)}
-                className="flex items-center gap-2"
-              >
-                <Edit2 size={16} />
-                Edit
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteTimeline(String(timeline.id))}
-                className="flex items-center gap-2 text-destructive hover:text-destructive"
-              >
-                <Trash2 size={16} />
-                Delete
-              </Button>
+              <div className="flex items-center space-x-2">
+                {editingTitleId === timeline.id ? (
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={() => handleTitleUpdate(timeline.id)}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingTitleId(null)}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startEditingTitle(timeline)}
+                    >
+                      <Edit2 size={16} className="mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteTimeline(timeline.id)}
+                    >
+                      <Trash2 size={16} className="mr-2" />
+                      Delete
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-muted-foreground">
+          You have no timelines. Click "New Timeline" to create one.
+        </div>
+      )}
     </div>
   );
 };

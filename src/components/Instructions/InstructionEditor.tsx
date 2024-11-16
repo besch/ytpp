@@ -297,65 +297,27 @@ const InstructionEditor: React.FC = () => {
     setValue("skipToSeconds", seconds);
   };
 
-  const handleDeleteOverlayVideoWithNoMedia = () => {
-    setValue("overlayVideo", null);
-  };
-
   const renderForm = () => {
     if (!selectedType && !isEditing) {
       return (
         <div className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium">Instructions</h3>
-          </div>
           <InstructionsList />
         </div>
       );
     }
 
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="p-0 h-8 w-8"
-            >
-              <ArrowLeft size={20} />
-            </Button>
-            <h3 className="text-sm font-medium">
-              {isEditing ? "Edit Instruction" : "Add Instruction"}
-            </h3>
-          </div>
-          {isEditing && (
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                if (editingInstruction?.id) {
-                  const instructionId = editingInstruction.id;
-
-                  // Define updatedInstructions after removal
-                  const updatedInstructions = instructions.filter(
-                    (instruction) => instruction.id !== instructionId
-                  );
-
-                  // Save the updated instructions to the backend
-                  handleSaveInstructions(updatedInstructions);
-
-                  dispatch(setEditingInstruction(null));
-                }
-              }}
-            >
-              <Trash2 size={16} className="mr-2" />
-              Delete
-            </Button>
-          )}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={handleBack}>
+            <ArrowLeft size={16} className="mr-2" />
+            Back
+          </Button>
+          <h3 className="text-lg font-medium">
+            {isEditing ? "Edit Instruction" : "Add Instruction"}
+          </h3>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground">
               Trigger Time
@@ -458,7 +420,7 @@ const InstructionEditor: React.FC = () => {
     );
   };
 
-  return <div className="p-4">{renderForm()}</div>;
+  return <div className="p-6">{renderForm()}</div>;
 };
 
 export default InstructionEditor;

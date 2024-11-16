@@ -30,22 +30,20 @@ const TimelineEditor: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft size={16} />
-            Back to List
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft size={16} />
+          Back
+        </Button>
         <h2 className="text-lg font-semibold">{currentTimeline.title}</h2>
       </div>
 
       <Tabs defaultValue="elements">
-        <TabsList className="grid grid-cols-3 mb-6">
+        <TabsList className="grid grid-cols-3 mb-4">
           <TabsTrigger value="elements">Elements</TabsTrigger>
           <TabsTrigger value="properties">Properties</TabsTrigger>
           <TabsTrigger value="instructions">Instructions</TabsTrigger>

@@ -50,16 +50,16 @@ const AddElements: React.FC = () => {
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-medium text-foreground">Add Elements</h3>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
         {elements.map(({ type, icon: Icon, label }) => (
           <Button
             key={type}
             onClick={() => addElement(type)}
             variant="outline"
-            className="flex flex-col items-center gap-2 p-3 h-auto"
+            className="flex flex-col items-center gap-2 p-4 h-auto"
             title={label}
           >
-            <Icon size={20} />
+            <Icon size={24} />
             <span className="text-xs">{label}</span>
           </Button>
         ))}
