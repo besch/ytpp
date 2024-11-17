@@ -15,6 +15,7 @@ class ContentScript {
   constructor() {
     this.timelineId = this.extractTimelineId();
     this.initialize();
+    this.setupCustomEventListeners();
   }
 
   private extractTimelineId(): string {
@@ -103,13 +104,9 @@ class ContentScript {
         OverlayManager.setCanvasVisibility(visible);
       }),
 
-      addCustomEventListener("SET_TIMELINE", ({ timeline }) => {
+      addCustomEventListener("TIMELINE_SELECTED", ({ timeline }) => {
         if (timeline) {
-          this.currentTimeline = timeline;
-          // Update elements in OverlayManager
-          OverlayManager.loadElements(timeline.elements || []);
-          // Update instructions in VideoManager
-          this.videoManager?.setInstructions(timeline.instructions || []);
+          this.updateTimeline(timeline);
         }
       }),
     ];
@@ -169,6 +166,14 @@ class ContentScript {
   private handleTimelineUpdate = (updatedTimeline: Timeline) => {
     this.currentTimeline = updatedTimeline;
   };
+
+  private updateTimeline(timeline: Timeline): void {
+    this.currentTimeline = timeline;
+    // Update elements in OverlayManager
+    OverlayManager.loadElements(timeline.elements || []);
+    // Update instructions in VideoManager
+    this.videoManager?.setInstructions(timeline.instructions || []);
+  }
 }
 
 export const contentScript = new ContentScript();

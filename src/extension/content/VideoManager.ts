@@ -11,6 +11,7 @@ export class VideoManager {
   private cleanupListeners: Array<() => void> = [];
   private videoOverlayManager: VideoOverlayManager | null = null;
   private instructions: Instruction[] = [];
+  private lastInstructionId: string | null = null;
 
   constructor() {
     const cleanupListeners = [
@@ -81,36 +82,58 @@ export class VideoManager {
 
   private handleVideoPause = (): void => {};
 
-  private handleVideoSeeking = (event: Event): void => {};
+  private handleVideoSeeking = (event: Event): void => {
+    // Reset lastInstructionId to allow instructions to trigger again upon seeking
+    this.lastInstructionId = null;
+
+    // Clear any existing resume timeout
+    if ((this.videoElement as any)._resumeTimeout) {
+      clearTimeout((this.videoElement as any)._resumeTimeout);
+      (this.videoElement as any)._resumeTimeout = null;
+    }
+  };
 
   private handleVolumeChange = (event: Event): void => {};
 
   private handleTimeUpdate = (event: Event): void => {
     const video = event.target as HTMLVideoElement;
-    const currentTimeMs = video.currentTime * 1000;
+    const currentTime = video.currentTime; // Current time in seconds
 
-    dispatchCustomEvent("VIDEO_TIME_UPDATE", { currentTimeMs });
-    this.checkInstructions(currentTimeMs);
+    dispatchCustomEvent("VIDEO_TIME_UPDATE", {
+      currentTimeMs: currentTime * 1000,
+    });
+    this.checkInstructions(currentTime);
 
     // Call updateVisibility on ElementManager
-    this.timeUpdateListeners.forEach((listener) => listener(currentTimeMs));
+    this.timeUpdateListeners.forEach((listener) =>
+      listener(currentTime * 1000)
+    );
   };
 
-  private async checkInstructions(currentTimeMs: number): Promise<void> {
-    const matchingInstruction = this.instructions.find(
-      (instruction: Instruction) =>
-        Math.abs(currentTimeMs - instruction.triggerTime) < 100
-    );
+  private async checkInstructions(currentTime: number): Promise<void> {
+    const instruction = this.instructions.find(
+      (instr: Instruction) =>
+        instr.type === "pause" &&
+        Math.abs(currentTime - instr.triggerTime / 1000) < 0.1 // 0.1 seconds tolerance
+    ) as PauseInstruction | undefined;
 
-    if (matchingInstruction && this.videoElement?.paused === false) {
-      switch (matchingInstruction.type) {
-        case "pause":
-          this.handleInstructionPause(matchingInstruction);
-          break;
-        case "skip":
-          this.handleInstructionSkip(matchingInstruction.skipToTime);
-          break;
+    if (instruction) {
+      if (this.lastInstructionId !== instruction.id) {
+        this.lastInstructionId = instruction.id;
+        if (instruction.overlayVideo?.url) {
+          console.log(
+            "Overlay video detected, handling overlay pause instruction."
+          );
+          await this.handleInstructionPauseWithOverlay(instruction);
+        } else {
+          console.log("No overlay video, handling standard pause instruction.");
+          this.handleInstructionPause(instruction);
+        }
       }
+    } else {
+      // No active instruction, hide overlay
+      this.videoOverlayManager?.hideOverlay();
+      this.lastInstructionId = null;
     }
   }
 
@@ -120,43 +143,23 @@ export class VideoManager {
     }
   };
 
-  private handleInstructionPause = (instruction: Instruction): void => {
-    if (
-      instruction.type === "pause" &&
-      this.videoElement &&
-      !this.videoElement.paused
-    ) {
+  private handleInstructionPause = (instruction: PauseInstruction): void => {
+    console.log(`Pausing main video for ${instruction.pauseDuration} seconds.`);
+    if (this.videoElement && !this.videoElement.paused) {
       this.videoElement.pause();
 
-      const pauseDuration =
-        (instruction as PauseInstruction).pauseDuration || 0;
+      const pauseDuration = instruction.pauseDuration || 0;
 
-      if (
-        (instruction as PauseInstruction).overlayVideo?.url &&
-        this.videoOverlayManager
-      ) {
-        this.videoOverlayManager
-          .playOverlayVideo((instruction as PauseInstruction).overlayVideo!.url)
-          .then(() => {
-            // Resume video after overlay video ends
-            this.videoElement?.play().catch((error) => {
-              console.error("Error resuming video:", error);
-            });
+      const resumeTimeout = setTimeout(() => {
+        if (this.videoElement && this.videoElement.paused) {
+          this.videoElement.play().catch((error) => {
+            console.error("Error resuming video:", error);
           });
-      } else {
-        // If no overlay video, resume after pauseDuration
-        const resumeTime = setTimeout(() => {
-          if (this.videoElement && this.videoElement.paused) {
-            console.log("Resuming video after pause");
-            this.videoElement.play().catch((error) => {
-              console.error("Error resuming video:", error);
-            });
-          }
-        }, pauseDuration * 1000);
+        }
+      }, pauseDuration * 1000); // Convert to milliseconds
 
-        // Store the timeout to clear it if needed
-        (this.videoElement as any)._pauseTimeout = resumeTime;
-      }
+      // Store the timeout to clear it if needed
+      (this.videoElement as any)._resumeTimeout = resumeTimeout;
     }
   };
 
@@ -248,7 +251,29 @@ export class VideoManager {
   }
 
   public setInstructions(instructions: Instruction[]): void {
-    console.log("setInstructions", instructions);
     this.instructions = instructions;
+    this.lastInstructionId = null; // Reset when instructions change
+  }
+
+  private async handleInstructionPauseWithOverlay(
+    instruction: PauseInstruction
+  ): Promise<void> {
+    console.log("Handling instruction with overlay video:", instruction);
+    if (this.videoElement && !this.videoElement.paused) {
+      this.videoElement.pause();
+
+      await this.videoOverlayManager?.playOverlayVideo(
+        instruction.overlayVideo!.url
+      );
+
+      this.videoOverlayManager?.onOverlayEnded(() => {
+        // Ensure the video hasn't been played already (in case of rapid seeking)
+        if (this.lastInstructionId === instruction.id) {
+          this.videoElement?.play().catch((error) => {
+            console.error("Error resuming video:", error);
+          });
+        }
+      });
+    }
   }
 }

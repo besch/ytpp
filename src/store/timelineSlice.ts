@@ -87,9 +87,6 @@ export const timelineSlice = createSlice({
     addInstruction: (state, action: PayloadAction<Instruction>) => {
       if (state.currentTimeline) {
         state.currentTimeline.instructions.push(action.payload);
-        dispatchCustomEvent("SET_TIMELINE", {
-          timeline: state.currentTimeline,
-        });
       }
     },
     updateInstruction: (state, action: PayloadAction<Instruction>) => {
@@ -109,9 +106,6 @@ export const timelineSlice = createSlice({
           state.currentTimeline.instructions.filter(
             (instruction) => instruction.id !== action.payload
           );
-        dispatchCustomEvent("SET_TIMELINE", {
-          timeline: state.currentTimeline,
-        });
       }
     },
     setEditingInstruction: (
@@ -127,9 +121,6 @@ export const timelineSlice = createSlice({
     setInstructions: (state, action: PayloadAction<Instruction[]>) => {
       if (state.currentTimeline) {
         state.currentTimeline.instructions = action.payload;
-        dispatchCustomEvent("SET_TIMELINE", {
-          timeline: state.currentTimeline,
-        });
       }
     },
     setCanvasVisibility: (state, action: PayloadAction<boolean>) => {
@@ -140,7 +131,6 @@ export const timelineSlice = createSlice({
     },
     setCurrentTimeline: (state, action: PayloadAction<Timeline | null>) => {
       state.currentTimeline = action.payload;
-      dispatchCustomEvent("SET_TIMELINE", { timeline: action.payload });
     },
     timelineDeleted: (state, action: PayloadAction<string>) => {
       state.timelines = state.timelines.filter((t) => t.id !== action.payload);

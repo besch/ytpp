@@ -4,6 +4,7 @@ export class VideoOverlayManager {
   private resizeObserver: ResizeObserver | null = null;
   private container: HTMLElement | null = null;
   private videoBlobUrl: string | null = null;
+  private overlayEndedCallback: (() => void) | null = null;
 
   constructor(videoElement: HTMLVideoElement) {
     this.videoElement = videoElement;
@@ -20,20 +21,31 @@ export class VideoOverlayManager {
   private setupOverlayVideo(): void {
     this.overlayVideo = document.createElement("video");
     this.overlayVideo.classList.add("youtube-uncensored-video");
-    this.overlayVideo.style.position = "absolute";
-    this.overlayVideo.style.top = "0";
-    this.overlayVideo.style.left = "0";
-    this.overlayVideo.style.width = "100%";
-    this.overlayVideo.style.height = "100%";
-    this.overlayVideo.style.display = "none";
-    this.overlayVideo.style.zIndex = "2"; // Ensure it's above the main video
-    this.overlayVideo.controls = true;
+
+    Object.assign(this.overlayVideo.style, {
+      position: "absolute",
+      top: "0",
+      left: "0",
+      width: "100%",
+      height: "100%",
+      display: "none",
+      zIndex: "2",
+      pointerEvents: "none", // Allow clicks through overlay
+    });
+
+    this.overlayVideo.controls = false;
     this.overlayVideo.loop = false;
 
-    this.container?.insertBefore(this.overlayVideo, this.container.firstChild);
+    if (this.container) {
+      this.container.insertBefore(this.overlayVideo, this.container.firstChild);
+    }
 
-    // Hide overlay video when it ends
-    this.overlayVideo.addEventListener("ended", this.hideOverlay);
+    this.overlayVideo.addEventListener("ended", () => {
+      this.hideOverlay();
+      if (this.overlayEndedCallback) {
+        this.overlayEndedCallback();
+      }
+    });
   }
 
   private setupResizeObserver(): void {
@@ -61,8 +73,10 @@ export class VideoOverlayManager {
   public async playOverlayVideo(videoUrl: string): Promise<void> {
     if (!this.overlayVideo) return;
 
+    console.log("Playing overlay video:", videoUrl);
+
     try {
-      // If the videoUrl is a blob URL, revoke the previous one
+      // Revoke previous blob URL if any
       if (this.videoBlobUrl) {
         URL.revokeObjectURL(this.videoBlobUrl);
       }
@@ -81,8 +95,9 @@ export class VideoOverlayManager {
   /**
    * Hides the overlay video.
    */
-  private hideOverlay = (): void => {
+  public hideOverlay = (): void => {
     if (this.overlayVideo) {
+      this.overlayVideo.pause();
       this.overlayVideo.style.display = "none";
       this.overlayVideo.src = "";
       if (this.videoBlobUrl) {
@@ -101,5 +116,9 @@ export class VideoOverlayManager {
       this.overlayVideo.removeEventListener("ended", this.hideOverlay);
       this.overlayVideo.remove();
     }
+  }
+
+  public onOverlayEnded(callback: () => void): void {
+    this.overlayEndedCallback = callback;
   }
 }

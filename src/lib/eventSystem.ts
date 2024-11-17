@@ -52,6 +52,9 @@ interface EventPayloads {
   };
   REACT_APP_READY: undefined;
   CONTENT_SCRIPT_LOADED: undefined;
+  TIMELINE_SELECTED: {
+    timeline: Timeline;
+  };
 }
 
 type EventName = keyof EventPayloads;
