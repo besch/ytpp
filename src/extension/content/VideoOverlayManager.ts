@@ -1,10 +1,11 @@
 export class VideoOverlayManager {
   private videoElement: HTMLVideoElement;
-  private overlayVideo: HTMLVideoElement | null = null;
+  private overlayElement: HTMLElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private container: HTMLElement | null = null;
-  private videoBlobUrl: string | null = null;
+  private mediaBlobUrl: string | null = null;
   private overlayEndedCallback: (() => void) | null = null;
+  private overlayTimeout: number | null = null;
 
   constructor(videoElement: HTMLVideoElement) {
     this.videoElement = videoElement;
@@ -14,15 +15,15 @@ export class VideoOverlayManager {
   private initialize(): void {
     this.container =
       this.videoElement.closest(".html5-video-container") || document.body;
-    this.setupOverlayVideo();
+    this.setupOverlayElement();
     this.setupResizeObserver();
   }
 
-  private setupOverlayVideo(): void {
-    this.overlayVideo = document.createElement("video");
-    this.overlayVideo.classList.add("youtube-uncensored-video");
+  private setupOverlayElement(): void {
+    this.overlayElement = document.createElement("div");
+    this.overlayElement.classList.add("youtube-uncensored-overlay");
 
-    Object.assign(this.overlayVideo.style, {
+    Object.assign(this.overlayElement.style, {
       position: "absolute",
       top: "0",
       left: "0",
@@ -33,19 +34,12 @@ export class VideoOverlayManager {
       pointerEvents: "none", // Allow clicks through overlay
     });
 
-    this.overlayVideo.controls = false;
-    this.overlayVideo.loop = false;
-
     if (this.container) {
-      this.container.insertBefore(this.overlayVideo, this.container.firstChild);
+      this.container.insertBefore(
+        this.overlayElement,
+        this.container.firstChild
+      );
     }
-
-    this.overlayVideo.addEventListener("ended", () => {
-      this.hideOverlay();
-      if (this.overlayEndedCallback) {
-        this.overlayEndedCallback();
-      }
-    });
   }
 
   private setupResizeObserver(): void {
@@ -59,56 +53,98 @@ export class VideoOverlayManager {
   }
 
   private updateOverlaySize(): void {
-    if (!this.videoElement || !this.overlayVideo) return;
+    if (!this.videoElement || !this.overlayElement) return;
 
     const { width, height } = this.videoElement.getBoundingClientRect();
-    this.overlayVideo.style.width = `${width}px`;
-    this.overlayVideo.style.height = `${height}px`;
+    this.overlayElement.style.width = `${width}px`;
+    this.overlayElement.style.height = `${height}px`;
   }
 
   /**
-   * Plays the overlay video.
-   * @param videoUrl - The URL of the overlay video.
-   * @param muteOverlay - Whether to mute the overlay video.
+   * Plays the overlay media.
+   * @param mediaUrl - The URL of the overlay media.
+   * @param muteOverlay - Whether to mute the overlay media.
+   * @param mediaType - The type of the media ("video" or "image").
    */
-  public async playOverlayVideo(
-    videoUrl: string,
-    muteOverlay: boolean = false
+  public async playOverlayMedia(
+    mediaUrl: string,
+    muteOverlay: boolean = false,
+    mediaType: "video" | "image",
+    duration?: number
   ): Promise<void> {
-    if (!this.overlayVideo) return;
+    if (!this.overlayElement) return;
 
-    console.log("Playing overlay video:", videoUrl);
+    console.log("Playing overlay media:", mediaUrl);
 
     try {
+      // Clear any existing content
+      this.overlayElement.innerHTML = "";
+
       // Revoke previous blob URL if any
-      if (this.videoBlobUrl) {
-        URL.revokeObjectURL(this.videoBlobUrl);
+      if (this.mediaBlobUrl) {
+        URL.revokeObjectURL(this.mediaBlobUrl);
       }
 
-      this.overlayVideo.src = videoUrl;
-      this.overlayVideo.muted = muteOverlay; // Apply mute setting
-      this.videoBlobUrl = videoUrl;
-      this.overlayVideo.style.display = "block";
+      this.mediaBlobUrl = mediaUrl;
 
-      await this.overlayVideo.play();
+      if (mediaType === "video") {
+        const overlayVideo = document.createElement("video");
+        overlayVideo.src = mediaUrl;
+        overlayVideo.muted = muteOverlay; // Apply mute setting
+        overlayVideo.style.width = "100%";
+        overlayVideo.style.height = "100%";
+        overlayVideo.style.objectFit = "contain";
+
+        overlayVideo.addEventListener("ended", () => {
+          this.hideOverlay();
+          if (this.overlayEndedCallback) {
+            this.overlayEndedCallback();
+          }
+        });
+
+        this.overlayElement.appendChild(overlayVideo);
+        this.overlayElement.style.display = "block";
+
+        await overlayVideo.play();
+      } else {
+        const overlayImage = document.createElement("img");
+        overlayImage.src = mediaUrl;
+        overlayImage.style.width = "100%";
+        overlayImage.style.height = "100%";
+        overlayImage.style.objectFit = "contain";
+
+        this.overlayElement.appendChild(overlayImage);
+        this.overlayElement.style.display = "block";
+
+        // Display the image for the specified duration
+        this.overlayTimeout = window.setTimeout(() => {
+          this.hideOverlay();
+          if (this.overlayEndedCallback) {
+            this.overlayEndedCallback();
+          }
+        }, (duration || 5) * 1000); // Default to 5 seconds if duration is not provided
+      }
     } catch (error) {
-      console.error("Error playing overlay video:", error);
+      console.error("Error playing overlay media:", error);
       this.hideOverlay();
     }
   }
 
   /**
-   * Hides the overlay video.
+   * Hides the overlay media.
    */
   public hideOverlay = (): void => {
-    if (this.overlayVideo) {
-      this.overlayVideo.pause();
-      this.overlayVideo.style.display = "none";
-      this.overlayVideo.src = "";
-      if (this.videoBlobUrl) {
-        URL.revokeObjectURL(this.videoBlobUrl);
-        this.videoBlobUrl = null;
+    if (this.overlayElement) {
+      this.overlayElement.style.display = "none";
+      this.overlayElement.innerHTML = "";
+      if (this.mediaBlobUrl) {
+        URL.revokeObjectURL(this.mediaBlobUrl);
+        this.mediaBlobUrl = null;
       }
+    }
+    if (this.overlayTimeout) {
+      clearTimeout(this.overlayTimeout);
+      this.overlayTimeout = null;
     }
   };
 
@@ -117,9 +153,11 @@ export class VideoOverlayManager {
    */
   public destroy(): void {
     this.resizeObserver?.disconnect();
-    if (this.overlayVideo) {
-      this.overlayVideo.removeEventListener("ended", this.hideOverlay);
-      this.overlayVideo.remove();
+    if (this.overlayElement) {
+      this.overlayElement.remove();
+    }
+    if (this.overlayTimeout) {
+      clearTimeout(this.overlayTimeout);
     }
   }
 

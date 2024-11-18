@@ -119,7 +119,7 @@ export class VideoManager {
     if (instruction) {
       if (this.lastInstructionId !== instruction.id) {
         this.lastInstructionId = instruction.id;
-        if (instruction.overlayVideo?.url) {
+        if (instruction.overlayMedia?.url) {
           await this.handleInstructionPauseWithOverlay(instruction);
         } else {
           this.handleInstructionPause(instruction);
@@ -253,21 +253,28 @@ export class VideoManager {
   private async handleInstructionPauseWithOverlay(
     instruction: PauseInstruction
   ): Promise<void> {
-    console.log("Handling instruction with overlay video:", instruction);
+    console.log("Handling instruction with overlay media:", instruction);
     if (this.videoElement && !this.videoElement.paused) {
       this.videoElement.pause();
 
-      // Play the overlay video with mute setting
-      await this.videoOverlayManager?.playOverlayVideo(
-        instruction.overlayVideo!.url,
-        instruction.muteOverlayVideo || false
+      // Determine media type
+      const mediaType = instruction.overlayMedia!.type.startsWith("video/")
+        ? "video"
+        : "image";
+
+      // Play the overlay media with mute setting
+      await this.videoOverlayManager?.playOverlayMedia(
+        instruction.overlayMedia!.url,
+        instruction.muteOverlayMedia || false,
+        mediaType,
+        instruction.pauseDuration
       );
 
       // Wait for overlay to finish
       this.videoOverlayManager?.onOverlayEnded(() => {
         // Ensure the video hasn't been played already (in case of rapid seeking)
         if (this.lastInstructionId === instruction.id) {
-          // Hide the overlay video
+          // Hide the overlay media
           this.videoOverlayManager?.hideOverlay();
 
           if (this.videoElement && this.videoElement.paused) {
@@ -278,12 +285,12 @@ export class VideoManager {
         }
       });
 
-      // If useOverlayDuration is false, resume main video after pauseDuration
-      if (!instruction.useOverlayDuration) {
+      // If useOverlayDuration is false and media is image, resume main video after pauseDuration
+      if (!instruction.useOverlayDuration && mediaType === "image") {
         const pauseDuration = instruction.pauseDuration || 0;
 
         const resumeTimeout = setTimeout(() => {
-          // Hide the overlay video
+          // Hide the overlay media
           this.videoOverlayManager?.hideOverlay();
 
           if (this.videoElement && this.videoElement.paused) {

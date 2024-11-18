@@ -75,13 +75,14 @@ export interface BaseInstruction {
 export interface PauseInstruction extends BaseInstruction {
   type: "pause";
   pauseDuration: number;
-  overlayVideo?: {
+  overlayMedia?: {
     url: string;
     duration: number;
     name?: string;
+    type: string;
   } | null;
   useOverlayDuration?: boolean;
-  muteOverlayVideo?: boolean;
+  muteOverlayMedia?: boolean;
 }
 
 export interface SkipInstruction extends BaseInstruction {
