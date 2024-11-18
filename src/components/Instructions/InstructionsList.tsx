@@ -45,7 +45,13 @@ const InstructionsList: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const instruction = instructions.find((inst) => inst.id === id);
+    if (instruction?.type === "pause" && instruction.overlayMedia?.url) {
+      await api.timelines.deleteMedia(instruction.overlayMedia.url);
+    }
+
     await dispatch(removeInstruction(id));
+
     await api.timelines.update(currentTimeline!.id, {
       instructions: instructions.filter((instruction) => instruction.id !== id),
     });
