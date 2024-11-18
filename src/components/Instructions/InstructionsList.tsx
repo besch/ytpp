@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -7,6 +7,7 @@ import {
   setEditingInstruction,
   removeInstruction,
   selectCurrentTimeline,
+  selectEditingInstruction,
 } from "@/store/timelineSlice";
 import type { Instruction } from "@/types";
 import { formatTime } from "@/lib/time";
@@ -18,7 +19,14 @@ const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
   const currentTimeline = useSelector(selectCurrentTimeline);
   const instructions = useSelector(selectInstructions);
+  const editingInstruction = useSelector(selectEditingInstruction);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
+
+  useEffect(() => {
+    if (editingInstruction) {
+      setShowTypeSelect(false);
+    }
+  }, [editingInstruction]);
 
   const handleAddNew = () => {
     setShowTypeSelect(true);
