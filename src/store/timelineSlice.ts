@@ -88,6 +88,9 @@ export const timelineSlice = createSlice({
     addInstruction: (state, action: PayloadAction<Instruction>) => {
       if (state.currentTimeline) {
         state.currentTimeline.instructions.push(action.payload);
+        dispatchCustomEvent("TIMELINE_SELECTED", {
+          timeline: state.currentTimeline,
+        });
       }
     },
     updateInstruction: (state, action: PayloadAction<Instruction>) => {
@@ -97,6 +100,9 @@ export const timelineSlice = createSlice({
         );
         if (index !== -1) {
           state.currentTimeline.instructions[index] = action.payload;
+          dispatchCustomEvent("TIMELINE_SELECTED", {
+            timeline: state.currentTimeline,
+          });
         }
       }
     },
