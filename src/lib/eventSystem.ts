@@ -30,9 +30,6 @@ interface EventPayloads {
   TOGGLE_CANVAS: {
     visible: boolean;
   };
-  SET_TIMELINE: {
-    timeline: Timeline | null;
-  };
   SET_CURRENT_TIMELINE: {
     timeline: Timeline;
   };

@@ -202,7 +202,7 @@ const InstructionEditor: React.FC = () => {
         updatedTimeline
       );
       dispatch(setCurrentTimeline(savedTimeline));
-      dispatchCustomEvent("SET_TIMELINE", { timeline: savedTimeline });
+      dispatchCustomEvent("TIMELINE_SELECTED", { timeline: savedTimeline });
     } catch (error) {
       console.error("Failed to save instructions:", error);
     }
