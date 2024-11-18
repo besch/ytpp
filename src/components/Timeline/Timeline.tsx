@@ -39,9 +39,7 @@ const Timeline: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const currentTime = useSelector(selectCurrentTime);
-  const instructions: Instruction[] = useSelector((state: RootState) =>
-    selectInstructions(state)
-  );
+  const instructions = useSelector(selectInstructions);
   const [duration, setDuration] = useState<number>(0);
   const [draggingInstructionId, setDraggingInstructionId] = useState<
     string | null

@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
 import { Timeline, Instruction, ElementStyle } from "@/types";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import { createSelector } from "@reduxjs/toolkit";
 
 interface TimelineState {
   currentTime: number;
@@ -189,8 +190,10 @@ export const selectSelectedElement = (state: RootState) => {
     : null;
 };
 export const selectActiveTab = (state: RootState) => state.timeline.activeTab;
-export const selectInstructions = (state: RootState) =>
-  state.timeline.currentTimeline?.instructions ?? [];
+export const selectInstructions = createSelector(
+  [(state: RootState) => state.timeline.currentTimeline],
+  (currentTimeline) => currentTimeline?.instructions ?? []
+);
 export const selectEditingInstruction = (state: RootState) =>
   state.timeline.editingInstruction;
 export const selectSelectedInstructionId = (state: RootState) =>
