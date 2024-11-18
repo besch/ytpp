@@ -21,6 +21,7 @@ class BackgroundService {
               target: { tabId: tab.id },
               files: ["content.js"],
             });
+            await chrome.tabs.sendMessage(tab.id, { action: "TOGGLE_OVERLAY" });
           }
         } catch (error) {
           console.error("Failed to execute content script:", error);
