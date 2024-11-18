@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "YTPP",
-  "version": "0.1",
-  "description": "Play movie on your favourite website with ai dubbing applied to it",
-  "permissions": ["activeTab", "alarms", "storage", "scripting"],
+  "name": "Youtube uncensored",
+  "version": "0.0.1",
+  "description": "View censored content or augmented Youtube content",
+  "permissions": ["activeTab", "storage", "scripting"],
   "host_permissions": ["https://*/", "http://*/"],
   "action": {
     "default_icon": {
