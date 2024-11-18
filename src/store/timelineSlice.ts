@@ -45,6 +45,7 @@ interface ElementUpdate {
     height: number;
     scaleMode: "responsive" | "fixed";
   };
+  muteOverlayVideo?: boolean;
 }
 
 export const timelineSlice = createSlice({
@@ -96,7 +97,6 @@ export const timelineSlice = createSlice({
         );
         if (index !== -1) {
           state.currentTimeline.instructions[index] = action.payload;
-          // Ensure immutability if necessary
         }
       }
     },

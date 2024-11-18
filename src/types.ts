@@ -80,6 +80,8 @@ export interface PauseInstruction extends BaseInstruction {
     duration: number;
     name?: string;
   } | null;
+  useOverlayDuration?: boolean;
+  muteOverlayVideo?: boolean;
 }
 
 export interface SkipInstruction extends BaseInstruction {

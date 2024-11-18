@@ -69,8 +69,12 @@ export class VideoOverlayManager {
   /**
    * Plays the overlay video.
    * @param videoUrl - The URL of the overlay video.
+   * @param muteOverlay - Whether to mute the overlay video.
    */
-  public async playOverlayVideo(videoUrl: string): Promise<void> {
+  public async playOverlayVideo(
+    videoUrl: string,
+    muteOverlay: boolean = false
+  ): Promise<void> {
     if (!this.overlayVideo) return;
 
     console.log("Playing overlay video:", videoUrl);
@@ -82,6 +86,7 @@ export class VideoOverlayManager {
       }
 
       this.overlayVideo.src = videoUrl;
+      this.overlayVideo.muted = muteOverlay; // Apply mute setting
       this.videoBlobUrl = videoUrl;
       this.overlayVideo.style.display = "block";
 

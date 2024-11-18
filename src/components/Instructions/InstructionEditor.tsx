@@ -1,14 +1,13 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import {
   selectCurrentTime,
   setCurrentTime,
   setEditingInstruction,
-  removeInstruction,
   selectEditingInstruction,
   selectInstructions,
   selectCurrentTimeline,
@@ -54,6 +53,8 @@ const InstructionEditor: React.FC = () => {
       minutes: 0,
       seconds: 0,
       pauseDuration: 0,
+      useOverlayDuration: false,
+      muteOverlayVideo: false,
       skipToHours: 0,
       skipToMinutes: 0,
       skipToSeconds: 0,
@@ -74,6 +75,15 @@ const InstructionEditor: React.FC = () => {
       if (editingInstruction.type === "pause") {
         const pauseInstruction = editingInstruction as PauseInstruction;
         setValue("pauseDuration", pauseInstruction.pauseDuration);
+        setValue(
+          "useOverlayDuration",
+          pauseInstruction.useOverlayDuration || false
+        );
+        setValue(
+          "muteOverlayVideo",
+          pauseInstruction.muteOverlayVideo || false
+        );
+
         if (pauseInstruction.overlayVideo) {
           setValue("overlayVideo", {
             url: pauseInstruction.overlayVideo.url,
@@ -118,7 +128,7 @@ const InstructionEditor: React.FC = () => {
     }
   }, [isEditing, editingInstruction, currentTime, selectedType, setValue]);
 
-  // Add useEffect to sync form inputs with currentTime when not editing
+  // Sync form inputs with currentTime when not editing
   useEffect(() => {
     if (!isEditing && selectedType === null) {
       const totalSeconds = currentTime / 1000;
@@ -132,7 +142,7 @@ const InstructionEditor: React.FC = () => {
     }
   }, [currentTime, isEditing, selectedType, setValue]);
 
-  // Add this effect to load media file data when editing
+  // Load media file data when editing
   useEffect(() => {
     if (isEditing && editingInstruction?.type === "pause") {
       const pauseInstruction = editingInstruction as PauseInstruction;
@@ -148,11 +158,18 @@ const InstructionEditor: React.FC = () => {
     }
   }, [isEditing, editingInstruction, setValue]);
 
+  // Disable pauseDuration input based on useOverlayDuration
+  useEffect(() => {
+    if (watch("useOverlayDuration")) {
+      // If useOverlayDuration is checked, disable pauseDuration input
+      setValue("pauseDuration", watch("overlayVideo")?.duration || 0);
+    }
+  }, [watch("useOverlayDuration"), watch("overlayVideo"), setValue]);
+
   const handleBack = () => {
     dispatch(setEditingInstruction(null));
   };
 
-  // **Modify handleSaveInstructions to accept updated instructions**
   const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
     if (!currentTimeline) return;
 
@@ -175,12 +192,15 @@ const InstructionEditor: React.FC = () => {
 
   const onSubmit = async (data: any) => {
     const triggerTime = parseTimeInput(data);
-    // Remove instructionId as it's no longer needed
     let newInstruction: Instruction;
 
     if (selectedType === "pause") {
-      let overlayVideo = null;
-      if (data.overlayVideo) {
+      let overlayVideo =
+        editingInstruction?.type === "pause"
+          ? (editingInstruction as PauseInstruction).overlayVideo
+          : null;
+
+      if (data.overlayVideo?.file) {
         try {
           const file = new File(
             [data.overlayVideo.file],
@@ -197,13 +217,15 @@ const InstructionEditor: React.FC = () => {
 
           overlayVideo = {
             url: mediaURL.url,
-            duration: Number(data.pauseDuration),
-            name: `Overlay Video (${Math.round(data.pauseDuration)}s)`,
+            duration: Number(data.overlayVideo.duration),
+            name: data.overlayVideo.name,
           };
         } catch (error) {
           console.error("Failed to upload overlay video:", error);
           return;
         }
+      } else if (data.overlayVideo) {
+        overlayVideo = data.overlayVideo;
       }
 
       newInstruction = {
@@ -211,18 +233,22 @@ const InstructionEditor: React.FC = () => {
         type: "pause",
         triggerTime,
         pauseDuration: Number(data.pauseDuration),
+        useOverlayDuration: data.useOverlayDuration,
+        muteOverlayVideo: data.muteOverlayVideo,
         overlayVideo,
       } as PauseInstruction;
     } else if (selectedType === "skip") {
+      const skipToTime = parseTimeInput({
+        hours: data.skipToHours,
+        minutes: data.skipToMinutes,
+        seconds: data.skipToSeconds,
+      });
+
       newInstruction = {
         id: editingInstruction?.id || Date.now().toString(),
         type: "skip",
         triggerTime,
-        skipToTime: parseTimeInput({
-          hours: data.skipToHours,
-          minutes: data.skipToMinutes,
-          seconds: data.skipToSeconds,
-        }),
+        skipToTime,
       } as SkipInstruction;
     } else {
       return;
@@ -264,7 +290,6 @@ const InstructionEditor: React.FC = () => {
               : instruction
           );
 
-          // Use handleSaveInstructions with updatedInstructions
           await handleSaveInstructions(updatedInstructions);
         }
       } catch (error) {
@@ -334,13 +359,40 @@ const InstructionEditor: React.FC = () => {
 
           {selectedType === "pause" && (
             <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  {...register("useOverlayDuration")}
+                  id="useOverlayDuration"
+                  disabled={!watch("overlayVideo")}
+                />
+                <label htmlFor="useOverlayDuration" className="text-sm">
+                  Use Overlay Video Duration
+                </label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  {...register("muteOverlayVideo")}
+                  id="muteOverlayVideo"
+                />
+                <label htmlFor="muteOverlayVideo" className="text-sm">
+                  Mute Overlay Video
+                </label>
+              </div>
+
               <div>
                 <label className="text-sm text-muted-foreground">
                   Pause Duration (seconds)
                 </label>
                 <Input
                   type="number"
-                  {...register("pauseDuration", { required: true, min: 0 })}
+                  {...register("pauseDuration", {
+                    required: !watch("useOverlayDuration"),
+                    min: 0,
+                  })}
+                  disabled={watch("useOverlayDuration")}
                 />
                 {errors.pauseDuration && (
                   <span className="text-xs text-destructive">

@@ -6,14 +6,17 @@ import {
   selectInstructions,
   setEditingInstruction,
   removeInstruction,
+  selectCurrentTimeline,
 } from "@/store/timelineSlice";
 import type { Instruction } from "@/types";
 import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import { api } from "@/lib/api";
 
 const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
+  const currentTimeline = useSelector(selectCurrentTimeline);
   const instructions = useSelector(selectInstructions);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
 
@@ -33,11 +36,11 @@ const InstructionsList: React.FC = () => {
     });
   };
 
-  const handleDelete = (id: string) => {
-    dispatch(removeInstruction(id));
-    // dispatchCustomEvent("SAVE_INSTRUCTIONS", {
-    //   instructions,
-    // });
+  const handleDelete = async (id: string) => {
+    await dispatch(removeInstruction(id));
+    await api.timelines.update(currentTimeline!.id, {
+      instructions: instructions.filter((instruction) => instruction.id !== id),
+    });
   };
 
   if (showTypeSelect) {
@@ -69,40 +72,45 @@ const InstructionsList: React.FC = () => {
       </div>
 
       <div className="space-y-2">
-        {instructions.map((instruction) => (
-          <div
-            key={instruction.id}
-            className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 flex items-center justify-between"
-          >
-            <div>
-              <span className="font-medium capitalize">{instruction.type}</span>
-              <span className="text-sm text-muted-foreground ml-2">
-                at {formatTime(instruction.triggerTime)}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              {instruction.type === "skip" && (
-                <span className="text-sm text-muted-foreground">
-                  → {formatTime((instruction as any).skipToTime)}
+        {instructions
+          .slice()
+          .sort((a, b) => a.triggerTime - b.triggerTime)
+          .map((instruction) => (
+            <div
+              key={instruction.id}
+              className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 flex items-center justify-between"
+            >
+              <div>
+                <span className="font-medium capitalize">
+                  {instruction.type}
                 </span>
-              )}
-              {instruction.type === "pause" && (
-                <span className="text-sm text-muted-foreground">
-                  for {(instruction as any).pauseDuration}s
+                <span className="text-sm text-muted-foreground ml-2">
+                  at {formatTime(instruction.triggerTime)}
                 </span>
-              )}
-              <Button variant="ghost" onClick={() => handleEdit(instruction)}>
-                <Edit2 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => handleDelete(instruction.id)}
-              >
-                <Trash2 className="w-4 h-4 text-destructive" />
-              </Button>
+              </div>
+              <div className="flex items-center space-x-2">
+                {instruction.type === "skip" && (
+                  <span className="text-sm text-muted-foreground">
+                    → {formatTime((instruction as any).skipToTime)}
+                  </span>
+                )}
+                {instruction.type === "pause" && (
+                  <span className="text-sm text-muted-foreground">
+                    for {(instruction as any).pauseDuration}s
+                  </span>
+                )}
+                <Button variant="ghost" onClick={() => handleEdit(instruction)}>
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleDelete(instruction.id)}
+                >
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
         {instructions.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">

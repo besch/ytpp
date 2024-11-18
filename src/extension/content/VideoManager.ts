@@ -73,7 +73,6 @@ export class VideoManager {
     }
     this.removeVideoClickPrevention();
 
-    // Destroy VideoOverlayManager
     this.videoOverlayManager?.destroy();
     this.videoOverlayManager = null;
   }
@@ -121,12 +120,8 @@ export class VideoManager {
       if (this.lastInstructionId !== instruction.id) {
         this.lastInstructionId = instruction.id;
         if (instruction.overlayVideo?.url) {
-          console.log(
-            "Overlay video detected, handling overlay pause instruction."
-          );
           await this.handleInstructionPauseWithOverlay(instruction);
         } else {
-          console.log("No overlay video, handling standard pause instruction.");
           this.handleInstructionPause(instruction);
         }
       }
@@ -144,7 +139,7 @@ export class VideoManager {
   };
 
   private handleInstructionPause = (instruction: PauseInstruction): void => {
-    console.log(`Pausing main video for ${instruction.pauseDuration} seconds.`);
+    console.log(`Pausing video for ${instruction.pauseDuration} seconds.`);
     if (this.videoElement && !this.videoElement.paused) {
       this.videoElement.pause();
 
@@ -262,18 +257,45 @@ export class VideoManager {
     if (this.videoElement && !this.videoElement.paused) {
       this.videoElement.pause();
 
+      // Play the overlay video with mute setting
       await this.videoOverlayManager?.playOverlayVideo(
-        instruction.overlayVideo!.url
+        instruction.overlayVideo!.url,
+        instruction.muteOverlayVideo || false
       );
 
+      // Wait for overlay to finish
       this.videoOverlayManager?.onOverlayEnded(() => {
         // Ensure the video hasn't been played already (in case of rapid seeking)
         if (this.lastInstructionId === instruction.id) {
-          this.videoElement?.play().catch((error) => {
-            console.error("Error resuming video:", error);
-          });
+          // Hide the overlay video
+          this.videoOverlayManager?.hideOverlay();
+
+          if (this.videoElement && this.videoElement.paused) {
+            this.videoElement.play().catch((error) => {
+              console.error("Error resuming video:", error);
+            });
+          }
         }
       });
+
+      // If useOverlayDuration is false, resume main video after pauseDuration
+      if (!instruction.useOverlayDuration) {
+        const pauseDuration = instruction.pauseDuration || 0;
+
+        const resumeTimeout = setTimeout(() => {
+          // Hide the overlay video
+          this.videoOverlayManager?.hideOverlay();
+
+          if (this.videoElement && this.videoElement.paused) {
+            this.videoElement.play().catch((error) => {
+              console.error("Error resuming video:", error);
+            });
+          }
+        }, pauseDuration * 1000); // Convert to milliseconds
+
+        // Store the timeout to clear it if needed
+        (this.videoElement as any)._resumeTimeout = resumeTimeout;
+      }
     }
   }
 }
