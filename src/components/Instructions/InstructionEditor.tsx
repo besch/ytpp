@@ -62,15 +62,15 @@ const InstructionEditor: React.FC = () => {
   });
 
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && editingInstruction) {
       const totalSeconds = editingInstruction.triggerTime / 1000;
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = Math.floor(totalSeconds % 60);
 
-      setValue("hours", hours);
-      setValue("minutes", minutes);
-      setValue("seconds", seconds);
+      setValue("hours", hours, { shouldValidate: false });
+      setValue("minutes", minutes, { shouldValidate: false });
+      setValue("seconds", seconds, { shouldValidate: false });
 
       if (editingInstruction.type === "pause") {
         const pauseInstruction = editingInstruction as PauseInstruction;
@@ -104,29 +104,8 @@ const InstructionEditor: React.FC = () => {
         setValue("skipToMinutes", skipMinutes);
         setValue("skipToSeconds", skipSeconds);
       }
-    } else {
-      const totalSeconds = currentTime / 1000;
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = Math.floor(totalSeconds % 60);
-
-      setValue("hours", hours);
-      setValue("minutes", minutes);
-      setValue("seconds", seconds);
-
-      // For new skip instructions, set skipToTime to currentTime + 1 second
-      if (selectedType === "skip") {
-        const skipToSeconds = totalSeconds + 1; // Add 1 second
-        const skipHours = Math.floor(skipToSeconds / 3600);
-        const skipMinutes = Math.floor((skipToSeconds % 3600) / 60);
-        const skipSeconds = Math.floor(skipToSeconds % 60);
-
-        setValue("skipToHours", skipHours);
-        setValue("skipToMinutes", skipMinutes);
-        setValue("skipToSeconds", skipSeconds);
-      }
     }
-  }, [isEditing, editingInstruction, currentTime, selectedType, setValue]);
+  }, [isEditing, editingInstruction, setValue]);
 
   // Sync form inputs with currentTime when not editing
   useEffect(() => {
@@ -165,6 +144,38 @@ const InstructionEditor: React.FC = () => {
       setValue("pauseDuration", watch("overlayVideo")?.duration || 0);
     }
   }, [watch("useOverlayDuration"), watch("overlayVideo"), setValue]);
+
+  // Add this new effect to watch for trigger time updates
+  useEffect(() => {
+    const subscription = watch((value, { name, type }) => {
+      // Only update if hours, minutes, or seconds changes
+      if (name?.match(/^(hours|minutes|seconds)$/)) {
+        const triggerTime = parseTimeInput({
+          hours: value.hours || 0,
+          minutes: value.minutes || 0,
+          seconds: value.seconds || 0,
+        });
+
+        if (isEditing && editingInstruction) {
+          // Create updated instruction with new trigger time
+          const updatedInstruction = {
+            ...editingInstruction,
+            triggerTime,
+          };
+
+          // Update the instruction in the timeline
+          const updatedInstructions = instructions.map((i) =>
+            i.id === editingInstruction.id ? updatedInstruction : i
+          );
+
+          // Save the updated instructions
+          handleSaveInstructions(updatedInstructions);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, isEditing, editingInstruction, instructions]);
 
   const handleBack = () => {
     dispatch(setEditingInstruction(null));
@@ -349,9 +360,9 @@ const InstructionEditor: React.FC = () => {
             </label>
             <TimeInput
               value={parseTimeInput({
-                hours: watch("hours"),
-                minutes: watch("minutes"),
-                seconds: watch("seconds"),
+                hours: watch("hours") || 0,
+                minutes: watch("minutes") || 0,
+                seconds: watch("seconds") || 0,
               })}
               onChange={handleTimeChange}
             />

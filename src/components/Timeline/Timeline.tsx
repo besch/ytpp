@@ -7,6 +7,7 @@ import {
   selectInstructions,
   setSelectedInstructionId,
   setEditingInstruction,
+  updateInstruction,
 } from "@/store/timelineSlice";
 import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
 import { RootState } from "@/store";
@@ -42,6 +43,10 @@ const Timeline: React.FC = () => {
     selectInstructions(state)
   );
   const [duration, setDuration] = useState<number>(0);
+  const [draggingInstructionId, setDraggingInstructionId] = useState<
+    string | null
+  >(null);
+  const [draggingTime, setDraggingTime] = useState<number | null>(null);
 
   useEffect(() => {
     videoRef.current = document.querySelector(
@@ -137,6 +142,50 @@ const Timeline: React.FC = () => {
     dispatch(setEditingInstruction(instruction));
   };
 
+  const handleInstructionDrag = (
+    e: React.MouseEvent,
+    instruction: Instruction
+  ) => {
+    e.stopPropagation();
+    setDraggingInstructionId(instruction.id);
+    setDraggingTime(instruction.triggerTime);
+
+    const startX = e.clientX;
+    const startTime = instruction.triggerTime;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const rect = timelineRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const deltaX = moveEvent.clientX - startX;
+      const timePerPixel = duration / rect.width;
+      const timeDelta = deltaX * timePerPixel;
+
+      const newTime = Math.max(0, Math.min(duration, startTime + timeDelta));
+      setDraggingTime(newTime);
+
+      // Update instruction with new time
+      const updatedInstruction = {
+        ...instruction,
+        triggerTime: Math.round(newTime),
+      };
+
+      // Update both the instruction and editing instruction
+      dispatch(updateInstruction(updatedInstruction));
+      dispatch(setEditingInstruction(updatedInstruction));
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      setDraggingInstructionId(null);
+      setDraggingTime(null);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
   const renderInstructionMarkers = () => {
     // Group instructions by triggerTime to handle overlapping instructions
     const groupedInstructions = instructions.reduce((acc, instruction) => {
@@ -209,11 +258,12 @@ const Timeline: React.FC = () => {
                   />
                 )}
                 <div
-                  className={`relative group 
+                  className={`relative group cursor-move 
                     ${
                       currentTime === instruction.triggerTime ? "scale-110" : ""
                     }
                     transition-all duration-200`}
+                  onMouseDown={(e) => handleInstructionDrag(e, instruction)}
                   onClick={(e) => handleInstructionClick(e, instruction)}
                   style={{
                     position: "absolute",
@@ -243,20 +293,27 @@ const Timeline: React.FC = () => {
                     )}
                   </div>
                   <div
-                    className="absolute opacity-0 group-hover:opacity-100
+                    className={`absolute ${
+                      draggingInstructionId === instruction.id
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
+                    }
                       bottom-full mb-2 left-1/2 -translate-x-1/2
                       bg-background/95 backdrop-blur-sm
                       border border-border px-3 py-2
                       rounded-lg shadow-xl
                       whitespace-nowrap text-xs
                       transition-all duration-200
-                      z-50"
+                      z-50`}
                   >
                     <div className="font-medium mb-1">
                       {instruction.type === "pause" ? "Pause" : "Skip"}
                     </div>
                     <div className="text-muted-foreground">
-                      {getInstructionLabel(instruction)}
+                      {draggingInstructionId === instruction.id &&
+                      draggingTime !== null
+                        ? formatTime(draggingTime)
+                        : getInstructionLabel(instruction)}
                     </div>
                     <div
                       className="absolute -bottom-1 left-1/2 -translate-x-1/2
