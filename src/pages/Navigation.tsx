@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ToggleCanvasButton } from "@/components/ToggleCanvasButton";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
@@ -14,9 +13,6 @@ const Navigation: React.FC = () => {
         >
           Timeline Editor
         </h1>
-      </div>
-      <div className="flex items-center space-x-4">
-        <ToggleCanvasButton />
       </div>
     </nav>
   );

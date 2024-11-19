@@ -7,10 +7,7 @@ import {
   selectCurrentTimeline,
   setCurrentTimeline,
 } from "@/store/timelineSlice";
-import AddElements from "@/components/AddElements";
-import TimelineProperties from "@/components/Timeline/TimelineProperties";
 import InstructionEditor from "@/components/Instructions/InstructionEditor";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 
 const TimelineEditor: React.FC = () => {
   const navigate = useNavigate();
@@ -42,25 +39,7 @@ const TimelineEditor: React.FC = () => {
         <h2 className="text-lg font-semibold">{currentTimeline.title}</h2>
       </div>
 
-      <Tabs defaultValue="elements">
-        <TabsList className="grid grid-cols-3 mb-4">
-          <TabsTrigger value="elements">Elements</TabsTrigger>
-          <TabsTrigger value="properties">Properties</TabsTrigger>
-          <TabsTrigger value="instructions">Instructions</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="elements">
-          <AddElements />
-        </TabsContent>
-
-        <TabsContent value="properties">
-          <TimelineProperties />
-        </TabsContent>
-
-        <TabsContent value="instructions">
-          <InstructionEditor />
-        </TabsContent>
-      </Tabs>
+      <InstructionEditor />
     </div>
   );
 };
