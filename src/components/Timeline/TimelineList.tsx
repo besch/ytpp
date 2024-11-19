@@ -30,7 +30,8 @@ const TimelineList: React.FC = () => {
   useEffect(() => {
     const fetchTimelines = async () => {
       try {
-        const fetchedTimelines = await api.timelines.getAll();
+        const videoUrl = window.location.href;
+        const fetchedTimelines = await api.timelines.getAll(videoUrl);
         dispatch(setTimelines(fetchedTimelines));
       } catch (error) {
         console.error("Failed to fetch timelines:", error);
@@ -42,9 +43,11 @@ const TimelineList: React.FC = () => {
 
   const handleCreateTimeline = async () => {
     try {
+      const videoUrl = window.location.href;
       const newTimeline = await api.timelines.create({
         id: Date.now().toString(),
         title: "New Timeline",
+        video_url: videoUrl,
         elements: [],
         instructions: [],
       });

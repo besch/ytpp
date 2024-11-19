@@ -114,6 +114,7 @@ export interface InstructionsState {
 export interface Timeline {
   id: string;
   title?: string;
+  video_url: string;
   elements: any[];
   instructions: Instruction[];
   created_at: string;

@@ -5,8 +5,11 @@ const API_BASE_URL = "http://localhost:3000/api";
 
 export const api = {
   timelines: {
-    getAll: async (): Promise<Timeline[]> => {
-      const response = await axios.get(`${API_BASE_URL}/timelines`);
+    getAll: async (videoUrl?: string): Promise<Timeline[]> => {
+      const params = videoUrl
+        ? `?video_url=${encodeURIComponent(videoUrl)}`
+        : "";
+      const response = await axios.get(`${API_BASE_URL}/timelines${params}`);
       return response.data;
     },
 
