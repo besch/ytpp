@@ -1,28 +1,5 @@
 import React from "react";
-import { Pause, SkipForward } from "lucide-react";
 import Button from "@/components/ui/Button";
-
-interface InstructionType {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  description: string;
-}
-
-const instructionTypes: InstructionType[] = [
-  {
-    id: "pause",
-    label: "Pause",
-    icon: Pause,
-    description: "Pause the video for a specified duration",
-  },
-  {
-    id: "skip",
-    label: "Skip",
-    icon: SkipForward,
-    description: "Skip to a specific time in the video",
-  },
-];
 
 interface InstructionTypeSelectProps {
   onSelect: (type: string) => void;
@@ -32,24 +9,13 @@ const InstructionTypeSelect: React.FC<InstructionTypeSelectProps> = ({
   onSelect,
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {instructionTypes.map((type) => {
-        const Icon = type.icon;
-        return (
-          <Button
-            key={type.id}
-            variant="outline"
-            className="flex flex-col items-center gap-2 p-4 h-auto"
-            onClick={() => onSelect(type.id)}
-          >
-            <Icon size={24} />
-            <span className="font-medium">{type.label}</span>
-            <span className="text-xs text-muted-foreground text-center">
-              {type.description}
-            </span>
-          </Button>
-        );
-      })}
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Select Instruction Type</h3>
+      <div className="space-y-2">
+        <Button onClick={() => onSelect("pause")}>Pause Instruction</Button>
+        <Button onClick={() => onSelect("skip")}>Skip Instruction</Button>
+        <Button onClick={() => onSelect("overlay")}>Overlay Instruction</Button>
+      </div>
     </div>
   );
 };

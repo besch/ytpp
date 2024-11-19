@@ -22,6 +22,7 @@ import {
   PauseInstruction,
   SkipInstruction,
   TimeInput as TimeInputInterface,
+  OverlayInstruction,
 } from "@/types";
 import InstructionsList from "./InstructionsList";
 
@@ -56,13 +57,13 @@ const InstructionEditor: React.FC = () => {
       hours: 0,
       minutes: 0,
       seconds: 0,
-      pauseDuration: 0,
+      overlayDuration: 5,
       useOverlayDuration: false,
       muteOverlayMedia: false,
+      overlayMediaType: "video",
       skipToHours: 0,
       skipToMinutes: 0,
       skipToSeconds: 0,
-      overlayMediaType: "video",
     },
   });
 
@@ -116,6 +117,35 @@ const InstructionEditor: React.FC = () => {
         setValue("skipToHours", skipHours);
         setValue("skipToMinutes", skipMinutes);
         setValue("skipToSeconds", skipSeconds);
+      } else if (editingInstruction.type === "overlay") {
+        const overlayInstruction = editingInstruction as OverlayInstruction;
+        setValue(
+          "useOverlayDuration",
+          overlayInstruction.useOverlayDuration || false
+        );
+        setValue(
+          "muteOverlayMedia",
+          overlayInstruction.muteOverlayMedia || false
+        );
+
+        const overlayMedia = overlayInstruction.overlayMedia;
+        if (overlayMedia) {
+          setValue("overlayMedia", {
+            url: overlayMedia.url,
+            duration: overlayMedia.duration,
+            name: overlayMedia.name,
+            type: overlayMedia.type || "video/mp4",
+          });
+          setValue("overlayDuration", overlayMedia.duration || 5);
+          setValue(
+            "overlayMediaType",
+            (overlayMedia.type || "video/mp4").startsWith("video/")
+              ? "video"
+              : "image"
+          );
+        } else {
+          setValue("overlayMedia", null);
+        }
       }
     }
   }, [isEditing, editingInstruction, setValue]);
@@ -239,7 +269,7 @@ const InstructionEditor: React.FC = () => {
 
           overlayMedia = {
             url: mediaURL.url,
-            duration: Number(data.overlayMedia.duration),
+            duration: Number(data.pauseDuration),
             name: data.overlayMedia.name,
             type: data.overlayMedia.type,
           };
@@ -248,7 +278,10 @@ const InstructionEditor: React.FC = () => {
           return;
         }
       } else if (data.overlayMedia) {
-        overlayMedia = data.overlayMedia;
+        overlayMedia = {
+          ...data.overlayMedia,
+          duration: Number(data.pauseDuration),
+        };
       }
 
       newInstruction = {
@@ -273,6 +306,60 @@ const InstructionEditor: React.FC = () => {
         triggerTime,
         skipToTime,
       } as SkipInstruction;
+    } else if (selectedType === "overlay") {
+      let overlayMedia =
+        editingInstruction?.type === "overlay"
+          ? (editingInstruction as OverlayInstruction).overlayMedia
+          : null;
+
+      if (data.overlayMedia?.file) {
+        try {
+          const file = new File(
+            [data.overlayMedia.file],
+            data.overlayMedia.name,
+            {
+              type: data.overlayMedia.type,
+            }
+          );
+
+          const mediaURL = await api.timelines.uploadMedia(
+            file,
+            currentTimeline!.id
+          );
+
+          overlayMedia = {
+            url: mediaURL.url,
+            duration: Number(
+              data.useOverlayDuration
+                ? data.overlayMedia.duration
+                : data.overlayDuration
+            ),
+            name: data.overlayMedia.name,
+            type: data.overlayMedia.type,
+          };
+        } catch (error) {
+          console.error("Failed to upload overlay media:", error);
+          return;
+        }
+      } else if (data.overlayMedia) {
+        overlayMedia = {
+          ...data.overlayMedia,
+          duration: Number(
+            data.useOverlayDuration
+              ? data.overlayMedia.duration
+              : data.overlayDuration
+          ),
+        };
+      }
+
+      newInstruction = {
+        id: editingInstruction?.id || Date.now().toString(),
+        type: "overlay",
+        triggerTime,
+        overlayMedia,
+        useOverlayDuration: data.useOverlayDuration,
+        muteOverlayMedia: data.muteOverlayMedia,
+      } as OverlayInstruction;
     } else {
       return;
     }
@@ -495,7 +582,7 @@ const InstructionEditor: React.FC = () => {
                   <MediaUpload
                     onMediaSelected={(mediaData) => {
                       setValue(
-                        "pauseDuration",
+                        "overlayDuration",
                         Math.ceil(mediaData.duration ?? 5)
                       );
                       setValue("overlayMedia", {
@@ -530,6 +617,121 @@ const InstructionEditor: React.FC = () => {
                 })}
                 onChange={handleSkipToTimeChange}
               />
+            </div>
+          )}
+
+          {selectedType === "overlay" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">
+                  Overlay Media
+                </label>
+                {watch("overlayMedia") ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span>{watch("overlayMedia").name}</span>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDeleteOverlayMedia}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                    <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
+                      {watch("overlayMedia").type.startsWith("video/") ? (
+                        <video
+                          src={watch("overlayMedia").url}
+                          className="w-full h-full object-contain"
+                          controls
+                          preload="metadata"
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <img
+                          src={watch("overlayMedia").url}
+                          className="w-full h-full object-contain"
+                          alt="Overlay Media"
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <MediaUpload
+                    onMediaSelected={(mediaData) => {
+                      setValue(
+                        "overlayDuration",
+                        Math.ceil(mediaData.duration ?? 5)
+                      );
+                      setValue("overlayMedia", {
+                        file: mediaData.file,
+                        url: mediaData.url,
+                        duration: mediaData.duration ?? 5,
+                        name: mediaData.name,
+                        type: mediaData.type,
+                      });
+                      setValue(
+                        "overlayMediaType",
+                        mediaData.type.startsWith("video/") ? "video" : "image"
+                      );
+                    }}
+                    currentMedia={watch("overlayMedia")}
+                  />
+                )}
+              </div>
+
+              {watch("overlayMedia") && (
+                <>
+                  {(watch("overlayMedia").type.startsWith("video/") ||
+                    watch("overlayMedia").type === "image/gif") && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        {...register("useOverlayDuration")}
+                        id="useOverlayDuration"
+                      />
+                      <label htmlFor="useOverlayDuration" className="text-sm">
+                        Use Overlay Media Duration
+                      </label>
+                    </div>
+                  )}
+
+                  {watch("overlayMedia").type.startsWith("video/") && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        {...register("muteOverlayMedia")}
+                        id="muteOverlayMedia"
+                      />
+                      <label htmlFor="muteOverlayMedia" className="text-sm">
+                        Mute Overlay Media
+                      </label>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {!watch("useOverlayDuration") && watch("overlayMedia") && (
+                <div>
+                  <label className="text-sm text-muted-foreground">
+                    Overlay Duration (seconds)
+                  </label>
+                  <Input
+                    type="number"
+                    {...register("overlayDuration", {
+                      required: true,
+                      min: 1,
+                    })}
+                  />
+                  {errors.overlayDuration && (
+                    <span className="text-xs text-destructive">
+                      This field is required
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

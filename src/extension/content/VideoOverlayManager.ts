@@ -74,8 +74,6 @@ export class VideoOverlayManager {
   ): Promise<void> {
     if (!this.overlayElement) return;
 
-    console.log("Playing overlay media:", mediaUrl);
-
     try {
       // Clear any existing content
       this.overlayElement.innerHTML = "";
@@ -90,7 +88,7 @@ export class VideoOverlayManager {
       if (mediaType === "video") {
         const overlayVideo = document.createElement("video");
         overlayVideo.src = mediaUrl;
-        overlayVideo.muted = muteOverlay; // Apply mute setting
+        overlayVideo.muted = muteOverlay;
         overlayVideo.style.width = "100%";
         overlayVideo.style.height = "100%";
         overlayVideo.style.objectFit = "contain";
@@ -117,12 +115,13 @@ export class VideoOverlayManager {
         this.overlayElement.style.display = "block";
 
         // Display the image for the specified duration
+        const displayDuration = duration ? duration * 1000 : 5000; // Default to 5 seconds
         this.overlayTimeout = window.setTimeout(() => {
           this.hideOverlay();
           if (this.overlayEndedCallback) {
             this.overlayEndedCallback();
           }
-        }, (duration || 5) * 1000); // Default to 5 seconds if duration is not provided
+        }, displayDuration);
       }
     } catch (error) {
       console.error("Error playing overlay media:", error);

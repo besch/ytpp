@@ -9,7 +9,7 @@ import {
   selectCurrentTimeline,
   selectEditingInstruction,
 } from "@/store/timelineSlice";
-import type { Instruction } from "@/types";
+import type { Instruction, PauseInstruction, SkipInstruction } from "@/types";
 import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
@@ -46,7 +46,10 @@ const InstructionsList: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     const instruction = instructions.find((inst) => inst.id === id);
-    if (instruction?.type === "pause" && instruction.overlayMedia?.url) {
+    if (
+      (instruction?.type === "pause" || instruction?.type === "overlay") &&
+      instruction.overlayMedia?.url
+    ) {
       await api.timelines.deleteMedia(instruction.overlayMedia.url);
     }
 
@@ -105,12 +108,17 @@ const InstructionsList: React.FC = () => {
               <div className="flex items-center space-x-2">
                 {instruction.type === "skip" && (
                   <span className="text-sm text-muted-foreground">
-                    → {formatTime((instruction as any).skipToTime)}
+                    → {formatTime((instruction as SkipInstruction).skipToTime)}
                   </span>
                 )}
                 {instruction.type === "pause" && (
                   <span className="text-sm text-muted-foreground">
-                    for {(instruction as any).pauseDuration}s
+                    for {(instruction as PauseInstruction).pauseDuration}s
+                  </span>
+                )}
+                {instruction.type === "overlay" && (
+                  <span className="text-sm text-muted-foreground">
+                    Overlay Media
                   </span>
                 )}
                 <Button variant="ghost" onClick={() => handleEdit(instruction)}>

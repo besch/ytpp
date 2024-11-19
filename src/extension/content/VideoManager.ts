@@ -1,4 +1,9 @@
-import { Instruction, PauseInstruction } from "@/types";
+import {
+  Instruction,
+  PauseInstruction,
+  OverlayInstruction,
+  SkipInstruction,
+} from "@/types";
 import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 import { VideoOverlayManager } from "./VideoOverlayManager";
 
@@ -12,6 +17,8 @@ export class VideoManager {
   private videoOverlayManager: VideoOverlayManager | null = null;
   private instructions: Instruction[] = [];
   private lastInstructionId: string | null = null;
+  private activeOverlayInstruction: OverlayInstruction | null = null;
+  private activeOverlayEndTime: number | null = null;
 
   constructor() {
     const cleanupListeners = [
@@ -110,26 +117,85 @@ export class VideoManager {
   };
 
   private async checkInstructions(currentTime: number): Promise<void> {
-    const instruction = this.instructions.find(
-      (instr: Instruction) =>
-        instr.type === "pause" &&
-        Math.abs(currentTime - instr.triggerTime / 1000) < 0.1 // 0.1 seconds tolerance
-    ) as PauseInstruction | undefined;
+    // First, check if any overlay instruction is currently active
+    if (this.activeOverlayInstruction) {
+      // If the overlay duration has passed, hide the overlay
+      if (currentTime >= this.activeOverlayEndTime!) {
+        this.videoOverlayManager?.hideOverlay();
+        this.activeOverlayInstruction = null;
+        this.activeOverlayEndTime = null;
+      }
+    }
 
-    if (instruction) {
+    // Find instructions that need to be triggered at the current time
+    const instructionsToTrigger = this.instructions.filter(
+      (instr: Instruction) =>
+        Math.abs(currentTime - instr.triggerTime / 1000) < 0.1 // 0.1 seconds tolerance
+    );
+
+    for (const instruction of instructionsToTrigger) {
       if (this.lastInstructionId !== instruction.id) {
         this.lastInstructionId = instruction.id;
-        if (instruction.overlayMedia?.url) {
-          await this.handleInstructionPauseWithOverlay(instruction);
-        } else {
-          this.handleInstructionPause(instruction);
+
+        if (instruction.type === "pause") {
+          const pauseInstruction = instruction as PauseInstruction;
+          if (pauseInstruction.overlayMedia?.url) {
+            await this.handleInstructionPauseWithOverlay(pauseInstruction);
+          } else {
+            this.handleInstructionPause(pauseInstruction);
+          }
+        } else if (instruction.type === "overlay") {
+          const overlayInstruction = instruction as OverlayInstruction;
+          await this.handleOverlayInstruction(overlayInstruction);
+        } else if (instruction.type === "skip") {
+          if (this.videoElement && !this.videoElement.paused) {
+            const skipInstruction = instruction as SkipInstruction;
+            this.handleInstructionSkip(skipInstruction.skipToTime);
+          } else {
+            console.log(
+              "Video is paused, skip instruction will not be executed"
+            );
+          }
         }
       }
-    } else {
-      // No active instruction, hide overlay
-      this.videoOverlayManager?.hideOverlay();
-      this.lastInstructionId = null;
     }
+  }
+
+  private async handleOverlayInstruction(
+    instruction: OverlayInstruction
+  ): Promise<void> {
+    console.log("Handling overlay instruction:", instruction);
+
+    // Determine media type
+    const mediaType = instruction.overlayMedia!.type.startsWith("video/")
+      ? "video"
+      : "image";
+
+    // Set active overlay instruction and calculate end time
+    this.activeOverlayInstruction = instruction;
+
+    if (instruction.useOverlayDuration) {
+      // Use the media's intrinsic duration
+      const duration =
+        mediaType === "video"
+          ? instruction.overlayMedia!.duration
+          : instruction.overlayMedia!.duration || 5; // Default to 5 seconds for images without duration
+      this.activeOverlayEndTime = instruction.triggerTime / 1000 + duration;
+    } else {
+      // Use specified overlay duration
+      const duration = instruction.overlayMedia!.duration || 5;
+      this.activeOverlayEndTime = instruction.triggerTime / 1000 + duration;
+    }
+
+    // Play the overlay media with mute setting
+    await this.videoOverlayManager?.playOverlayMedia(
+      instruction.overlayMedia!.url,
+      instruction.muteOverlayMedia || false,
+      mediaType,
+      instruction.useOverlayDuration
+        ? instruction.overlayMedia!.duration
+        : instruction.overlayMedia!.duration // Use overlayDuration for images
+    );
   }
 
   private handleInstructionSkip = (skipToTime: number): void => {

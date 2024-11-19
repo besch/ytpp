@@ -90,7 +90,22 @@ export interface SkipInstruction extends BaseInstruction {
   skipToTime: number;
 }
 
-export type Instruction = PauseInstruction | SkipInstruction;
+export interface OverlayInstruction extends BaseInstruction {
+  type: "overlay";
+  overlayMedia: {
+    url: string;
+    duration: number;
+    name?: string;
+    type: string;
+  } | null;
+  useOverlayDuration?: boolean;
+  muteOverlayMedia?: boolean;
+}
+
+export type Instruction =
+  | PauseInstruction
+  | SkipInstruction
+  | OverlayInstruction;
 
 export interface InstructionsState {
   instructions: Instruction[];
