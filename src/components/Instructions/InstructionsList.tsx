@@ -50,7 +50,7 @@ const InstructionsList: React.FC = () => {
       await api.timelines.deleteMedia(instruction.overlayMedia.url);
     }
 
-    await dispatch(removeInstruction(id));
+    dispatch(removeInstruction(id));
 
     await api.timelines.update(currentTimeline!.id, {
       instructions: instructions.filter((instruction) => instruction.id !== id),

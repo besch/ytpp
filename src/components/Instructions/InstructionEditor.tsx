@@ -17,9 +17,13 @@ import { TimeInput } from "../ui/TimeInput";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 import MediaUpload from "@/components/MediaUpload";
 import { api } from "@/lib/api";
-import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
+import {
+  Instruction,
+  PauseInstruction,
+  SkipInstruction,
+  TimeInput as TimeInputInterface,
+} from "@/types";
 import InstructionsList from "./InstructionsList";
-import { TimeInput as TimeInputInterface } from "@/types";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -401,32 +405,36 @@ const InstructionEditor: React.FC = () => {
 
           {selectedType === "pause" && (
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  {...register("useOverlayDuration")}
-                  id="useOverlayDuration"
-                  disabled={!watch("overlayMedia")}
-                />
-                <label htmlFor="useOverlayDuration" className="text-sm">
-                  Use Overlay Media Duration
-                </label>
-              </div>
+              {watch("overlayMedia") && (
+                <>
+                  {(watch("overlayMedia").type.startsWith("video/") ||
+                    watch("overlayMedia").type === "image/gif") && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        {...register("useOverlayDuration")}
+                        id="useOverlayDuration"
+                      />
+                      <label htmlFor="useOverlayDuration" className="text-sm">
+                        Use Overlay Media Duration
+                      </label>
+                    </div>
+                  )}
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  {...register("muteOverlayMedia")}
-                  id="muteOverlayMedia"
-                  disabled={
-                    watch("overlayMedia")?.type &&
-                    !watch("overlayMedia").type.startsWith("video/")
-                  }
-                />
-                <label htmlFor="muteOverlayMedia" className="text-sm">
-                  Mute Overlay Media
-                </label>
-              </div>
+                  {watch("overlayMedia").type.startsWith("video/") && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        {...register("muteOverlayMedia")}
+                        id="muteOverlayMedia"
+                      />
+                      <label htmlFor="muteOverlayMedia" className="text-sm">
+                        Mute Overlay Media
+                      </label>
+                    </div>
+                  )}
+                </>
+              )}
 
               <div>
                 <label className="text-sm text-muted-foreground">
