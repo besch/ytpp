@@ -1,5 +1,4 @@
 import { VideoManager } from "./content/VideoManager";
-import { OverlayManager } from "./content/OverlayManager";
 import { Instruction, Timeline } from "@/types";
 import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 import { storage } from "@/lib/storage";
@@ -7,10 +6,10 @@ import { api } from "@/lib/api";
 
 class ContentScript {
   private videoManager: VideoManager | null = null;
-  private isOverlayVisible: boolean = false;
   private cleanupListeners: Array<() => void> = [];
   private timelineId: string = "";
   private currentTimeline: Timeline | null = null;
+  private isAppVisible: boolean = false;
 
   constructor() {
     this.timelineId = this.extractTimelineId();
@@ -40,19 +39,12 @@ class ContentScript {
     }
 
     if (this.videoManager?.hasVideoElement()) {
-      if (this.isOverlayVisible) {
-        // Remove overlay and React app
-        OverlayManager.removeOverlay();
+      if (this.isAppVisible) {
         this.removeReactApp();
       } else {
-        // Show overlay and inject React app
         this.injectReactApp();
-        OverlayManager.createOverlay(
-          this.videoManager.getVideoElement()!,
-          this.timelineId
-        );
       }
-      this.isOverlayVisible = !this.isOverlayVisible;
+      this.isAppVisible = !this.isAppVisible;
     }
   }
 
@@ -78,32 +70,6 @@ class ContentScript {
 
   private setupCustomEventListeners(): void {
     const listeners = [
-      addCustomEventListener("ADD_ELEMENT", ({ elementType, gifUrl }) => {
-        OverlayManager.addElement(elementType, gifUrl);
-      }),
-
-      addCustomEventListener("UPDATE_ELEMENT_COLOR", ({ color, type }) => {
-        OverlayManager.updateElementColor(color, type);
-      }),
-
-      // addCustomEventListener(
-      //   "UPDATE_ELEMENT_TIME",
-      //   ({ elementId, from, to }) => {
-      //     const selectedElement = OverlayManager.getSelectedElement();
-      //     if (selectedElement && selectedElement.data?.id === elementId) {
-      //       OverlayManager.updateElementTime(selectedElement, from, to);
-      //     }
-      //   }
-      // ),
-
-      // addCustomEventListener("DELETE_ELEMENT", () => {
-      //   OverlayManager.elementManager?.deleteSelectedElement();
-      // }),
-
-      addCustomEventListener("TOGGLE_CANVAS", ({ visible }) => {
-        OverlayManager.setCanvasVisibility(visible);
-      }),
-
       addCustomEventListener("TIMELINE_SELECTED", ({ timeline }) => {
         if (timeline) {
           this.updateTimeline(timeline);
@@ -142,14 +108,12 @@ class ContentScript {
     if (message.action === "TOGGLE_OVERLAY") {
       await this.toggleOverlay();
       sendResponse({ success: true });
-    } else if (message.action === "ADD_ELEMENT") {
-      OverlayManager.addElement(message.elementType);
     }
     return true;
   }
 
   private handleTimeUpdate = (currentTimeMs: number): void => {
-    OverlayManager.update(currentTimeMs);
+    // Remove OverlayManager update
   };
 
   private startPlay(): void {
@@ -169,9 +133,7 @@ class ContentScript {
 
   private updateTimeline(timeline: Timeline): void {
     this.currentTimeline = timeline;
-    // Update elements in OverlayManager
-    OverlayManager.loadElements(timeline.elements || []);
-    // Update instructions in VideoManager
+    // Update instructions in VideoManager only
     this.videoManager?.setInstructions(timeline.instructions || []);
   }
 }
