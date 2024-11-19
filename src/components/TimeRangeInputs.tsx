@@ -42,7 +42,7 @@ const TimeRangeInputs: React.FC = () => {
         updatedTimeline
       );
       dispatch(setCurrentTimeline(savedTimeline));
-      dispatchCustomEvent("TIMELINE_SELECTED", { timeline: savedTimeline });
+      dispatchCustomEvent("UPDATE_TIMELINE", { timeline: savedTimeline });
     } catch (error) {
       console.error("Failed to update timeline:", error);
     }
@@ -72,7 +72,7 @@ const TimeRangeInputs: React.FC = () => {
         updatedTimeline
       );
       dispatch(setCurrentTimeline(savedTimeline));
-      dispatchCustomEvent("TIMELINE_SELECTED", { timeline: savedTimeline });
+      dispatchCustomEvent("UPDATE_TIMELINE", { timeline: savedTimeline });
     } catch (error) {
       console.error("Failed to update timeline:", error);
     }

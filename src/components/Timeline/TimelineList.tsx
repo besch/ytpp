@@ -51,7 +51,7 @@ const TimelineList: React.FC = () => {
         instructions: [],
       });
       dispatch(setCurrentTimeline(newTimeline));
-      dispatchCustomEvent("TIMELINE_SELECTED", { timeline: newTimeline });
+      dispatchCustomEvent("UPDATE_TIMELINE", { timeline: newTimeline });
       navigate(`/timeline/${newTimeline.id}`);
     } catch (error) {
       console.error("Failed to create timeline:", error);
@@ -60,7 +60,7 @@ const TimelineList: React.FC = () => {
 
   const handleEditTimeline = async (timeline: Timeline) => {
     dispatch(setCurrentTimeline(timeline));
-    dispatchCustomEvent("TIMELINE_SELECTED", { timeline });
+    dispatchCustomEvent("UPDATE_TIMELINE", { timeline });
     navigate(`/timeline/${timeline.id}`);
   };
 

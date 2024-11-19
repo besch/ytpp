@@ -49,7 +49,7 @@ interface EventPayloads {
   };
   REACT_APP_READY: undefined;
   CONTENT_SCRIPT_LOADED: undefined;
-  TIMELINE_SELECTED: {
+  UPDATE_TIMELINE: {
     timeline: Timeline;
   };
 }

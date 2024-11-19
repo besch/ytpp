@@ -62,7 +62,7 @@ class ContentScript {
 
   private setupCustomEventListeners(): void {
     this.eventListeners = [
-      addCustomEventListener("TIMELINE_SELECTED", ({ timeline }) => {
+      addCustomEventListener("UPDATE_TIMELINE", ({ timeline }) => {
         if (timeline) {
           this.updateTimeline(timeline);
         }
