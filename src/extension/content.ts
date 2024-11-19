@@ -1,6 +1,6 @@
 import { VideoManager } from "./content/VideoManager";
 import { Timeline } from "@/types";
-import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
+import { addCustomEventListener } from "@/lib/eventSystem";
 
 class ContentScript {
   private videoManager: VideoManager | null = null;
@@ -9,14 +9,12 @@ class ContentScript {
 
   constructor() {
     this.initialize();
-    this.setupCustomEventListeners();
   }
 
   private initialize(): void {
     this.setupMessageListener();
     this.setupCustomEventListeners();
 
-    // Initialize VideoManager
     this.videoManager = new VideoManager();
     this.videoManager.findAndStoreVideoElement();
   }
@@ -79,17 +77,14 @@ class ContentScript {
 
   private setupMessageListener(): void {
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
-    window.addEventListener("message", this.handleWindowMessage.bind(this));
   }
-
-  private handleWindowMessage(event: MessageEvent): void {}
 
   private async handleMessage(
     message: any,
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ): Promise<boolean> {
-    if (message.action === "TOGGLE_OVERLAY") {
+    if (message.action === "TOGGLE_APP_VISIBILITY") {
       await this.toggleAppVisiblity();
       sendResponse({ success: true });
     }

@@ -13,7 +13,7 @@ class BackgroundService {
       if (tab.id) {
         try {
           const response = await chrome.tabs
-            .sendMessage(tab.id, { action: "TOGGLE_OVERLAY" })
+            .sendMessage(tab.id, { action: "TOGGLE_APP_VISIBILITY" })
             .catch(() => null);
 
           if (!response) {
@@ -21,7 +21,9 @@ class BackgroundService {
               target: { tabId: tab.id },
               files: ["content.js"],
             });
-            await chrome.tabs.sendMessage(tab.id, { action: "TOGGLE_OVERLAY" });
+            await chrome.tabs.sendMessage(tab.id, {
+              action: "TOGGLE_APP_VISIBILITY",
+            });
           }
         } catch (error) {
           console.error("Failed to execute content script:", error);
