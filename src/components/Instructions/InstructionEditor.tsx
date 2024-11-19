@@ -455,6 +455,13 @@ const InstructionEditor: React.FC = () => {
     }
   }, [editingInstruction, currentTime, reset]);
 
+  useEffect(() => {
+    const overlayMedia = watch("overlayMedia");
+    if (overlayMedia?.type?.startsWith("video/")) {
+      setValue("useOverlayDuration", true);
+    }
+  }, [watch("overlayMedia"), setValue]);
+
   const renderForm = () => {
     if (!selectedType && !isEditing) {
       return (
@@ -503,7 +510,7 @@ const InstructionEditor: React.FC = () => {
                         id="useOverlayDuration"
                       />
                       <label htmlFor="useOverlayDuration" className="text-sm">
-                        Use Overlay Media Duration
+                        Pause for Video Duration
                       </label>
                     </div>
                   )}
@@ -516,7 +523,7 @@ const InstructionEditor: React.FC = () => {
                         id="muteOverlayMedia"
                       />
                       <label htmlFor="muteOverlayMedia" className="text-sm">
-                        Mute Overlay Media
+                        Mute Video
                       </label>
                     </div>
                   )}

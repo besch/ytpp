@@ -26,11 +26,11 @@ const TimelineList: React.FC = () => {
   const error = useSelector(selectTimelineError);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
+  const videoUrl = window.location.href.split("&")[0];
 
   useEffect(() => {
     const fetchTimelines = async () => {
       try {
-        const videoUrl = window.location.href.split("&")[0];
         const fetchedTimelines = await api.timelines.getAll(videoUrl);
         dispatch(setTimelines(fetchedTimelines));
       } catch (error) {
@@ -43,7 +43,6 @@ const TimelineList: React.FC = () => {
 
   const handleCreateTimeline = async () => {
     try {
-      const videoUrl = window.location.href;
       const newTimeline = await api.timelines.create({
         id: Date.now().toString(),
         title: "New Timeline",
