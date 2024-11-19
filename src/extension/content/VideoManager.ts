@@ -166,6 +166,12 @@ export class VideoManager {
   ): Promise<void> {
     console.log("Handling overlay instruction:", instruction);
 
+    // Only proceed if video is not paused
+    if (!this.videoElement || this.videoElement.paused) {
+      console.log("Video is paused, overlay instruction will not be executed");
+      return;
+    }
+
     // Determine media type
     const mediaType = instruction.overlayMedia!.type.startsWith("video/")
       ? "video"
