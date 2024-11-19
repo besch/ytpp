@@ -99,7 +99,7 @@ const TimelineList: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Your Timelines</h2>
+        <h2 className="text-xl font-semibold">Timeline list</h2>
         <Button onClick={handleCreateTimeline}>
           <Plus size={16} className="mr-2" />
           New Timeline

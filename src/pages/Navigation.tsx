@@ -11,7 +11,7 @@ const Navigation: React.FC = () => {
           className="text-lg font-semibold cursor-pointer hover:text-primary"
           onClick={() => navigate("/")}
         >
-          Timeline Editor
+          Youtube Timelines
         </h1>
       </div>
     </nav>
