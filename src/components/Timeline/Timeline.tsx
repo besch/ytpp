@@ -9,8 +9,12 @@ import {
   setEditingInstruction,
   updateInstruction,
 } from "@/store/timelineSlice";
-import { Instruction, PauseInstruction, SkipInstruction } from "@/types";
-import { RootState } from "@/store";
+import {
+  Instruction,
+  PauseInstruction,
+  SkipInstruction,
+  OverlayInstruction,
+} from "@/types";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 const formatTime = (timeMs: number): string => {
@@ -26,10 +30,14 @@ const formatTime = (timeMs: number): string => {
 };
 
 const getInstructionLabel = (instruction: Instruction): string => {
-  if ("pauseDuration" in instruction) {
+  if (instruction.type === "pause") {
     return `Pause for ${(instruction as PauseInstruction).pauseDuration}s`;
-  } else if ("skipToTime" in instruction) {
+  } else if (instruction.type === "skip") {
     return `Skip to ${formatTime((instruction as SkipInstruction).skipToTime)}`;
+  } else if (instruction.type === "overlay") {
+    return `Overlay ${
+      (instruction as OverlayInstruction).overlayMedia?.name || "media"
+    }`;
   }
   return "Unknown instruction";
 };
@@ -277,6 +285,8 @@ const Timeline: React.FC = () => {
                       ${
                         instruction.type === "pause"
                           ? "bg-secondary hover:bg-secondary/80"
+                          : instruction.type === "overlay"
+                          ? "bg-accent hover:bg-accent/80"
                           : "bg-primary hover:bg-primary/80"
                       }
                       ${
@@ -305,7 +315,8 @@ const Timeline: React.FC = () => {
                       z-50`}
                   >
                     <div className="font-medium mb-1">
-                      {instruction.type === "pause" ? "Pause" : "Skip"}
+                      {instruction.type.charAt(0).toUpperCase() +
+                        instruction.type.slice(1)}
                     </div>
                     <div className="text-muted-foreground">
                       {draggingInstructionId === instruction.id &&

@@ -16,6 +16,7 @@ interface ElementPayload {
 
 // Define all possible event payloads
 interface EventPayloads {
+  // Canvas elements
   ADD_ELEMENT: {
     timelineId: string;
     elementType: string;
@@ -30,9 +31,6 @@ interface EventPayloads {
   TOGGLE_CANVAS: {
     visible: boolean;
   };
-  SET_CURRENT_TIMELINE: {
-    timeline: Timeline;
-  };
   ELEMENT_SELECTED: {
     element: ElementPayload;
   };
@@ -41,6 +39,8 @@ interface EventPayloads {
     timelineId: string;
     element: CustomFabricObject;
   };
+  // Canvas elements
+
   SEEK_TO_TIME: {
     timeMs: number;
   };
