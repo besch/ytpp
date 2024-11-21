@@ -15,8 +15,10 @@ import {
   PauseInstruction,
   SkipInstruction,
   OverlayInstruction,
+  Timeline as ITimeline,
 } from "@/types";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
+import { api } from "@/lib/api";
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
@@ -183,7 +185,7 @@ const Timeline: React.FC = () => {
       dispatch(setEditingInstruction(updatedInstruction));
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = async () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
       setDraggingInstructionId(null);
@@ -200,18 +202,19 @@ const Timeline: React.FC = () => {
           updated_at,
         } = currentTimeline;
 
-        dispatchCustomEvent("UPDATE_TIMELINE", {
-          timeline: {
-            id,
-            title,
-            video_url,
-            instructions,
-            elements,
-            media_files,
-            created_at,
-            updated_at,
-          },
-        });
+        const updatedTimeline: ITimeline = {
+          id,
+          title,
+          video_url,
+          instructions,
+          elements,
+          media_files,
+          created_at,
+          updated_at,
+        };
+
+        dispatchCustomEvent("UPDATE_TIMELINE", { timeline: updatedTimeline });
+        await api.timelines.update(id, updatedTimeline);
       }
     };
 
