@@ -536,9 +536,11 @@ const InstructionEditor: React.FC = () => {
                 </label>
                 <Input
                   type="number"
+                  step="0.1"
                   {...register("pauseDuration", {
                     required: !watch("useOverlayDuration"),
                     min: 0,
+                    valueAsNumber: true,
                   })}
                   disabled={watch("useOverlayDuration")}
                 />
