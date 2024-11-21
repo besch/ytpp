@@ -8,6 +8,7 @@ import {
   setSelectedInstructionId,
   setEditingInstruction,
   updateInstruction,
+  selectCurrentTimeline,
 } from "@/store/timelineSlice";
 import {
   Instruction,
@@ -48,6 +49,7 @@ const Timeline: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const currentTime = useSelector(selectCurrentTime);
   const instructions = useSelector(selectInstructions);
+  const currentTimeline = useSelector(selectCurrentTimeline);
   const [duration, setDuration] = useState<number>(0);
   const [draggingInstructionId, setDraggingInstructionId] = useState<
     string | null
@@ -186,6 +188,31 @@ const Timeline: React.FC = () => {
       document.removeEventListener("mouseup", handleMouseUp);
       setDraggingInstructionId(null);
       setDraggingTime(null);
+
+      if (currentTimeline && instructions) {
+        const {
+          id,
+          title,
+          video_url,
+          elements,
+          media_files,
+          created_at,
+          updated_at,
+        } = currentTimeline;
+
+        dispatchCustomEvent("UPDATE_TIMELINE", {
+          timeline: {
+            id,
+            title,
+            video_url,
+            instructions,
+            elements,
+            media_files,
+            created_at,
+            updated_at,
+          },
+        });
+      }
     };
 
     document.addEventListener("mousemove", handleMouseMove);
