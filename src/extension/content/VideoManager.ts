@@ -185,6 +185,8 @@ export class VideoManager {
     // Determine media type
     const mediaType = instruction.overlayMedia!.type.startsWith("video/")
       ? "video"
+      : instruction.overlayMedia!.type.startsWith("audio/")
+      ? "audio"
       : "image";
 
     // Set active overlay instruction and calculate end time
@@ -193,7 +195,7 @@ export class VideoManager {
     if (instruction.useOverlayDuration) {
       // Use the media's intrinsic duration
       const duration =
-        mediaType === "video"
+        mediaType === "video" || mediaType === "audio"
           ? instruction.overlayMedia!.duration
           : instruction.overlayMedia!.duration || 5; // Default to 5 seconds for images without duration
       this.activeOverlayEndTime = instruction.triggerTime / 1000 + duration;
@@ -210,7 +212,7 @@ export class VideoManager {
       mediaType,
       instruction.useOverlayDuration
         ? instruction.overlayMedia!.duration
-        : instruction.overlayMedia!.duration // Use overlayDuration for images
+        : instruction.overlayMedia!.duration
     );
   }
 
