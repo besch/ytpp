@@ -332,6 +332,8 @@ export class VideoManager {
       // Determine media type
       const mediaType = instruction.overlayMedia!.type.startsWith("video/")
         ? "video"
+        : instruction.overlayMedia!.type.startsWith("audio/")
+        ? "audio"
         : "image";
 
       // Play the overlay media with mute setting
@@ -339,26 +341,11 @@ export class VideoManager {
         instruction.overlayMedia!.url,
         instruction.muteOverlayMedia || false,
         mediaType,
-        instruction.pauseDuration
+        instruction.useOverlayDuration ? undefined : instruction.pauseDuration
       );
 
-      // Wait for overlay to finish
-      this.videoOverlayManager?.onOverlayEnded(() => {
-        // Ensure the video hasn't been played already (in case of rapid seeking)
-        if (this.lastInstructionId === instruction.id) {
-          // Hide the overlay media
-          this.videoOverlayManager?.hideOverlay();
-
-          if (this.videoElement && this.videoElement.paused) {
-            this.videoElement.play().catch((error) => {
-              console.error("Error resuming video:", error);
-            });
-          }
-        }
-      });
-
-      // If useOverlayDuration is false and media is image, resume main video after pauseDuration
-      if (!instruction.useOverlayDuration && mediaType === "image") {
+      // If useOverlayDuration is false, we need to ensure the main video resumes after pauseDuration
+      if (!instruction.useOverlayDuration) {
         const pauseDuration = instruction.pauseDuration || 0;
 
         const resumeTimeout = setTimeout(() => {
@@ -374,6 +361,21 @@ export class VideoManager {
 
         // Store the timeout to clear it if needed
         (this.videoElement as any)._resumeTimeout = resumeTimeout;
+      } else {
+        // If useOverlayDuration is true, resume main video when overlay ends
+        this.videoOverlayManager?.onOverlayEnded(() => {
+          // Ensure the video hasn't been played already (in case of rapid seeking)
+          if (this.lastInstructionId === instruction.id) {
+            // Hide the overlay media
+            this.videoOverlayManager?.hideOverlay();
+
+            if (this.videoElement && this.videoElement.paused) {
+              this.videoElement.play().catch((error) => {
+                console.error("Error resuming video:", error);
+              });
+            }
+          }
+        });
       }
     }
   }

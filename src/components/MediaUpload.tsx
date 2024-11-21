@@ -39,8 +39,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       const url = URL.createObjectURL(file);
       let duration: number | undefined;
 
-      if (file.type.startsWith("video/")) {
-        duration = await getMediaDuration(url);
+      if (file.type.startsWith("video/") || file.type.startsWith("audio/")) {
+        duration = await getMediaDuration(url, file.type);
       } else {
         // Set a default duration for images/GIFs if needed
         duration = 5; // Default duration in seconds for images/GIFs
@@ -61,14 +61,26 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     }
   };
 
-  const getMediaDuration = (url: string): Promise<number> => {
+  const getMediaDuration = (
+    url: string,
+    mediaType: string
+  ): Promise<number> => {
     return new Promise((resolve, reject) => {
-      const media = document.createElement("video");
-      media.src = url;
-      media.addEventListener("loadedmetadata", () => {
-        resolve(media.duration);
+      let mediaElement: HTMLMediaElement;
+
+      if (mediaType.startsWith("video/")) {
+        mediaElement = document.createElement("video");
+      } else if (mediaType.startsWith("audio/")) {
+        mediaElement = document.createElement("audio");
+      } else {
+        return resolve(5); // Default duration if not video or audio
+      }
+
+      mediaElement.src = url;
+      mediaElement.addEventListener("loadedmetadata", () => {
+        resolve(mediaElement.duration);
       });
-      media.addEventListener("error", () => {
+      mediaElement.addEventListener("error", () => {
         reject(new Error("Failed to load media"));
       });
     });
@@ -89,6 +101,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
           >
             Your browser does not support the video tag.
           </video>
+        ) : type.startsWith("audio/") ? (
+          <audio src={src} className="w-full" controls preload="metadata">
+            Your browser does not support the audio tag.
+          </audio>
         ) : (
           <img
             src={src}
@@ -105,7 +121,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       <input
         type="file"
         ref={inputRef}
-        accept="video/*, image/*"
+        accept="video/*, image/*, audio/*"
         onChange={handleFileChange}
         className="hidden"
       />

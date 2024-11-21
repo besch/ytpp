@@ -6,6 +6,7 @@ export class VideoOverlayManager {
   private mediaBlobUrl: string | null = null;
   private overlayEndedCallback: (() => void) | null = null;
   private overlayTimeout: number | null = null;
+  private audioElement: HTMLAudioElement | null = null;
 
   constructor(videoElement: HTMLVideoElement) {
     this.videoElement = videoElement;
@@ -64,12 +65,12 @@ export class VideoOverlayManager {
    * Plays the overlay media.
    * @param mediaUrl - The URL of the overlay media.
    * @param muteOverlay - Whether to mute the overlay media.
-   * @param mediaType - The type of the media ("video" or "image").
+   * @param mediaType - The type of the media ("video", "image", or "audio").
    */
   public async playOverlayMedia(
     mediaUrl: string,
     muteOverlay: boolean = false,
-    mediaType: "video" | "image",
+    mediaType: "video" | "image" | "audio",
     duration?: number
   ): Promise<void> {
     if (!this.overlayElement) return;
@@ -104,7 +105,7 @@ export class VideoOverlayManager {
         this.overlayElement.style.display = "block";
 
         await overlayVideo.play();
-      } else {
+      } else if (mediaType === "image") {
         const overlayImage = document.createElement("img");
         overlayImage.src = mediaUrl;
         overlayImage.style.width = "100%";
@@ -122,6 +123,31 @@ export class VideoOverlayManager {
             this.overlayEndedCallback();
           }
         }, displayDuration);
+      } else if (mediaType === "audio") {
+        // Handle audio overlay
+        this.audioElement = document.createElement("audio");
+        this.audioElement.src = mediaUrl;
+        this.audioElement.muted = muteOverlay;
+
+        this.audioElement.addEventListener("ended", () => {
+          this.hideOverlay();
+          if (this.overlayEndedCallback) {
+            this.overlayEndedCallback();
+          }
+        });
+
+        // Start playing audio
+        await this.audioElement.play();
+
+        // If duration is specified and useOverlayDuration is false
+        if (duration) {
+          this.overlayTimeout = window.setTimeout(() => {
+            this.hideOverlay();
+            if (this.overlayEndedCallback) {
+              this.overlayEndedCallback();
+            }
+          }, duration * 1000);
+        }
       }
     } catch (error) {
       console.error("Error playing overlay media:", error);
@@ -144,6 +170,10 @@ export class VideoOverlayManager {
     if (this.overlayTimeout) {
       clearTimeout(this.overlayTimeout);
       this.overlayTimeout = null;
+    }
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.audioElement = null;
     }
   };
 
