@@ -103,34 +103,44 @@ export class VideoManager {
 
   private handleTimeUpdate = (event: Event): void => {
     const video = event.target as HTMLVideoElement;
-    const currentTime = video.currentTime; // Current time in seconds
+    const currentTime = video.currentTime;
+    const lastTime = (video as any)._lastTime || 0;
 
     dispatchCustomEvent("VIDEO_TIME_UPDATE", {
       currentTimeMs: currentTime * 1000,
     });
-    this.checkInstructions(currentTime);
 
-    // Call updateVisibility on ElementManager
+    // Check for instructions between last update and current time
+    this.checkInstructions(lastTime, currentTime);
+
+    // Store the current time for next update
+    (video as any)._lastTime = currentTime;
+
     this.timeUpdateListeners.forEach((listener) =>
       listener(currentTime * 1000)
     );
   };
 
-  private async checkInstructions(currentTime: number): Promise<void> {
-    // First, check if any overlay instruction is currently active
-    if (this.activeOverlayInstruction) {
-      // If the overlay duration has passed, hide the overlay
-      if (currentTime >= this.activeOverlayEndTime!) {
-        this.videoOverlayManager?.hideOverlay();
-        this.activeOverlayInstruction = null;
-        this.activeOverlayEndTime = null;
-      }
+  private async checkInstructions(
+    lastTime: number,
+    currentTime: number
+  ): Promise<void> {
+    // Handle active overlay check as before
+    if (
+      this.activeOverlayInstruction &&
+      currentTime >= this.activeOverlayEndTime!
+    ) {
+      this.videoOverlayManager?.hideOverlay();
+      this.activeOverlayInstruction = null;
+      this.activeOverlayEndTime = null;
     }
 
-    // Find instructions that need to be triggered at the current time
+    // Find instructions that should trigger between lastTime and currentTime
     const instructionsToTrigger = this.instructions.filter(
-      (instr: Instruction) =>
-        Math.abs(currentTime - instr.triggerTime / 1000) < 0.1 // 0.1 seconds tolerance
+      (instr: Instruction) => {
+        const instrTime = instr.triggerTime / 1000;
+        return instrTime > lastTime && instrTime <= currentTime;
+      }
     );
 
     for (const instruction of instructionsToTrigger) {
