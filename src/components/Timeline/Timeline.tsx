@@ -57,6 +57,12 @@ const Timeline: React.FC = () => {
     string | null
   >(null);
   const [draggingTime, setDraggingTime] = useState<number | null>(null);
+  const [draggingSkipEndId, setDraggingSkipEndId] = useState<string | null>(
+    null
+  );
+  const [draggingSkipEndTime, setDraggingSkipEndTime] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
     videoRef.current = document.querySelector(
@@ -222,6 +228,63 @@ const Timeline: React.FC = () => {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
+  const handleSkipEndDrag = (
+    e: React.MouseEvent,
+    instruction: SkipInstruction
+  ) => {
+    e.stopPropagation();
+    setDraggingSkipEndId(instruction.id);
+    setDraggingSkipEndTime(instruction.skipToTime);
+
+    const startX = e.clientX;
+    const startTime = instruction.skipToTime;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const rect = timelineRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const deltaX = moveEvent.clientX - startX;
+      const timePerPixel = duration / rect.width;
+      const timeDelta = deltaX * timePerPixel;
+
+      const newTime = Math.max(
+        instruction.triggerTime,
+        Math.min(duration, startTime + timeDelta)
+      );
+      setDraggingSkipEndTime(newTime);
+
+      // Update instruction with new skipToTime
+      const updatedInstruction = {
+        ...instruction,
+        skipToTime: Math.round(newTime),
+      };
+
+      dispatch(updateInstruction(updatedInstruction));
+      dispatch(setEditingInstruction(updatedInstruction));
+    };
+
+    const handleMouseUp = async () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      setDraggingSkipEndId(null);
+      setDraggingSkipEndTime(null);
+
+      // Save to backend
+      if (currentTimeline && instructions) {
+        const updatedTimeline: ITimeline = {
+          ...currentTimeline,
+          instructions,
+        };
+
+        dispatchCustomEvent("UPDATE_TIMELINE", { timeline: updatedTimeline });
+        await api.timelines.update(currentTimeline.id, updatedTimeline);
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
   const renderInstructionMarkers = () => {
     // Group instructions by triggerTime to handle overlapping instructions
     const groupedInstructions = instructions.reduce((acc, instruction) => {
@@ -361,6 +424,40 @@ const Timeline: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                {instruction.type === "skip" && (
+                  <div
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-30"
+                    style={{
+                      transform: "translate(50%, -50%)",
+                    }}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full cursor-move
+                        border-2 border-background shadow-md
+                        bg-primary hover:bg-primary/80
+                        transition-all duration-200`}
+                      onMouseDown={(e) =>
+                        handleSkipEndDrag(e, instruction as SkipInstruction)
+                      }
+                    >
+                      {draggingSkipEndId === instruction.id && (
+                        <div
+                          className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2
+                            bg-background/95 backdrop-blur-sm
+                            border border-border px-3 py-2
+                            rounded-lg shadow-xl
+                            whitespace-nowrap text-xs"
+                        >
+                          {formatTime(
+                            draggingSkipEndTime ||
+                              (instruction as SkipInstruction).skipToTime
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
