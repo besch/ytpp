@@ -35,11 +35,12 @@ const TimelineList: React.FC = () => {
         dispatch(setTimelines(fetchedTimelines));
       } catch (error) {
         console.error("Failed to fetch timelines:", error);
+        dispatch(setError("Failed to fetch timelines"));
       }
     };
 
     fetchTimelines();
-  }, [dispatch]);
+  }, [dispatch, videoUrl]);
 
   const handleCreateTimeline = async () => {
     try {
@@ -55,6 +56,7 @@ const TimelineList: React.FC = () => {
       navigate(`/timeline/${newTimeline.id}`);
     } catch (error) {
       console.error("Failed to create timeline:", error);
+      dispatch(setError("Failed to create timeline"));
     }
   };
 
@@ -69,7 +71,7 @@ const TimelineList: React.FC = () => {
       dispatch(setLoading(true));
       await api.timelines.delete(timelineId);
       dispatch(timelineDeleted(timelineId));
-      const updatedTimelines = await api.timelines.getAll();
+      const updatedTimelines = await api.timelines.getAll(videoUrl);
       dispatch(setTimelines(updatedTimelines));
     } catch (error) {
       console.error("Failed to delete timeline:", error);
@@ -87,18 +89,19 @@ const TimelineList: React.FC = () => {
   const handleTitleUpdate = async (timelineId: string) => {
     try {
       await api.timelines.update(timelineId, { title: newTitle });
-      const updatedTimelines = await api.timelines.getAll();
+      const updatedTimelines = await api.timelines.getAll(videoUrl);
       dispatch(setTimelines(updatedTimelines));
       setEditingTitleId(null);
     } catch (error) {
       console.error("Failed to update timeline title:", error);
+      dispatch(setError("Failed to update timeline title"));
     }
   };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Timeline list</h2>
+        <h2 className="text-xl font-semibold">Your Timelines</h2>
         <Button onClick={handleCreateTimeline}>
           <Plus size={16} className="mr-2" />
           New Timeline
@@ -116,8 +119,7 @@ const TimelineList: React.FC = () => {
           {timelines.map((timeline) => (
             <div
               key={timeline.id}
-              className="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-muted cursor-pointer"
-              onClick={() => handleEditTimeline(timeline)}
+              className="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-muted/10"
             >
               <div className="flex-1">
                 {editingTitleId === timeline.id ? (
@@ -132,7 +134,12 @@ const TimelineList: React.FC = () => {
                     className="h-9"
                   />
                 ) : (
-                  <p className="font-medium">{timeline.title}</p>
+                  <p
+                    className="font-medium cursor-pointer hover:text-primary"
+                    onClick={() => handleEditTimeline(timeline)}
+                  >
+                    {timeline.title}
+                  </p>
                 )}
               </div>
               <div className="flex items-center space-x-2">
@@ -155,19 +162,25 @@ const TimelineList: React.FC = () => {
                 ) : (
                   <>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => startEditingTitle(timeline)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEditingTitle(timeline);
+                      }}
                     >
                       <Edit2 size={16} className="mr-2" />
                       Edit
                     </Button>
                     <Button
-                      variant="destructive"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteTimeline(timeline.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTimeline(timeline.id);
+                      }}
                     >
-                      <Trash2 size={16} className="mr-2" />
+                      <Trash2 size={16} className="mr-2 text-destructive" />
                       Delete
                     </Button>
                   </>

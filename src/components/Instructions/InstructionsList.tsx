@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Play } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
   selectInstructions,
@@ -53,93 +53,112 @@ const InstructionsList: React.FC = () => {
       await api.timelines.deleteMedia(instruction.overlayMedia.url);
     }
 
+    const updatedInstructions = instructions.filter(
+      (instruction) => instruction.id !== id
+    );
     dispatch(removeInstruction(id));
 
     await api.timelines.update(currentTimeline!.id, {
-      instructions: instructions.filter((instruction) => instruction.id !== id),
+      instructions: updatedInstructions,
     });
   };
-
-  if (showTypeSelect) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowTypeSelect(false)}
-          >
-            ← Back
-          </Button>
-          <h3 className="text-lg font-medium">Select Instruction Type</h3>
-        </div>
-        <InstructionTypeSelect onSelect={handleTypeSelect} />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Instructions</h3>
-        <Button onClick={handleAddNew} size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Instruction
-        </Button>
-      </div>
-
-      <div className="space-y-2">
-        {instructions
-          .slice()
-          .sort((a, b) => a.triggerTime - b.triggerTime)
-          .map((instruction) => (
-            <div
-              key={instruction.id}
-              className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 flex items-center justify-between"
+        <div>
+          {showTypeSelect ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowTypeSelect(false)}
             >
-              <div>
-                <span className="font-medium capitalize">
-                  {instruction.type}
-                </span>
-                <span className="text-sm text-muted-foreground ml-2">
-                  at {formatTime(instruction.triggerTime)}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                {instruction.type === "skip" && (
-                  <span className="text-sm text-muted-foreground">
-                    → {formatTime((instruction as SkipInstruction).skipToTime)}
-                  </span>
-                )}
-                {instruction.type === "pause" && (
-                  <span className="text-sm text-muted-foreground">
-                    for {(instruction as PauseInstruction).pauseDuration}s
-                  </span>
-                )}
-                {instruction.type === "overlay" && (
-                  <span className="text-sm text-muted-foreground">
-                    Overlay Media
-                  </span>
-                )}
-                <Button variant="ghost" onClick={() => handleEdit(instruction)}>
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleDelete(instruction.id)}
-                >
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                </Button>
-              </div>
-            </div>
-          ))}
-
-        {instructions.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No instructions yet. Click the button above to add one.
-          </div>
-        )}
+              Cancel
+            </Button>
+          ) : (
+            <Button onClick={handleAddNew} size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Instruction
+            </Button>
+          )}
+        </div>
       </div>
+
+      {showTypeSelect ? (
+        <InstructionTypeSelect onSelect={handleTypeSelect} />
+      ) : instructions.length > 0 ? (
+        <div className="space-y-2">
+          {instructions
+            .slice()
+            .sort((a, b) => a.triggerTime - b.triggerTime)
+            .map((instruction) => (
+              <div
+                key={instruction.id}
+                className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 flex items-center justify-between"
+              >
+                <div>
+                  <span className="font-medium capitalize">
+                    {instruction.type} Instruction
+                  </span>
+                  <span className="text-sm text-muted-foreground ml-2">
+                    at {formatTime(instruction.triggerTime)}
+                  </span>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {instruction.type === "skip" && (
+                      <>
+                        Skips to{" "}
+                        {formatTime(
+                          (instruction as SkipInstruction).skipToTime
+                        )}
+                      </>
+                    )}
+                    {instruction.type === "pause" && (
+                      <>
+                        Pauses for{" "}
+                        {(instruction as PauseInstruction).pauseDuration}s
+                      </>
+                    )}
+                    {instruction.type === "overlay" && (
+                      <>Displays overlay media</>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      dispatchCustomEvent("SEEK_TO_TIME", {
+                        timeMs: instruction.triggerTime,
+                      })
+                    }
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(instruction)}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(instruction.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-muted-foreground">
+          No instructions yet. Click the button above to add one.
+        </div>
+      )}
     </div>
   );
 };

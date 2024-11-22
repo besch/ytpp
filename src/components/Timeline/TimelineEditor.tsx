@@ -16,7 +16,7 @@ const TimelineEditor: React.FC = () => {
 
   const handleBack = () => {
     dispatch(setCurrentTimeline(null));
-    navigate("/");
+    navigate("/timelines");
   };
 
   if (!currentTimeline) {
@@ -34,7 +34,7 @@ const TimelineEditor: React.FC = () => {
           className="flex items-center gap-2"
         >
           <ArrowLeft size={16} />
-          Back
+          Back to Timelines
         </Button>
         <h2 className="text-lg font-semibold">{currentTimeline.title}</h2>
       </div>
