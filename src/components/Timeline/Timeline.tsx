@@ -430,6 +430,7 @@ const Timeline: React.FC = () => {
                     className="absolute right-0 top-1/2 -translate-y-1/2 z-30"
                     style={{
                       transform: "translate(50%, -50%)",
+                      top: "calc(50% + 5px)",
                     }}
                   >
                     <div
