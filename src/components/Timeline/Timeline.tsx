@@ -66,7 +66,7 @@ const Timeline: React.FC = () => {
 
   useEffect(() => {
     videoRef.current = document.querySelector(
-      "video:not(.youtube-uncensored-video)"
+      "video:not(.timelines-video)"
     ) as HTMLVideoElement;
 
     if (videoRef.current) {

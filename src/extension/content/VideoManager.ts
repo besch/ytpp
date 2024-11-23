@@ -30,9 +30,7 @@ export class VideoManager {
   }
 
   public async findAndStoreVideoElement(): Promise<void> {
-    this.videoElement = document.querySelector(
-      "video:not(.youtube-uncensored-video)"
-    );
+    this.videoElement = document.querySelector("video:not(.timelines-video)");
 
     if (this.videoElement) {
       this.handleVideo(this.videoElement);

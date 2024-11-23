@@ -22,7 +22,7 @@ export class VideoOverlayManager {
 
   private setupOverlayElement(): void {
     this.overlayElement = document.createElement("div");
-    this.overlayElement.classList.add("youtube-uncensored-overlay");
+    this.overlayElement.classList.add("timelines-overlay");
 
     Object.assign(this.overlayElement.style, {
       position: "absolute",
