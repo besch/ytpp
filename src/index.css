@@ -1,6 +1,3 @@
-/* #timeline-container,
-#react-overlay-root { */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* } */
