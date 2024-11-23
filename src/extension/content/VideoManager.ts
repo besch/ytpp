@@ -12,7 +12,6 @@ export class VideoManager {
   private originalVideoVolume: number = 1;
   private currentVideoPlayerVolume: number = 1;
   private timeUpdateListeners: Array<(currentTimeMs: number) => void> = [];
-  private clickHandler: ((event: MouseEvent) => void) | null = null;
   private cleanupListeners: Array<() => void> = [];
   private videoOverlayManager: VideoOverlayManager | null = null;
   private instructions: Instruction[] = [];
@@ -56,7 +55,6 @@ export class VideoManager {
     video.addEventListener("seeking", this.handleVideoSeeking);
     video.addEventListener("volumechange", this.handleVolumeChange);
     video.addEventListener("timeupdate", this.handleTimeUpdate);
-    this.preventVideoClicks();
   }
 
   public removeVideoEventListeners(): void {
@@ -78,7 +76,6 @@ export class VideoManager {
         this.handleTimeUpdate
       );
     }
-    this.removeVideoClickPrevention();
 
     this.videoOverlayManager?.destroy();
     this.videoOverlayManager = null;
@@ -290,28 +287,6 @@ export class VideoManager {
   private handlePageUnload = (): void => {
     this.restoreOriginalVideoVolume();
   };
-
-  public preventVideoClicks(): void {
-    if (this.videoElement) {
-      this.videoElement.style.pointerEvents = "none";
-    }
-
-    this.clickHandler = (event: MouseEvent) => {
-      if ((event.target as Element).matches("video")) {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-    };
-
-    window.addEventListener("click", this.clickHandler, true);
-  }
-
-  public removeVideoClickPrevention(): void {
-    if (this.clickHandler) {
-      window.removeEventListener("click", this.clickHandler, true);
-      this.clickHandler = null;
-    }
-  }
 
   private handleSeekToTime = (timeMs: number): void => {
     if (this.videoElement) {
