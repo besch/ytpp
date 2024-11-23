@@ -13,7 +13,7 @@ function init() {
   timelineContainer.id = "timeline-container";
 
   // Safe access to player element with fallback
-  const playerElement = document.getElementById("player");
+  const playerElement = document.querySelector("video");
   const playerRect = playerElement?.getBoundingClientRect();
 
   timelineContainer.style.cssText = `
