@@ -11,32 +11,64 @@ function init() {
   // Create container for Timeline
   const timelineContainer = document.createElement("div");
   timelineContainer.id = "timeline-container";
-  timelineContainer.style.width = "100%";
 
-  // Find the primary-inner element and the player
-  const primaryInner = document.getElementById("primary-inner");
-  const player = document.getElementById("player");
+  // Safe access to player element with fallback
+  const playerElement = document.getElementById("player");
+  const playerRect = playerElement?.getBoundingClientRect();
 
-  // Insert timeline after player if both elements exist
-  if (primaryInner && player) {
-    // Find the next element after player to insert before
-    const nextElement = player.nextElementSibling;
-    if (nextElement) {
-      primaryInner.insertBefore(timelineContainer, nextElement);
-    } else {
-      primaryInner.appendChild(timelineContainer);
-    }
-  }
+  timelineContainer.style.cssText = `
+    position: absolute;
+    top: ${playerRect ? playerRect.bottom + 20 : 20}px;
+    left: ${playerRect ? playerRect.left : 20}px;
+    width: ${playerRect ? `${playerRect.width}px` : "auto"};
+    cursor: move;
+    z-index: 9999;
+  `;
 
   // Create container for other components
   const container = document.createElement("div");
   container.id = "react-overlay-root";
-  container.style.width = "100%";
+  container.style.cssText = `
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: move;
+    width: 350px;
+    z-index: 9999;
+  `;
 
-  const secondary = document.getElementById("secondary");
-  if (secondary) {
-    secondary.prepend(container);
-  }
+  // Add containers to body instead of specific elements
+  document.body.appendChild(timelineContainer);
+  document.body.appendChild(container);
+
+  // Add drag functionality with proper types
+  [timelineContainer, container].forEach((elem) => {
+    let isDragging = false;
+    let currentX: number;
+    let currentY: number;
+    let initialX: number;
+    let initialY: number;
+
+    elem.addEventListener("mousedown", (e: MouseEvent) => {
+      isDragging = true;
+      initialX = e.clientX - elem.offsetLeft;
+      initialY = e.clientY - elem.offsetTop;
+    });
+
+    document.addEventListener("mousemove", (e: MouseEvent) => {
+      if (isDragging) {
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        elem.style.left = `${currentX}px`;
+        elem.style.top = `${currentY}px`;
+      }
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+  });
 
   // Render the components
   try {
