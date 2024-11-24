@@ -19,6 +19,8 @@ import {
 } from "@/types";
 import { dispatchCustomEvent } from "@/lib/eventSystem";
 import { api } from "@/lib/api";
+import Button from "@/components/ui/Button";
+import { Move } from "lucide-react";
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
@@ -467,11 +469,44 @@ const Timeline: React.FC = () => {
     });
   };
 
+  const handleDragStart = (e: React.MouseEvent) => {
+    const container = document.getElementById("timeline-container");
+    if (!container) return;
+
+    const initialX = e.clientX - container.offsetLeft;
+    const initialY = e.clientY - container.offsetTop;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
+      const currentX = e.clientX - initialX;
+      const currentY = e.clientY - initialY;
+      container.style.left = `${currentX}px`;
+      container.style.top = `${currentY}px`;
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
   return (
     <div className="bg-background border border-border rounded-lg">
       <div className="flex items-center justify-between p-4">
         <h3 className="text-sm font-medium text-foreground">Timeline</h3>
-        <div className="text-xs text-muted-foreground">Click to seek</div>
+        <div className="flex gap-2 items-center">
+          <Button
+            variant="ghost"
+            size="lg"
+            onMouseDown={handleDragStart}
+            title="Drag timeline"
+          >
+            <Move className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div
