@@ -12,28 +12,8 @@ const Navigation: React.FC = () => {
         className="text-xl font-semibold text-foreground cursor-pointer hover:text-primary"
         onClick={() => navigate("/")}
       >
-        YouTube Timelines
+        Timelines
       </h1>
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2"
-        >
-          <Home size={16} />
-          Home
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/timelines")}
-          className="flex items-center gap-2"
-        >
-          <List size={16} />
-          Timelines
-        </Button>
-      </div>
     </nav>
   );
 };
