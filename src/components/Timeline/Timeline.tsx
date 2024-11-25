@@ -324,143 +324,61 @@ const Timeline: React.FC = () => {
                 className="absolute"
                 style={{
                   top: `${25 + index * 20}%`,
-                  width:
-                    instruction.type === "skip"
-                      ? `${
-                          ((((instruction as SkipInstruction).skipToTime -
-                            instruction.triggerTime) /
-                            duration) *
-                            100 *
-                            (timelineRef.current?.clientWidth ?? 0)) /
-                          100
-                        }px`
-                      : "auto",
+                  transform: "translateX(-50%)",
+                  zIndex: 20,
                 }}
               >
-                {isPause && (
-                  <div
-                    className="absolute h-2 bg-secondary/20 rounded-full"
-                    style={{
-                      width: `${pauseWidth}%`,
-                      left: 0,
-                    }}
-                  />
-                )}
-                {instruction.type === "skip" && (
-                  <div
-                    className="absolute h-2 bg-primary/20 rounded-full"
-                    style={{
-                      width: "100%",
-                      left: 0,
-                      top: "calc(50% + 5px)",
-                      transform: "translateY(-50%)",
-                      zIndex: 1,
-                    }}
-                  />
-                )}
                 <div
-                  className={`relative group cursor-move 
+                  className={`instruction-marker
+                    border-2 border-background shadow-md
                     ${
-                      currentTime === instruction.triggerTime ? "scale-110" : ""
+                      instruction.type === "pause"
+                        ? "bg-secondary hover:bg-secondary/80"
+                        : instruction.type === "skip"
+                        ? "bg-primary hover:bg-primary/80"
+                        : instruction.type === "overlay"
+                        ? "bg-accent hover:bg-accent/80"
+                        : "bg-primary hover:bg-primary/80"
                     }
-                    transition-all duration-200`}
+                    ${
+                      currentTime === instruction.triggerTime
+                        ? "ring-2 ring-offset-2 ring-offset-background ring-primary"
+                        : ""
+                    }
+                  `}
                   onMouseDown={(e) => handleInstructionDrag(e, instruction)}
                   onClick={(e) => handleInstructionClick(e, instruction)}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    transform: "translateX(-50%)",
-                    zIndex: 20,
-                  }}
                 >
-                  <div
-                    className={`w-4 h-4 rounded-full cursor-pointer relative
-                      border-2 border-background shadow-md
-                      transition-all duration-200
-                      ${
-                        instruction.type === "pause"
-                          ? "bg-secondary hover:bg-secondary/80"
-                          : instruction.type === "overlay"
-                          ? "bg-accent hover:bg-accent/80"
-                          : "bg-primary hover:bg-primary/80"
-                      }
-                      ${
-                        currentTime === instruction.triggerTime
-                          ? "ring-2 ring-offset-2 ring-offset-background ring-primary"
-                          : ""
-                      }
-                    `}
-                  >
-                    {currentTime === instruction.triggerTime && (
-                      <span className="absolute inset-0 rounded-full bg-primary/30 animate-ripple" />
-                    )}
-                  </div>
-                  <div
-                    className={`absolute ${
-                      draggingInstructionId === instruction.id
-                        ? "opacity-100"
-                        : "opacity-0 group-hover:opacity-100"
-                    }
-                      bottom-full mb-2 left-1/2 -translate-x-1/2
-                      bg-background/95 backdrop-blur-sm
-                      border border-border px-3 py-2
-                      rounded-lg shadow-xl
-                      whitespace-nowrap text-xs
-                      transition-all duration-200
-                      z-50`}
-                  >
-                    <div className="font-medium mb-1">
-                      {instruction.type.charAt(0).toUpperCase() +
-                        instruction.type.slice(1)}
-                    </div>
-                    <div className="text-muted-foreground">
-                      {draggingInstructionId === instruction.id &&
-                      draggingTime !== null
-                        ? formatTime(draggingTime)
-                        : getInstructionLabel(instruction)}
-                    </div>
-                    <div
-                      className="absolute -bottom-1 left-1/2 -translate-x-1/2
-                      w-2 h-2 bg-background border-b border-r border-border
-                      rotate-45"
-                    />
-                  </div>
+                  {currentTime === instruction.triggerTime && (
+                    <span className="absolute inset-0 rounded-full bg-primary/30 animate-ripple" />
+                  )}
                 </div>
 
-                {instruction.type === "skip" && (
-                  <div
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-30"
-                    style={{
-                      transform: "translate(50%, -50%)",
-                      top: "calc(50% + 5px)",
-                    }}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full cursor-move
-                        border-2 border-background shadow-md
-                        bg-primary hover:bg-primary/80
-                        transition-all duration-200`}
-                      onMouseDown={(e) =>
-                        handleSkipEndDrag(e, instruction as SkipInstruction)
-                      }
-                    >
-                      {draggingSkipEndId === instruction.id && (
-                        <div
-                          className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2
-                            bg-background/95 backdrop-blur-sm
-                            border border-border px-3 py-2
-                            rounded-lg shadow-xl
-                            whitespace-nowrap text-xs"
-                        >
-                          {formatTime(
-                            draggingSkipEndTime ||
-                              (instruction as SkipInstruction).skipToTime
-                          )}
-                        </div>
-                      )}
-                    </div>
+                <div
+                  className={`instruction-popover ${
+                    draggingInstructionId === instruction.id ? "visible" : ""
+                  }
+                    bg-background/95 backdrop-blur-sm
+                    border border-border px-3 py-2
+                    rounded-lg shadow-xl
+                    text-xs`}
+                >
+                  <div className="font-medium mb-1">
+                    {instruction.type.charAt(0).toUpperCase() +
+                      instruction.type.slice(1)}
                   </div>
-                )}
+                  <div className="text-muted-foreground">
+                    {draggingInstructionId === instruction.id &&
+                    draggingTime !== null
+                      ? formatTime(draggingTime)
+                      : getInstructionLabel(instruction)}
+                  </div>
+                  <div
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2
+                    w-2 h-2 bg-background border-b border-r border-border
+                    rotate-45"
+                  />
+                </div>
               </div>
             );
           })}
