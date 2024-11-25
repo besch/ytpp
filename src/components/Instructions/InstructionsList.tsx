@@ -88,7 +88,7 @@ const InstructionsList: React.FC = () => {
       {showTypeSelect ? (
         <InstructionTypeSelect onSelect={handleTypeSelect} />
       ) : instructions.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-[600px] overflow-y-auto">
           {instructions
             .slice()
             .sort((a, b) => a.triggerTime - b.triggerTime)
