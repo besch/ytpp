@@ -329,23 +329,8 @@ const Timeline: React.FC = () => {
                 }}
               >
                 <div
-                  className={`instruction-marker
-                    border-2 border-background shadow-md
-                    ${
-                      instruction.type === "pause"
-                        ? "bg-secondary hover:bg-secondary/80"
-                        : instruction.type === "skip"
-                        ? "bg-primary hover:bg-primary/80"
-                        : instruction.type === "overlay"
-                        ? "bg-accent hover:bg-accent/80"
-                        : "bg-primary hover:bg-primary/80"
-                    }
-                    ${
-                      currentTime === instruction.triggerTime
-                        ? "ring-2 ring-offset-2 ring-offset-background ring-primary"
-                        : ""
-                    }
-                  `}
+                  className="instruction-marker border-2 border-background shadow-md"
+                  data-type={instruction.type}
                   onMouseDown={(e) => handleInstructionDrag(e, instruction)}
                   onClick={(e) => handleInstructionClick(e, instruction)}
                 >
