@@ -9,6 +9,7 @@ import {
   setEditingInstruction,
   updateInstruction,
   selectCurrentTimeline,
+  selectSelectedInstructionId,
 } from "@/store/timelineSlice";
 import {
   Instruction,
@@ -54,6 +55,7 @@ const Timeline: React.FC = () => {
   const currentTime = useSelector(selectCurrentTime);
   const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
+  const selectedInstructionId = useSelector(selectSelectedInstructionId);
   const [duration, setDuration] = useState<number>(0);
   const [draggingInstructionId, setDraggingInstructionId] = useState<
     string | null
@@ -364,6 +366,7 @@ const Timeline: React.FC = () => {
             {markerGroup.map((marker, index) => {
               const instruction = marker.instruction;
               const isEndMarker = marker.isEndMarker;
+              const isSelected = instruction.id === selectedInstructionId;
 
               return (
                 <div
@@ -376,10 +379,17 @@ const Timeline: React.FC = () => {
                   }}
                 >
                   <div
-                    className={`instruction-marker border-2 border-background shadow-md ${
-                      isEndMarker ? "opacity-50" : ""
-                    }`}
+                    className={`instruction-marker border-2 border-background shadow-md
+                      ${isEndMarker ? "opacity-50" : ""}
+                      ${
+                        isSelected
+                          ? "ring-2 ring-white ring-offset-2 ring-offset-background scale-125"
+                          : ""
+                      }
+                      transition-all duration-200 ease-out
+                    `}
                     data-type={instruction.type}
+                    data-selected={isSelected}
                     onMouseDown={(e) =>
                       isEndMarker
                         ? handleSkipEndDrag(e, instruction as SkipInstruction)
