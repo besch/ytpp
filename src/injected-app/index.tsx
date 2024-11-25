@@ -18,10 +18,17 @@ function init() {
 
   timelineContainer.style.cssText = `
     position: absolute;
-    top: ${playerRect ? playerRect.bottom : 20}px;
+    top: ${playerRect ? playerRect.bottom + 20 : 20}px;
     left: ${playerRect ? playerRect.left : 20}px;
     width: ${playerRect ? `${playerRect.width}px` : "auto"};
+    min-width: 400px;
     z-index: 9999;
+    contain: layout style;
+    isolation: isolate;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: theme("colors.background");
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   `;
 
   // Create container for other components
@@ -33,6 +40,9 @@ function init() {
     right: 20px;
     width: 350px;
     z-index: 9999;
+    contain: content;
+    isolation: isolate;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   `;
 
   document.body.appendChild(timelineContainer);

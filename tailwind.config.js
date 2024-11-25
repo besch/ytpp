@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{ts,tsx}"],
+  important: "#timeline-container, #react-overlay-root",
   theme: {
     extend: {
       colors: {
@@ -46,17 +47,37 @@ module.exports = {
     require("tailwindcss-animate"),
     function ({ addBase, theme }) {
       addBase({
-        "input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active":
-          {
-            "-webkit-box-shadow": `0 0 0 30px ${theme(
-              "colors.background"
-            )} inset !important`,
-            "-webkit-text-fill-color": `${theme(
-              "colors.foreground"
-            )} !important`,
-            transition: "background-color 5000s ease-in-out 0s",
+        "#timeline-container, #react-overlay-root": {
+          // Add base styles for containers
+          "--tw-shadow": "none",
+          "--tw-ring-shadow": "none",
+        },
+        "#timeline-container button, #react-overlay-root button": {
+          // Reset button styles
+          background: "transparent",
+          border: "none",
+          padding: "0.5rem 1rem",
+          "font-weight": "500",
+          "border-radius": "0.375rem",
+          cursor: "pointer",
+          transition: "background-color 200ms",
+          "&:hover": {
+            "background-color": "rgba(255, 255, 255, 0.1)",
           },
+        },
+        "#timeline-container *, #react-overlay-root *": {
+          // Ensure proper box model
+          "box-sizing": "border-box",
+        },
+        "#react-overlay-root [role='button']": {
+          cursor: "move",
+          "user-select": "none",
+          "-webkit-user-select": "none",
+        },
       });
     },
   ],
+  corePlugins: {
+    preflight: true,
+  },
 };
