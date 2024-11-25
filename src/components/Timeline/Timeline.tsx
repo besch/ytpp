@@ -61,12 +61,6 @@ const Timeline: React.FC = () => {
     string | null
   >(null);
   const [draggingTime, setDraggingTime] = useState<number | null>(null);
-  const [draggingSkipEndId, setDraggingSkipEndId] = useState<string | null>(
-    null
-  );
-  const [draggingSkipEndTime, setDraggingSkipEndTime] = useState<number | null>(
-    null
-  );
 
   useEffect(() => {
     videoRef.current = document.querySelector(
@@ -237,8 +231,6 @@ const Timeline: React.FC = () => {
     instruction: SkipInstruction
   ) => {
     e.stopPropagation();
-    setDraggingSkipEndId(instruction.id);
-    setDraggingSkipEndTime(instruction.skipToTime);
 
     const startX = e.clientX;
     const startTime = instruction.skipToTime;
@@ -255,7 +247,6 @@ const Timeline: React.FC = () => {
         instruction.triggerTime,
         Math.min(duration, startTime + timeDelta)
       );
-      setDraggingSkipEndTime(newTime);
 
       // Update instruction with new skipToTime
       const updatedInstruction = {
@@ -270,8 +261,6 @@ const Timeline: React.FC = () => {
     const handleMouseUp = async () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-      setDraggingSkipEndId(null);
-      setDraggingSkipEndTime(null);
 
       // Save to backend
       if (currentTimeline && instructions) {
@@ -471,7 +460,7 @@ const Timeline: React.FC = () => {
     <div className="bg-background border border-border rounded-lg">
       <div className="flex items-center justify-between p-4">
         <h3 className="text-sm font-medium text-foreground">Timeline</h3>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center mb-4">
           <Button
             variant="ghost"
             size="lg"

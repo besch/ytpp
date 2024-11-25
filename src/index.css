@@ -413,4 +413,36 @@
   & .instruction-marker[data-selected="true"]:hover {
     transform: scale(1.35) !important;
   }
+
+  /* Fix button styles to match Navigation */
+  & .flex.gap-2 {
+    width: auto !important;
+  }
+
+  & button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 0.375rem !important;
+    transition: background-color 200ms !important;
+    background-color: transparent !important;
+    color: theme("colors.foreground") !important;
+  }
+
+  & button:hover {
+    background-color: theme("colors.accent") !important;
+  }
+
+  & button svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  /* Specific styles for ghost variant */
+  & button[variant="ghost"] {
+    background-color: transparent !important;
+  }
 }
