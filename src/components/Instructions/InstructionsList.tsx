@@ -8,11 +8,11 @@ import {
   removeInstruction,
   selectCurrentTimeline,
   selectEditingInstruction,
+  seekToTime,
 } from "@/store/timelineSlice";
 import type { Instruction, PauseInstruction, SkipInstruction } from "@/types";
 import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
-import { dispatchCustomEvent } from "@/lib/eventSystem";
 import { api } from "@/lib/api";
 
 const InstructionsList: React.FC = () => {
@@ -39,9 +39,7 @@ const InstructionsList: React.FC = () => {
 
   const handleEdit = (instruction: Instruction) => {
     dispatch(setEditingInstruction(instruction));
-    dispatchCustomEvent("SEEK_TO_TIME", {
-      timeMs: instruction.triggerTime,
-    });
+    dispatch(seekToTime(instruction.triggerTime));
   };
 
   const handleDelete = async (id: string) => {
@@ -129,9 +127,7 @@ const InstructionsList: React.FC = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() =>
-                      dispatchCustomEvent("SEEK_TO_TIME", {
-                        timeMs: instruction.triggerTime,
-                      })
+                      dispatch(seekToTime(instruction.triggerTime))
                     }
                   >
                     <Play className="w-4 h-4" />

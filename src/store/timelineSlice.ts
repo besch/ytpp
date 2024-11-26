@@ -150,6 +150,9 @@ export const timelineSlice = createSlice({
     setVideoElement: (state, action: PayloadAction<string | null>) => {
       state.videoElementId = action.payload;
     },
+    seekToTime: (state, action: PayloadAction<number>) => {
+      state.currentTime = action.payload;
+    },
   },
 });
 
@@ -173,6 +176,7 @@ export const {
   setLoading,
   setError,
   setVideoElement,
+  seekToTime,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>

@@ -4,8 +4,9 @@ import {
   OverlayInstruction,
   SkipInstruction,
 } from "@/types";
-import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 import { VideoOverlayManager } from "./VideoOverlayManager";
+import { store } from '@/store';
+import { seekToTime } from '@/store/timelineSlice';
 
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
@@ -20,13 +21,7 @@ export class VideoManager {
   private activeOverlayEndTime: number | null = null;
 
   constructor() {
-    const cleanupListeners = [
-      addCustomEventListener("SEEK_TO_TIME", ({ timeMs }) => {
-        this.handleSeekToTime(timeMs);
-      }),
-    ];
-
-    this.cleanupListeners.push(...cleanupListeners);
+    this.cleanupListeners = [];
   }
 
   public async findAndStoreVideoElement(): Promise<void> {
@@ -287,6 +282,7 @@ export class VideoManager {
   private handleSeekToTime = (timeMs: number): void => {
     if (this.videoElement) {
       this.videoElement.currentTime = timeMs / 1000;
+      store.dispatch(seekToTime(timeMs));
     }
   };
 
@@ -295,9 +291,7 @@ export class VideoManager {
   }
 
   public seekTo(timeMs: number): void {
-    if (this.videoElement) {
-      this.videoElement.currentTime = timeMs / 1000;
-    }
+    this.handleSeekToTime(timeMs);
   }
 
   public setInstructions(instructions: Instruction[]): void {
