@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Music } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import {
@@ -578,6 +578,21 @@ const InstructionEditor: React.FC = () => {
                         >
                           Your browser does not support the video tag.
                         </video>
+                      ) : watch("overlayMedia").type.startsWith("audio/") ? (
+                        <div className="flex flex-col items-center justify-center h-full">
+                          <Music
+                            size={48}
+                            className="text-muted-foreground mb-2"
+                          />
+                          <audio
+                            src={watch("overlayMedia").url}
+                            controls
+                            className="w-3/4"
+                            preload="metadata"
+                          >
+                            Your browser does not support the audio tag.
+                          </audio>
+                        </div>
                       ) : (
                         <img
                           src={watch("overlayMedia").url}
@@ -658,6 +673,21 @@ const InstructionEditor: React.FC = () => {
                         >
                           Your browser does not support the video tag.
                         </video>
+                      ) : watch("overlayMedia").type.startsWith("audio/") ? (
+                        <div className="flex flex-col items-center justify-center h-full">
+                          <Music
+                            size={48}
+                            className="text-muted-foreground mb-2"
+                          />
+                          <audio
+                            src={watch("overlayMedia").url}
+                            controls
+                            className="w-3/4"
+                            preload="metadata"
+                          >
+                            Your browser does not support the audio tag.
+                          </audio>
+                        </div>
                       ) : (
                         <img
                           src={watch("overlayMedia").url}
