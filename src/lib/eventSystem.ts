@@ -49,9 +49,6 @@ interface EventPayloads {
   };
   REACT_APP_READY: undefined;
   CONTENT_SCRIPT_LOADED: undefined;
-  UPDATE_TIMELINE: {
-    timeline: Timeline;
-  };
 }
 
 type EventName = keyof EventPayloads;

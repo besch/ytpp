@@ -76,8 +76,9 @@ export class VideoOverlayManager {
     if (!this.overlayElement) return;
 
     try {
-      // Clear any existing content
-      this.overlayElement.innerHTML = "";
+      while (this.overlayElement.firstChild) {
+        this.overlayElement.removeChild(this.overlayElement.firstChild);
+      }
 
       // Revoke previous blob URL if any
       if (this.mediaBlobUrl) {
@@ -161,7 +162,9 @@ export class VideoOverlayManager {
   public hideOverlay = (): void => {
     if (this.overlayElement) {
       this.overlayElement.style.display = "none";
-      this.overlayElement.innerHTML = "";
+      while (this.overlayElement.firstChild) {
+        this.overlayElement.removeChild(this.overlayElement.firstChild);
+      }
       if (this.mediaBlobUrl) {
         URL.revokeObjectURL(this.mediaBlobUrl);
         this.mediaBlobUrl = null;

@@ -13,7 +13,6 @@ import {
   setLoading,
   setError,
 } from "@/store/timelineSlice";
-import { dispatchCustomEvent } from "@/lib/eventSystem";
 import { Timeline } from "@/types";
 import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
@@ -52,7 +51,6 @@ const TimelineList: React.FC = () => {
         instructions: [],
       });
       dispatch(setCurrentTimeline(newTimeline));
-      dispatchCustomEvent("UPDATE_TIMELINE", { timeline: newTimeline });
       navigate(`/timeline/${newTimeline.id}`);
     } catch (error) {
       console.error("Failed to create timeline:", error);
@@ -62,7 +60,6 @@ const TimelineList: React.FC = () => {
 
   const handleEditTimeline = async (timeline: Timeline) => {
     dispatch(setCurrentTimeline(timeline));
-    dispatchCustomEvent("UPDATE_TIMELINE", { timeline });
     navigate(`/timeline/${timeline.id}`);
   };
 

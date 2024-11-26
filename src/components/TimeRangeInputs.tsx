@@ -8,7 +8,6 @@ import {
 } from "@/store/timelineSlice";
 import { TimeInput } from "@/components/ui/TimeInput";
 import DeleteElementButton from "./DeleteElementButton";
-import { dispatchCustomEvent } from "@/lib/eventSystem";
 import { api } from "@/lib/api";
 
 const TimeRangeInputs: React.FC = () => {
@@ -42,7 +41,6 @@ const TimeRangeInputs: React.FC = () => {
         updatedTimeline
       );
       dispatch(setCurrentTimeline(savedTimeline));
-      dispatchCustomEvent("UPDATE_TIMELINE", { timeline: savedTimeline });
     } catch (error) {
       console.error("Failed to update timeline:", error);
     }
@@ -72,7 +70,6 @@ const TimeRangeInputs: React.FC = () => {
         updatedTimeline
       );
       dispatch(setCurrentTimeline(savedTimeline));
-      dispatchCustomEvent("UPDATE_TIMELINE", { timeline: savedTimeline });
     } catch (error) {
       console.error("Failed to update timeline:", error);
     }

@@ -33,10 +33,12 @@ export class VideoManager {
     this.videoElement = document.querySelector("video:not(.timelines-video)");
 
     if (this.videoElement) {
+      if (!this.videoElement.id) {
+        this.videoElement.id = "video-player";
+      }
       this.handleVideo(this.videoElement);
       (window as any).videoManager = this;
 
-      // Initialize VideoOverlayManager with the video element
       this.videoOverlayManager = new VideoOverlayManager(this.videoElement);
 
       return Promise.resolve();
@@ -45,6 +47,10 @@ export class VideoManager {
   }
 
   private handleVideo(video: HTMLVideoElement): void {
+    if (!this.videoOverlayManager) {
+      this.videoOverlayManager = new VideoOverlayManager(video);
+    }
+
     this.videoElement = video;
     this.currentVideoPlayerVolume = video.volume;
     this.originalVideoVolume = video.volume;
@@ -99,17 +105,9 @@ export class VideoManager {
   private handleTimeUpdate = (event: Event): void => {
     const video = event.target as HTMLVideoElement;
     const currentTime = video.currentTime;
-    const lastTime = (video as any)._lastTime || 0;
 
-    dispatchCustomEvent("VIDEO_TIME_UPDATE", {
-      currentTimeMs: currentTime * 1000,
-    });
-
-    // Check for instructions between last update and current time
-    this.checkInstructions(lastTime, currentTime);
-
-    // Store the current time for next update
-    (video as any)._lastTime = currentTime;
+    // Check for instructions in the last 280ms window
+    this.checkInstructions(currentTime - 0.28, currentTime);
 
     this.timeUpdateListeners.forEach((listener) =>
       listener(currentTime * 1000)
@@ -363,5 +361,22 @@ export class VideoManager {
         });
       }
     }
+  }
+
+  public getDuration(): number {
+    return this.videoElement ? this.videoElement.duration * 1000 : 0;
+  }
+
+  public getCurrentTime(): number {
+    return this.videoElement ? this.videoElement.currentTime * 1000 : 0;
+  }
+
+  public setVideoElement(video: HTMLVideoElement): void {
+    this.videoElement = video;
+    if (this.videoOverlayManager) {
+      this.videoOverlayManager.destroy();
+    }
+    this.videoOverlayManager = new VideoOverlayManager(video);
+    this.handleVideo(video);
   }
 }

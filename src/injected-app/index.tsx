@@ -7,8 +7,20 @@ import VisibilityToggle from "@/components/VisibilityToggle";
 import "@/index.css";
 import App from "@/App";
 import { MemoryRouter as Router } from "react-router-dom";
+import { VideoManager } from "@/lib/VideoManager";
+import { setVideoElement } from "@/store/timelineSlice";
 
 function init() {
+  // Initialize VideoManager first
+  const videoManager = new VideoManager();
+  videoManager.findAndStoreVideoElement().then(() => {
+    const videoElement = videoManager.getVideoElement();
+    if (videoElement) {
+      // Store the video element's ID instead of the element itself
+      store.dispatch(setVideoElement(videoElement.id || 'video-player'));
+    }
+  });
+
   // Create toggle button container
   const toggleContainer = document.createElement("div");
   toggleContainer.id = "timeline-toggle-container";

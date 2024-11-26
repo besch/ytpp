@@ -10,6 +10,7 @@ import {
   updateInstruction,
   selectCurrentTimeline,
   selectSelectedInstructionId,
+  setCurrentTimeline,
 } from "@/store/timelineSlice";
 import {
   Instruction,
@@ -18,10 +19,10 @@ import {
   OverlayInstruction,
   Timeline as ITimeline,
 } from "@/types";
-import { dispatchCustomEvent } from "@/lib/eventSystem";
 import { api } from "@/lib/api";
 import Button from "@/components/ui/Button";
 import { Move } from "lucide-react";
+import { useVideoManager } from "@/hooks/useVideoManager";
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
@@ -51,7 +52,7 @@ const getInstructionLabel = (instruction: Instruction): string => {
 const Timeline: React.FC = () => {
   const dispatch = useDispatch();
   const timelineRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoManager = useVideoManager();
   const currentTime = useSelector(selectCurrentTime);
   const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
@@ -63,68 +64,16 @@ const Timeline: React.FC = () => {
   const [draggingTime, setDraggingTime] = useState<number | null>(null);
 
   useEffect(() => {
-    videoRef.current = document.querySelector(
-      "video:not(.timelines-video)"
-    ) as HTMLVideoElement;
-
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration * 1000);
-      dispatch(setCurrentTime(videoRef.current.currentTime * 1000));
-
-      const handleLoadedMetadata = () => {
-        if (!videoRef.current) return;
-        setDuration(videoRef.current.duration * 1000);
-        dispatch(setCurrentTime(videoRef.current.currentTime * 1000));
-      };
-
-      const handleTimeUpdate = () => {
-        if (!videoRef.current) return;
-        const currentTimeMs = videoRef.current.currentTime * 1000;
-        requestAnimationFrame(() => {
-          dispatch(setCurrentTime(currentTimeMs));
-        });
-      };
-
-      const handleDurationChange = () => {
-        if (!videoRef.current) return;
-        setDuration(videoRef.current.duration * 1000);
-      };
-
-      videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
-      videoRef.current.addEventListener("timeupdate", handleTimeUpdate);
-      videoRef.current.addEventListener("durationchange", handleDurationChange);
-
-      return () => {
-        if (!videoRef.current) return;
-        videoRef.current.removeEventListener(
-          "loadedmetadata",
-          handleLoadedMetadata
-        );
-        videoRef.current.removeEventListener("timeupdate", handleTimeUpdate);
-        videoRef.current.removeEventListener(
-          "durationchange",
-          handleDurationChange
-        );
-      };
+    if (videoManager) {
+      setDuration(videoManager.getDuration());
+      dispatch(setCurrentTime(videoManager.getCurrentTime()));
     }
-  }, [dispatch]);
-
-  useEffect(() => {
-    const handleManualTimeUpdate = () => {
-      if (!videoRef.current) return;
-      const newTime = videoRef.current.currentTime * 1000;
-      if (Math.abs(newTime - currentTime) > 16) {
-        dispatch(setCurrentTime(newTime));
-      }
-    };
-
-    const interval = setInterval(handleManualTimeUpdate, 250);
-    return () => clearInterval(interval);
-  }, [dispatch, currentTime]);
+  }, [videoManager, dispatch]);
 
   const seekToTime = (timeMs: number) => {
-    dispatchCustomEvent("SEEK_TO_TIME", { timeMs });
-    dispatch(setCurrentTime(timeMs));
+    if (videoManager) {
+      videoManager.seekTo(timeMs);
+    }
   };
 
   const getTimelinePosition = (time: number): number => {
@@ -196,29 +145,16 @@ const Timeline: React.FC = () => {
       setDraggingTime(null);
 
       if (currentTimeline && instructions) {
-        const {
-          id,
-          title,
-          video_url,
-          elements,
-          media_files,
-          created_at,
-          updated_at,
-        } = currentTimeline;
-
         const updatedTimeline: ITimeline = {
-          id,
-          title,
-          video_url,
+          ...currentTimeline,
           instructions,
-          elements,
-          media_files,
-          created_at,
-          updated_at,
         };
 
-        dispatchCustomEvent("UPDATE_TIMELINE", { timeline: updatedTimeline });
-        await api.timelines.update(id, updatedTimeline);
+        const savedTimeline = await api.timelines.update(
+          currentTimeline.id,
+          updatedTimeline
+        );
+        dispatch(setCurrentTimeline(savedTimeline));
       }
     };
 
@@ -262,15 +198,17 @@ const Timeline: React.FC = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
-      // Save to backend
       if (currentTimeline && instructions) {
         const updatedTimeline: ITimeline = {
           ...currentTimeline,
           instructions,
         };
 
-        dispatchCustomEvent("UPDATE_TIMELINE", { timeline: updatedTimeline });
-        await api.timelines.update(currentTimeline.id, updatedTimeline);
+        const savedTimeline = await api.timelines.update(
+          currentTimeline.id,
+          updatedTimeline
+        );
+        dispatch(setCurrentTimeline(savedTimeline));
       }
     };
 

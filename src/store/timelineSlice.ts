@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
 import { Timeline, Instruction, ElementStyle } from "@/types";
-import { dispatchCustomEvent } from "@/lib/eventSystem";
 import { createSelector } from "@reduxjs/toolkit";
+import type { Draft } from "@reduxjs/toolkit";
 
 interface TimelineState {
   currentTime: number;
@@ -15,6 +15,7 @@ interface TimelineState {
   currentTimeline: Timeline | null;
   loading: boolean;
   error: string | null;
+  videoElementId: string | null;
 }
 
 const initialState: TimelineState = {
@@ -28,6 +29,7 @@ const initialState: TimelineState = {
   currentTimeline: null,
   loading: false,
   error: null,
+  videoElementId: null,
 };
 
 interface ElementUpdate {
@@ -89,9 +91,6 @@ export const timelineSlice = createSlice({
     addInstruction: (state, action: PayloadAction<Instruction>) => {
       if (state.currentTimeline) {
         state.currentTimeline.instructions.push(action.payload);
-        dispatchCustomEvent("UPDATE_TIMELINE", {
-          timeline: state.currentTimeline,
-        });
       }
     },
     updateInstruction: (state, action: PayloadAction<Instruction>) => {
@@ -101,9 +100,6 @@ export const timelineSlice = createSlice({
         );
         if (index !== -1) {
           state.currentTimeline.instructions[index] = action.payload;
-          dispatchCustomEvent("UPDATE_TIMELINE", {
-            timeline: state.currentTimeline,
-          });
         }
       }
     },
@@ -151,6 +147,9 @@ export const timelineSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    setVideoElement: (state, action: PayloadAction<string | null>) => {
+      state.videoElementId = action.payload;
+    },
   },
 });
 
@@ -173,6 +172,7 @@ export const {
   timelineDeleted,
   setLoading,
   setError,
+  setVideoElement,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>
@@ -206,5 +206,7 @@ export const selectCurrentTimeline = (state: RootState) =>
 export const selectTimelineLoading = (state: RootState) =>
   state.timeline.loading;
 export const selectTimelineError = (state: RootState) => state.timeline.error;
+export const selectVideoElementId = (state: RootState) =>
+  state.timeline.videoElementId;
 
 export default timelineSlice.reducer;

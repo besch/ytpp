@@ -1,9 +1,6 @@
-import { VideoManager } from "./content/VideoManager";
-import { Timeline } from "@/types";
 import { addCustomEventListener } from "@/lib/eventSystem";
 
 class ContentScript {
-  private videoManager: VideoManager | null = null;
   private isAppVisible: boolean = false;
   private eventListeners: Array<() => void> = [];
 
@@ -13,25 +10,15 @@ class ContentScript {
 
   private initialize(): void {
     this.setupMessageListener();
-    this.setupCustomEventListeners();
-
-    this.videoManager = new VideoManager();
-    this.videoManager.findAndStoreVideoElement();
   }
 
   private async toggleAppVisiblity(): Promise<void> {
-    if (!this.videoManager?.hasVideoElement()) {
-      await this.videoManager?.findAndStoreVideoElement();
+    if (this.isAppVisible) {
+      this.removeReactApp();
+    } else {
+      this.injectReactApp();
     }
-
-    if (this.videoManager?.hasVideoElement()) {
-      if (this.isAppVisible) {
-        this.removeReactApp();
-      } else {
-        this.injectReactApp();
-      }
-      this.isAppVisible = !this.isAppVisible;
-    }
+    this.isAppVisible = !this.isAppVisible;
   }
 
   private removeReactApp(): void {
@@ -58,16 +45,6 @@ class ContentScript {
     this.eventListeners = [];
   }
 
-  private setupCustomEventListeners(): void {
-    this.eventListeners = [
-      addCustomEventListener("UPDATE_TIMELINE", ({ timeline }) => {
-        if (timeline) {
-          this.updateTimeline(timeline);
-        }
-      }),
-    ];
-  }
-
   private injectReactApp(): void {
     const script = document.createElement("script");
     script.src = chrome.runtime.getURL("injected-app.js");
@@ -89,10 +66,6 @@ class ContentScript {
       sendResponse({ success: true });
     }
     return true;
-  }
-
-  private updateTimeline(timeline: Timeline): void {
-    this.videoManager?.setInstructions(timeline.instructions || []);
   }
 }
 
