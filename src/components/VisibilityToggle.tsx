@@ -26,7 +26,7 @@ const VisibilityToggle: React.FC = () => {
   return (
     <button
       onClick={toggleVisibility}
-      className="flex items-center justify-center w-10 h-10 rounded-full bg-muted/5 border border-border shadow-lg hover:bg-accent transition-colors duration-200"
+      className="flex items-center justify-center w-10 h-10 rounded-full bg-background border border-border shadow-lg hover:bg-accent transition-colors duration-200"
       style={{
         color: "white",
         cursor: "pointer",
