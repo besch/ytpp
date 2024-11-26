@@ -3,11 +3,24 @@ import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import { store } from "@/store";
 import Timeline from "@/components/Timeline/Timeline";
+import VisibilityToggle from "@/components/VisibilityToggle";
 import "@/index.css";
 import App from "@/App";
 import { MemoryRouter as Router } from "react-router-dom";
 
 function init() {
+  // Create toggle button container
+  const toggleContainer = document.createElement("div");
+  toggleContainer.id = "timeline-toggle-container";
+  toggleContainer.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 2147483647;
+    contain: layout style;
+    isolation: isolate;
+  `;
+
   // Create container for Timeline
   const timelineContainer = document.createElement("div");
   timelineContainer.id = "timeline-container";
@@ -50,11 +63,46 @@ function init() {
     border: 1px dashed white;
   `;
 
+  document.body.appendChild(toggleContainer);
   document.body.appendChild(timelineContainer);
   document.body.appendChild(container);
 
+  // Create ResizeObserver for video element
+  const updateTimelinePosition = () => {
+    const playerElement = document.querySelector("video");
+    const timelineContainer = document.getElementById("timeline-container");
+
+    if (playerElement && timelineContainer) {
+      const playerRect = playerElement.getBoundingClientRect();
+      timelineContainer.style.top = `${playerRect.bottom + 20}px`;
+      timelineContainer.style.left = `${playerRect.left}px`;
+      timelineContainer.style.width = `${playerRect.width}px`;
+    }
+  };
+
+  const resizeObserver = new ResizeObserver(() => {
+    updateTimelinePosition();
+  });
+
+  if (playerElement) {
+    resizeObserver.observe(playerElement);
+  }
+
+  // Initial position setup
+  updateTimelinePosition();
+
   // Render the components
   try {
+    // Render toggle button
+    const toggleRoot = createRoot(toggleContainer);
+    toggleRoot.render(
+      <React.StrictMode>
+        <Provider store={store}>
+          <VisibilityToggle />
+        </Provider>
+      </React.StrictMode>
+    );
+
     // Render Timeline
     const timelineRoot = createRoot(timelineContainer);
     timelineRoot.render(
@@ -80,6 +128,11 @@ function init() {
     console.error("Failed to render React app:", error);
     container.textContent = "Failed to load extension interface";
   }
+
+  // Clean up observer when extension is unloaded
+  window.addEventListener("unload", () => {
+    resizeObserver.disconnect();
+  });
 }
 
 init();
