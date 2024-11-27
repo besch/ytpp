@@ -26,6 +26,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
   const mediaRef = useRef<HTMLElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState<string>("");
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState<MediaPosition>(
     initialPosition || {
@@ -42,8 +43,8 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
     ) as HTMLVideoElement;
     if (videoElement && containerRef.current) {
       const rect = videoElement.getBoundingClientRect();
-      const scale = 320 / rect.width;
-      containerRef.current.style.width = "320px";
+      const scale = 290 / rect.width;
+      containerRef.current.style.width = "290px";
       containerRef.current.style.height = `${rect.height * scale}px`;
 
       if (!initialPosition) {
@@ -57,21 +58,26 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
     }
   }, [videoElementId, initialPosition]);
 
-  const handleMouseDown = (e: React.MouseEvent, action: "drag" | "resize") => {
+  const handleMouseDown = (
+    e: React.MouseEvent,
+    action: "drag" | "resize",
+    direction?: string
+  ) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const container = containerRef.current!;
-    const rect = container.getBoundingClientRect();
-    const mediaRect = e.currentTarget.getBoundingClientRect();
 
     setStartPos({
       x: e.clientX,
       y: e.clientY,
     });
 
-    if (action === "drag") setIsDragging(true);
-    if (action === "resize") setIsResizing(true);
+    if (action === "drag") {
+      setIsDragging(true);
+    }
+    if (action === "resize") {
+      setIsResizing(true);
+      setResizeDirection(direction || "");
+    }
   };
 
   const handleMouseMove = (e: MouseEvent) => {
@@ -91,32 +97,59 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
       const y = Math.max(0, Math.min(newY, rect.height - position.height));
 
       setPosition((prev) => ({ ...prev, x, y }));
-      setStartPos({ x: e.clientX, y: e.clientY });
     }
 
     if (isResizing) {
-      // Calculate new dimensions
-      const newWidth = Math.max(50, position.width + deltaX);
-      const newHeight = Math.max(50, position.height + deltaY);
+      let newWidth = position.width;
+      let newHeight = position.height;
+      let newX = position.x;
+      let newY = position.y;
+
+      switch (resizeDirection) {
+        case "se": // bottom-right
+          newWidth = Math.max(50, position.width + deltaX);
+          newHeight = Math.max(50, position.height + deltaY);
+          break;
+        case "sw": // bottom-left
+          newWidth = Math.max(50, position.width - deltaX);
+          newHeight = Math.max(50, position.height + deltaY);
+          newX = position.x + deltaX;
+          break;
+        case "ne": // top-right
+          newWidth = Math.max(50, position.width + deltaX);
+          newHeight = Math.max(50, position.height - deltaY);
+          newY = position.y + deltaY;
+          break;
+        case "nw": // top-left
+          newWidth = Math.max(50, position.width - deltaX);
+          newHeight = Math.max(50, position.height - deltaY);
+          newX = position.x + deltaX;
+          newY = position.y + deltaY;
+          break;
+      }
 
       // Constrain to container bounds
-      const width = Math.min(newWidth, rect.width - position.x);
-      const height = Math.min(newHeight, rect.height - position.y);
+      newWidth = Math.min(newWidth, rect.width - newX);
+      newHeight = Math.min(newHeight, rect.height - newY);
+      newX = Math.max(0, Math.min(newX, rect.width - newWidth));
+      newY = Math.max(0, Math.min(newY, rect.height - newHeight));
 
-      setPosition((prev) => ({
-        ...prev,
-        width,
-        height,
-      }));
-
-      setStartPos({ x: e.clientX, y: e.clientY });
+      setPosition({
+        x: newX,
+        y: newY,
+        width: newWidth,
+        height: newHeight,
+      });
     }
+
+    setStartPos({ x: e.clientX, y: e.clientY });
   };
 
   const handleMouseUp = () => {
     if (isDragging || isResizing) {
       setIsDragging(false);
       setIsResizing(false);
+      setResizeDirection("");
       onPositionChange(position);
     }
   };
@@ -131,7 +164,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
         window.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, position, startPos]);
+  }, [isDragging, isResizing, position, startPos, resizeDirection]);
 
   return (
     <div
@@ -172,19 +205,19 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
           {/* Resize handles */}
           <div
             className="absolute bottom-0 right-0 w-4 h-4 bg-white/50 rounded-tl cursor-se-resize"
-            onMouseDown={(e) => handleMouseDown(e, "resize")}
+            onMouseDown={(e) => handleMouseDown(e, "resize", "se")}
           />
           <div
             className="absolute top-0 left-0 w-4 h-4 bg-white/50 rounded-br cursor-nw-resize"
-            onMouseDown={(e) => handleMouseDown(e, "resize")}
+            onMouseDown={(e) => handleMouseDown(e, "resize", "nw")}
           />
           <div
             className="absolute top-0 right-0 w-4 h-4 bg-white/50 rounded-bl cursor-ne-resize"
-            onMouseDown={(e) => handleMouseDown(e, "resize")}
+            onMouseDown={(e) => handleMouseDown(e, "resize", "ne")}
           />
           <div
             className="absolute bottom-0 left-0 w-4 h-4 bg-white/50 rounded-tr cursor-sw-resize"
-            onMouseDown={(e) => handleMouseDown(e, "resize")}
+            onMouseDown={(e) => handleMouseDown(e, "resize", "sw")}
           />
         </div>
       </div>
