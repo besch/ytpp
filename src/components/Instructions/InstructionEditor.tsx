@@ -550,43 +550,45 @@ const InstructionEditor: React.FC = () => {
                     </label>
                   </div>
 
-                  {watch("pauseMainVideo") && !watch("useOverlayDuration") && (
-                    <div>
-                      <label className="text-sm text-muted-foreground">
-                        Pause Duration (seconds)
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        {...register("pauseDuration", {
-                          required:
-                            watch("pauseMainVideo") &&
-                            !watch("useOverlayDuration"),
-                          min: 0,
-                          valueAsNumber: true,
-                        })}
-                        disabled={watch("useOverlayDuration")}
-                      />
-                      {errors.pauseDuration && (
-                        <span className="text-xs text-destructive">
-                          This field is required
-                        </span>
+                  {watch("pauseMainVideo") && (
+                    <>
+                      {(watch("overlayMedia").type.startsWith("video/") ||
+                        watch("overlayMedia").type === "image/gif") && (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            {...register("useOverlayDuration")}
+                            id="useOverlayDuration"
+                          />
+                          <label htmlFor="useOverlayDuration" className="text-sm">
+                            Pause for ful media file duration
+                          </label>
+                        </div>
                       )}
-                    </div>
-                  )}
 
-                  {(watch("overlayMedia").type.startsWith("video/") ||
-                    watch("overlayMedia").type === "image/gif") && (
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        {...register("useOverlayDuration")}
-                        id="useOverlayDuration"
-                      />
-                      <label htmlFor="useOverlayDuration" className="text-sm">
-                        Pause for ful media file duration
-                      </label>
-                    </div>
+                      {!watch("useOverlayDuration") && (
+                        <div>
+                          <label className="text-sm text-muted-foreground">
+                            Pause Duration (seconds)
+                          </label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            {...register("pauseDuration", {
+                              required: true,
+                              min: 0,
+                              valueAsNumber: true,
+                            })}
+                            disabled={watch("useOverlayDuration")}
+                          />
+                          {errors.pauseDuration && (
+                            <span className="text-xs text-destructive">
+                              This field is required
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {watch("overlayMedia").type.startsWith("video/") && (
