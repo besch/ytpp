@@ -1,9 +1,4 @@
-import {
-  Instruction,
-  PauseInstruction,
-  OverlayInstruction,
-  SkipInstruction,
-} from "@/types";
+import { Instruction, OverlayInstruction, SkipInstruction } from "@/types";
 import { VideoOverlayManager } from "./VideoOverlayManager";
 import { store } from "@/store";
 import { seekToTime } from "@/store/timelineSlice";
@@ -135,14 +130,7 @@ export class VideoManager {
       if (this.lastInstructionId !== instruction.id) {
         this.lastInstructionId = instruction.id;
 
-        if (instruction.type === "pause") {
-          const pauseInstruction = instruction as PauseInstruction;
-          if (pauseInstruction.overlayMedia?.url) {
-            await this.handleInstructionPauseWithOverlay(pauseInstruction);
-          } else {
-            this.handleInstructionPause(pauseInstruction);
-          }
-        } else if (instruction.type === "overlay") {
+        if (instruction.type === "overlay") {
           const overlayInstruction = instruction as OverlayInstruction;
           await this.handleOverlayInstruction(overlayInstruction);
         } else if (instruction.type === "skip") {
@@ -188,6 +176,11 @@ export class VideoManager {
       this.activeOverlayEndTime = instruction.triggerTime / 1000 + duration;
     }
 
+    // Pause main video if specified
+    if (instruction.pauseMainVideo) {
+      this.videoElement.pause();
+    }
+
     await this.videoOverlayManager?.playOverlayMedia(
       instruction.overlayMedia!.url,
       instruction.muteOverlayMedia || false,
@@ -197,31 +190,34 @@ export class VideoManager {
         : instruction.overlayMedia!.duration,
       instruction.overlayMedia!.position
     );
-  }
 
-  private handleInstructionSkip = (skipToTime: number): void => {
-    if (this.videoElement) {
-      this.videoElement.currentTime = skipToTime / 1000;
-    }
-  };
-
-  private handleInstructionPause = (instruction: PauseInstruction): void => {
-    console.log(`Pausing video for ${instruction.pauseDuration} seconds.`);
-    if (this.videoElement && !this.videoElement.paused) {
-      this.videoElement.pause();
-
+    // If pauseMainVideo is true and useOverlayDuration is false, resume after pauseDuration
+    if (instruction.pauseMainVideo && !instruction.useOverlayDuration) {
       const pauseDuration = instruction.pauseDuration || 0;
-
-      const resumeTimeout = setTimeout(() => {
+      setTimeout(() => {
         if (this.videoElement && this.videoElement.paused) {
           this.videoElement.play().catch((error) => {
             console.error("Error resuming video:", error);
           });
         }
-      }, pauseDuration * 1000); // Convert to milliseconds
+      }, pauseDuration * 1000);
+    }
 
-      // Store the timeout to clear it if needed
-      (this.videoElement as any)._resumeTimeout = resumeTimeout;
+    // If using overlay duration, resume video when overlay ends
+    if (instruction.pauseMainVideo && instruction.useOverlayDuration) {
+      this.videoOverlayManager?.onOverlayEnded(() => {
+        if (this.videoElement && this.videoElement.paused) {
+          this.videoElement.play().catch((error) => {
+            console.error("Error resuming video:", error);
+          });
+        }
+      });
+    }
+  }
+
+  private handleInstructionSkip = (skipToTime: number): void => {
+    if (this.videoElement) {
+      this.videoElement.currentTime = skipToTime / 1000;
     }
   };
 
@@ -292,64 +288,6 @@ export class VideoManager {
   public setInstructions(instructions: Instruction[]): void {
     this.instructions = instructions;
     this.lastInstructionId = null; // Reset when instructions change
-  }
-
-  private async handleInstructionPauseWithOverlay(
-    instruction: PauseInstruction
-  ): Promise<void> {
-    console.log("Handling instruction with overlay media:", instruction);
-    if (this.videoElement && !this.videoElement.paused) {
-      this.videoElement.pause();
-
-      const mediaType = instruction.overlayMedia!.type.startsWith("video/")
-        ? "video"
-        : instruction.overlayMedia!.type.startsWith("audio/")
-        ? "audio"
-        : "image";
-
-      // Play the overlay media with position
-      await this.videoOverlayManager?.playOverlayMedia(
-        instruction.overlayMedia!.url,
-        instruction.muteOverlayMedia || false,
-        mediaType,
-        instruction.useOverlayDuration ? undefined : instruction.pauseDuration,
-        instruction.overlayMedia!.position
-      );
-
-      // If useOverlayDuration is false, we need to ensure the main video resumes after pauseDuration
-      if (!instruction.useOverlayDuration) {
-        const pauseDuration = instruction.pauseDuration || 0;
-
-        const resumeTimeout = setTimeout(() => {
-          // Hide the overlay media
-          this.videoOverlayManager?.hideOverlay();
-
-          if (this.videoElement && this.videoElement.paused) {
-            this.videoElement.play().catch((error) => {
-              console.error("Error resuming video:", error);
-            });
-          }
-        }, pauseDuration * 1000); // Convert to milliseconds
-
-        // Store the timeout to clear it if needed
-        (this.videoElement as any)._resumeTimeout = resumeTimeout;
-      } else {
-        // If useOverlayDuration is true, resume main video when overlay ends
-        this.videoOverlayManager?.onOverlayEnded(() => {
-          // Ensure the video hasn't been played already (in case of rapid seeking)
-          if (this.lastInstructionId === instruction.id) {
-            // Hide the overlay media
-            this.videoOverlayManager?.hideOverlay();
-
-            if (this.videoElement && this.videoElement.paused) {
-              this.videoElement.play().catch((error) => {
-                console.error("Error resuming video:", error);
-              });
-            }
-          }
-        });
-      }
-    }
   }
 
   public getDuration(): number {

@@ -72,12 +72,13 @@ export interface BaseInstruction {
   triggerTime: number;
 }
 
-export interface PauseInstruction extends BaseInstruction {
-  type: "pause";
-  pauseDuration: number;
+export interface OverlayInstruction extends BaseInstruction {
+  type: "overlay";
   overlayMedia: OverlayMedia | null;
   useOverlayDuration?: boolean;
   muteOverlayMedia?: boolean;
+  pauseMainVideo?: boolean;
+  pauseDuration?: number;
 }
 
 export interface SkipInstruction extends BaseInstruction {
@@ -85,17 +86,7 @@ export interface SkipInstruction extends BaseInstruction {
   skipToTime: number;
 }
 
-export interface OverlayInstruction extends BaseInstruction {
-  type: "overlay";
-  overlayMedia: OverlayMedia | null;
-  useOverlayDuration?: boolean;
-  muteOverlayMedia?: boolean;
-}
-
-export type Instruction =
-  | PauseInstruction
-  | SkipInstruction
-  | OverlayInstruction;
+export type Instruction = SkipInstruction | OverlayInstruction;
 
 export interface InstructionsState {
   instructions: Instruction[];

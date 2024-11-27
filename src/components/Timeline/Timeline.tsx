@@ -14,7 +14,6 @@ import {
 } from "@/store/timelineSlice";
 import {
   Instruction,
-  PauseInstruction,
   SkipInstruction,
   OverlayInstruction,
   Timeline as ITimeline,
@@ -37,14 +36,15 @@ const formatTime = (timeMs: number): string => {
 };
 
 const getInstructionLabel = (instruction: Instruction): string => {
-  if (instruction.type === "pause") {
-    return `Pause for ${(instruction as PauseInstruction).pauseDuration}s`;
-  } else if (instruction.type === "skip") {
+  if (instruction.type === "skip") {
     return `Skip to ${formatTime((instruction as SkipInstruction).skipToTime)}`;
   } else if (instruction.type === "overlay") {
-    return `Overlay ${
-      (instruction as OverlayInstruction).overlayMedia?.name || "media"
-    }`;
+    const overlayInstruction = instruction as OverlayInstruction;
+    let label = `Overlay ${overlayInstruction.overlayMedia?.name || "media"}`;
+    if (overlayInstruction.pauseMainVideo) {
+      label += ` (Pause ${overlayInstruction.pauseDuration || "for overlay"}s)`;
+    }
+    return label;
   }
   return "Unknown instruction";
 };

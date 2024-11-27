@@ -10,7 +10,7 @@ import {
   selectEditingInstruction,
   seekToTime,
 } from "@/store/timelineSlice";
-import type { Instruction, PauseInstruction, SkipInstruction } from "@/types";
+import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
 import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
 import { api } from "@/lib/api";
@@ -44,10 +44,7 @@ const InstructionsList: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     const instruction = instructions.find((inst) => inst.id === id);
-    if (
-      (instruction?.type === "pause" || instruction?.type === "overlay") &&
-      instruction.overlayMedia?.url
-    ) {
+    if (instruction?.type === "overlay" && instruction.overlayMedia?.url) {
       await api.timelines.deleteMedia(instruction.overlayMedia.url);
     }
 
@@ -59,6 +56,28 @@ const InstructionsList: React.FC = () => {
     await api.timelines.update(currentTimeline!.id, {
       instructions: updatedInstructions,
     });
+  };
+
+  const getInstructionDescription = (instruction: Instruction): string => {
+    if (instruction.type === "skip") {
+      return `Skips to ${formatTime(
+        (instruction as SkipInstruction).skipToTime
+      )}`;
+    } else if (instruction.type === "overlay") {
+      const overlayInstruction = instruction as OverlayInstruction;
+      let description = `Displays ${
+        overlayInstruction.overlayMedia?.name || "overlay media"
+      }`;
+      if (overlayInstruction.pauseMainVideo) {
+        if (overlayInstruction.useOverlayDuration) {
+          description += " (Pauses for overlay duration)";
+        } else {
+          description += ` (Pauses for ${overlayInstruction.pauseDuration}s)`;
+        }
+      }
+      return description;
+    }
+    return "";
   };
 
   return (
@@ -103,23 +122,7 @@ const InstructionsList: React.FC = () => {
                     at {formatTime(instruction.triggerTime)}
                   </span>
                   <div className="text-sm text-muted-foreground mt-1">
-                    {instruction.type === "skip" && (
-                      <>
-                        Skips to{" "}
-                        {formatTime(
-                          (instruction as SkipInstruction).skipToTime
-                        )}
-                      </>
-                    )}
-                    {instruction.type === "pause" && (
-                      <>
-                        Pauses for{" "}
-                        {(instruction as PauseInstruction).pauseDuration}s
-                      </>
-                    )}
-                    {instruction.type === "overlay" && (
-                      <>Displays overlay media</>
-                    )}
+                    {getInstructionDescription(instruction)}
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
