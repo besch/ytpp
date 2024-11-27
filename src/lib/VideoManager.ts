@@ -5,8 +5,8 @@ import {
   SkipInstruction,
 } from "@/types";
 import { VideoOverlayManager } from "./VideoOverlayManager";
-import { store } from '@/store';
-import { seekToTime } from '@/store/timelineSlice';
+import { store } from "@/store";
+import { seekToTime } from "@/store/timelineSlice";
 
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
@@ -164,43 +164,38 @@ export class VideoManager {
   ): Promise<void> {
     console.log("Handling overlay instruction:", instruction);
 
-    // Only proceed if video is not paused
     if (!this.videoElement || this.videoElement.paused) {
       console.log("Video is paused, overlay instruction will not be executed");
       return;
     }
 
-    // Determine media type
     const mediaType = instruction.overlayMedia!.type.startsWith("video/")
       ? "video"
       : instruction.overlayMedia!.type.startsWith("audio/")
       ? "audio"
       : "image";
 
-    // Set active overlay instruction and calculate end time
     this.activeOverlayInstruction = instruction;
 
     if (instruction.useOverlayDuration) {
-      // Use the media's intrinsic duration
       const duration =
         mediaType === "video" || mediaType === "audio"
           ? instruction.overlayMedia!.duration
-          : instruction.overlayMedia!.duration || 5; // Default to 5 seconds for images without duration
+          : instruction.overlayMedia!.duration || 5;
       this.activeOverlayEndTime = instruction.triggerTime / 1000 + duration;
     } else {
-      // Use specified overlay duration
       const duration = instruction.overlayMedia!.duration || 5;
       this.activeOverlayEndTime = instruction.triggerTime / 1000 + duration;
     }
 
-    // Play the overlay media with mute setting
     await this.videoOverlayManager?.playOverlayMedia(
       instruction.overlayMedia!.url,
       instruction.muteOverlayMedia || false,
       mediaType,
       instruction.useOverlayDuration
         ? instruction.overlayMedia!.duration
-        : instruction.overlayMedia!.duration
+        : instruction.overlayMedia!.duration,
+      instruction.overlayMedia!.position
     );
   }
 
@@ -306,19 +301,19 @@ export class VideoManager {
     if (this.videoElement && !this.videoElement.paused) {
       this.videoElement.pause();
 
-      // Determine media type
       const mediaType = instruction.overlayMedia!.type.startsWith("video/")
         ? "video"
         : instruction.overlayMedia!.type.startsWith("audio/")
         ? "audio"
         : "image";
 
-      // Play the overlay media with mute setting
+      // Play the overlay media with position
       await this.videoOverlayManager?.playOverlayMedia(
         instruction.overlayMedia!.url,
         instruction.muteOverlayMedia || false,
         mediaType,
-        instruction.useOverlayDuration ? undefined : instruction.pauseDuration
+        instruction.useOverlayDuration ? undefined : instruction.pauseDuration,
+        instruction.overlayMedia!.position
       );
 
       // If useOverlayDuration is false, we need to ensure the main video resumes after pauseDuration

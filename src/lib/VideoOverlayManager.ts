@@ -71,7 +71,8 @@ export class VideoOverlayManager {
     mediaUrl: string,
     muteOverlay: boolean = false,
     mediaType: "video" | "image" | "audio",
-    duration?: number
+    duration?: number,
+    position?: { x: number; y: number; width: number; height: number }
   ): Promise<void> {
     if (!this.overlayElement) return;
 
@@ -80,7 +81,6 @@ export class VideoOverlayManager {
         this.overlayElement.removeChild(this.overlayElement.firstChild);
       }
 
-      // Revoke previous blob URL if any
       if (this.mediaBlobUrl) {
         URL.revokeObjectURL(this.mediaBlobUrl);
       }
@@ -91,9 +91,23 @@ export class VideoOverlayManager {
         const overlayVideo = document.createElement("video");
         overlayVideo.src = mediaUrl;
         overlayVideo.muted = muteOverlay;
-        overlayVideo.style.width = "100%";
-        overlayVideo.style.height = "100%";
-        overlayVideo.style.objectFit = "contain";
+
+        if (position) {
+          const containerRect = this.container?.getBoundingClientRect();
+          const videoRect = this.videoElement.getBoundingClientRect();
+          const scale = videoRect.width / 320;
+
+          overlayVideo.style.position = "absolute";
+          overlayVideo.style.left = `${position.x * scale}px`;
+          overlayVideo.style.top = `${position.y * scale}px`;
+          overlayVideo.style.width = `${position.width * scale}px`;
+          overlayVideo.style.height = `${position.height * scale}px`;
+          overlayVideo.style.objectFit = "fill";
+        } else {
+          overlayVideo.style.width = "100%";
+          overlayVideo.style.height = "100%";
+          overlayVideo.style.objectFit = "contain";
+        }
 
         overlayVideo.addEventListener("ended", () => {
           this.hideOverlay();
@@ -109,15 +123,28 @@ export class VideoOverlayManager {
       } else if (mediaType === "image") {
         const overlayImage = document.createElement("img");
         overlayImage.src = mediaUrl;
-        overlayImage.style.width = "100%";
-        overlayImage.style.height = "100%";
-        overlayImage.style.objectFit = "contain";
+
+        if (position) {
+          const containerRect = this.container?.getBoundingClientRect();
+          const videoRect = this.videoElement.getBoundingClientRect();
+          const scale = videoRect.width / 320;
+
+          overlayImage.style.position = "absolute";
+          overlayImage.style.left = `${position.x * scale}px`;
+          overlayImage.style.top = `${position.y * scale}px`;
+          overlayImage.style.width = `${position.width * scale}px`;
+          overlayImage.style.height = `${position.height * scale}px`;
+          overlayImage.style.objectFit = "fill";
+        } else {
+          overlayImage.style.width = "100%";
+          overlayImage.style.height = "100%";
+          overlayImage.style.objectFit = "contain";
+        }
 
         this.overlayElement.appendChild(overlayImage);
         this.overlayElement.style.display = "block";
 
-        // Display the image for the specified duration
-        const displayDuration = duration ? duration * 1000 : 5000; // Default to 5 seconds
+        const displayDuration = duration ? duration * 1000 : 5000;
         this.overlayTimeout = window.setTimeout(() => {
           this.hideOverlay();
           if (this.overlayEndedCallback) {
@@ -125,7 +152,6 @@ export class VideoOverlayManager {
           }
         }, displayDuration);
       } else if (mediaType === "audio") {
-        // Handle audio overlay
         this.audioElement = document.createElement("audio");
         this.audioElement.src = mediaUrl;
         this.audioElement.muted = muteOverlay;
@@ -137,10 +163,8 @@ export class VideoOverlayManager {
           }
         });
 
-        // Start playing audio
         await this.audioElement.play();
 
-        // If duration is specified and useOverlayDuration is false
         if (duration) {
           this.overlayTimeout = window.setTimeout(() => {
             this.hideOverlay();

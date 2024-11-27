@@ -75,12 +75,7 @@ export interface BaseInstruction {
 export interface PauseInstruction extends BaseInstruction {
   type: "pause";
   pauseDuration: number;
-  overlayMedia?: {
-    url: string;
-    duration: number;
-    name?: string;
-    type: string;
-  } | null;
+  overlayMedia: OverlayMedia | null;
   useOverlayDuration?: boolean;
   muteOverlayMedia?: boolean;
 }
@@ -92,12 +87,7 @@ export interface SkipInstruction extends BaseInstruction {
 
 export interface OverlayInstruction extends BaseInstruction {
   type: "overlay";
-  overlayMedia: {
-    url: string;
-    duration: number;
-    name?: string;
-    type: string;
-  } | null;
+  overlayMedia: OverlayMedia | null;
   useOverlayDuration?: boolean;
   muteOverlayMedia?: boolean;
 }
@@ -157,4 +147,18 @@ export interface Element {
     scaleMode: "responsive" | "fixed";
   };
   data?: CustomFabricData;
+}
+
+// Update the existing OverlayMedia interface
+export interface OverlayMedia {
+  url: string;
+  duration: number;
+  name?: string;
+  type: string;
+  position?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }

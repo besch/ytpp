@@ -14,7 +14,6 @@ import {
   setCurrentTimeline,
 } from "@/store/timelineSlice";
 import { TimeInput } from "../ui/TimeInput";
-import { dispatchCustomEvent } from "@/lib/eventSystem";
 import MediaUpload from "@/components/MediaUpload";
 import { api } from "@/lib/api";
 import {
@@ -25,6 +24,7 @@ import {
   OverlayInstruction,
 } from "@/types";
 import InstructionsList from "./InstructionsList";
+import MediaPositioner, { MediaPosition } from "./MediaPositioner";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -461,6 +461,33 @@ const InstructionEditor: React.FC = () => {
     }
   }, [watch("overlayMedia"), setValue]);
 
+  const handleMediaPositionChange = (position: MediaPosition) => {
+    const overlayMedia = watch("overlayMedia");
+    if (overlayMedia) {
+      setValue("overlayMedia", {
+        ...overlayMedia,
+        position,
+      });
+
+      // If we're editing, update the instruction immediately
+      if (editingInstruction?.id) {
+        const updatedInstructions = instructions.map((instruction) =>
+          instruction.id === editingInstruction.id
+            ? {
+                ...instruction,
+                overlayMedia: {
+                  ...overlayMedia,
+                  position,
+                },
+              }
+            : instruction
+        );
+
+        handleSaveInstructions(updatedInstructions);
+      }
+    }
+  };
+
   const renderForm = () => {
     if (!selectedType && !isEditing) {
       return (
@@ -567,6 +594,15 @@ const InstructionEditor: React.FC = () => {
                         Delete
                       </Button>
                     </div>
+
+                    {!watch("overlayMedia").type.startsWith("audio/") && (
+                      <MediaPositioner
+                        media={watch("overlayMedia")}
+                        onPositionChange={handleMediaPositionChange}
+                        initialPosition={watch("overlayMedia").position}
+                      />
+                    )}
+
                     <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
                       {watch("overlayMedia").type.startsWith("video/") ? (
                         <video
@@ -662,6 +698,15 @@ const InstructionEditor: React.FC = () => {
                         Delete
                       </Button>
                     </div>
+
+                    {!watch("overlayMedia").type.startsWith("audio/") && (
+                      <MediaPositioner
+                        media={watch("overlayMedia")}
+                        onPositionChange={handleMediaPositionChange}
+                        initialPosition={watch("overlayMedia").position}
+                      />
+                    )}
+
                     <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
                       {watch("overlayMedia").type.startsWith("video/") ? (
                         <video
