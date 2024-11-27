@@ -2,20 +2,34 @@ import React, { useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { Upload } from "lucide-react";
 
+interface MediaData {
+  file: File;
+  url: string;
+  duration?: number;
+  name: string;
+  type: string;
+  position?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+
 interface MediaUploadProps {
-  onMediaSelected: (mediaData: {
-    file: File;
-    url: string;
-    duration?: number; // duration is optional for images/GIFs
-    name: string;
-    type: string;
-  }) => void;
+  onMediaSelected: (mediaData: MediaData) => void;
   currentMedia?: {
     url: string;
-    name?: string;
     duration?: number;
+    name?: string;
     type: string;
-  };
+    position?: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+  } | null;
 }
 
 const MediaUpload: React.FC<MediaUploadProps> = ({
@@ -42,8 +56,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       if (file.type.startsWith("video/") || file.type.startsWith("audio/")) {
         duration = await getMediaDuration(url, file.type);
       } else {
-        // Set a default duration for images/GIFs if needed
-        duration = 5; // Default duration in seconds for images/GIFs
+        duration = 5;
       }
 
       onMediaSelected({
@@ -73,7 +86,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       } else if (mediaType.startsWith("audio/")) {
         mediaElement = document.createElement("audio");
       } else {
-        return resolve(5); // Default duration if not video or audio
+        return resolve(5);
       }
 
       mediaElement.src = url;
@@ -86,7 +99,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     });
   };
 
-  const MediaPreview = ({ src, type }: { src: string; type: string }) => (
+  const MediaPreview: React.FC<{ src: string; type: string }> = ({
+    src,
+    type,
+  }) => (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Media Preview</p>
@@ -140,7 +156,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
         {mediaError && <p className="text-sm text-destructive">{mediaError}</p>}
 
-        {currentMedia?.url && (
+        {currentMedia?.url && currentMedia.type && (
           <MediaPreview src={currentMedia.url} type={currentMedia.type} />
         )}
       </div>

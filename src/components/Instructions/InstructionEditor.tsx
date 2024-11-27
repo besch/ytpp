@@ -97,6 +97,7 @@ const InstructionEditor: React.FC = () => {
             duration: overlayMedia.duration,
             name: overlayMedia.name,
             type: overlayMedia.type || "video/mp4",
+            position: overlayMedia.position,
           });
           setValue(
             "overlayMediaType",
@@ -135,6 +136,7 @@ const InstructionEditor: React.FC = () => {
             duration: overlayMedia.duration,
             name: overlayMedia.name,
             type: overlayMedia.type || "video/mp4",
+            position: overlayMedia.position,
           });
           setValue("overlayDuration", overlayMedia.duration || 5);
           setValue(
@@ -271,6 +273,7 @@ const InstructionEditor: React.FC = () => {
             duration: Number(data.pauseDuration),
             name: data.overlayMedia.name,
             type: data.overlayMedia.type,
+            position: data.overlayMedia.position,
           };
         } catch (error) {
           console.error("Failed to upload overlay media:", error);
@@ -280,6 +283,7 @@ const InstructionEditor: React.FC = () => {
         overlayMedia = {
           ...data.overlayMedia,
           duration: Number(data.pauseDuration),
+          position: data.overlayMedia.position,
         };
       }
 
@@ -335,6 +339,7 @@ const InstructionEditor: React.FC = () => {
             ),
             name: data.overlayMedia.name,
             type: data.overlayMedia.type,
+            position: data.overlayMedia.position,
           };
         } catch (error) {
           console.error("Failed to upload overlay media:", error);
@@ -348,6 +353,7 @@ const InstructionEditor: React.FC = () => {
               ? data.overlayMedia.duration
               : data.overlayDuration
           ),
+          position: data.overlayMedia.position,
         };
       }
 
@@ -650,6 +656,12 @@ const InstructionEditor: React.FC = () => {
                         duration: mediaData.duration ?? 5,
                         name: mediaData.name,
                         type: mediaData.type,
+                        position: {
+                          x: 32,
+                          y: 18,
+                          width: 160,
+                          height: 90,
+                        },
                       });
                       setValue(
                         "overlayMediaType",
@@ -754,6 +766,12 @@ const InstructionEditor: React.FC = () => {
                         duration: mediaData.duration ?? 5,
                         name: mediaData.name,
                         type: mediaData.type,
+                        position: {
+                          x: 32,
+                          y: 18,
+                          width: 160,
+                          height: 90,
+                        },
                       });
                       setValue(
                         "overlayMediaType",
