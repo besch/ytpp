@@ -2,7 +2,7 @@ import React from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import Navigation from "@/pages/Navigation";
 import TimelineList from "@/components/Timeline/TimelineList";
-import TimelineEditor from "@/components/Timeline/TimelineEditor";
+import InstructionEditor from "@/components/Instructions/InstructionEditor";
 
 const App: React.FC = () => {
   return (
@@ -12,8 +12,8 @@ const App: React.FC = () => {
         <div className="flex-grow overflow-auto">
           <Routes>
             <Route path="/" element={<TimelineList />} />
-            <Route path="/timeline/:id" element={<TimelineEditor />} />
-            <Route path="/timeline/new" element={<TimelineEditor />} />
+            <Route path="/timeline/:id" element={<InstructionEditor />} />
+            <Route path="/timeline/new" element={<InstructionEditor />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

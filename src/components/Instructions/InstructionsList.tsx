@@ -83,7 +83,7 @@ const InstructionsList: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium">Instructions</h1>
+        <h1 className="text-lg font-medium">{currentTimeline?.title}</h1>
         <div>
           {showTypeSelect ? (
             <Button
