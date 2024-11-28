@@ -90,6 +90,10 @@ const InstructionEditor: React.FC = () => {
           "muteOverlayMedia",
           overlayInstruction.muteOverlayMedia || false
         );
+        setValue(
+          "overlayDuration",
+          overlayInstruction.overlayMedia?.duration || 5
+        );
 
         const overlayMedia = overlayInstruction.overlayMedia;
         if (overlayMedia) {
@@ -465,14 +469,6 @@ const InstructionEditor: React.FC = () => {
                       </Button>
                     </div>
 
-                    {!watch("overlayMedia").type.startsWith("audio/") && (
-                      <MediaPositioner
-                        media={watch("overlayMedia")}
-                        onPositionChange={handleMediaPositionChange}
-                        initialPosition={watch("overlayMedia").position}
-                      />
-                    )}
-
                     <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
                       {watch("overlayMedia").type.startsWith("video/") ? (
                         <video
@@ -506,6 +502,14 @@ const InstructionEditor: React.FC = () => {
                         />
                       )}
                     </div>
+
+                    {!watch("overlayMedia").type.startsWith("audio/") && (
+                      <MediaPositioner
+                        media={watch("overlayMedia")}
+                        onPositionChange={handleMediaPositionChange}
+                        initialPosition={watch("overlayMedia").position}
+                      />
+                    )}
                   </div>
                 ) : (
                   <MediaUpload
@@ -560,7 +564,10 @@ const InstructionEditor: React.FC = () => {
                             {...register("useOverlayDuration")}
                             id="useOverlayDuration"
                           />
-                          <label htmlFor="useOverlayDuration" className="text-sm">
+                          <label
+                            htmlFor="useOverlayDuration"
+                            className="text-sm"
+                          >
                             Pause for ful media file duration
                           </label>
                         </div>
