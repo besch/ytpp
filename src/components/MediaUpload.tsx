@@ -1,6 +1,8 @@
 import React, { useRef, useState } from "react";
+import { useDropzone } from "react-dropzone";
 import Button from "@/components/ui/Button";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MediaData {
   file: File;
@@ -40,12 +42,24 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   const [mediaError, setMediaError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
+  const onDrop = async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
     if (!file) return;
+    handleFileProcessing(file);
+  };
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "video/*": [],
+      "image/*": [],
+      "audio/*": [],
+    },
+    maxFiles: 1,
+    multiple: false,
+  });
+
+  const handleFileProcessing = async (file: File) => {
     setIsLoading(true);
     setMediaError(null);
 
@@ -99,67 +113,79 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     });
   };
 
-  const MediaPreview: React.FC<{ src: string; type: string }> = ({
-    src,
-    type,
-  }) => (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Media Preview</p>
-      </div>
-      <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
-        {type.startsWith("video/") ? (
-          <video
-            src={src}
-            className="w-full h-full object-contain"
-            controls
-            preload="metadata"
+  const MediaPreview = React.memo<{ src: string; type: string }>(
+    ({ src, type }) => (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">Media Preview</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              onMediaSelected({ file: null, url: "", type: "" } as any)
+            }
           >
-            Your browser does not support the video tag.
-          </video>
-        ) : type.startsWith("audio/") ? (
-          <audio src={src} className="w-full" controls preload="metadata">
-            Your browser does not support the audio tag.
-          </audio>
-        ) : (
-          <img
-            src={src}
-            className="w-full h-full object-contain"
-            alt="Media Preview"
-          />
-        )}
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
+          {type.startsWith("video/") ? (
+            <video
+              src={src}
+              className="w-full h-full object-contain"
+              controls
+              preload="metadata"
+            >
+              Your browser does not support the video tag.
+            </video>
+          ) : type.startsWith("audio/") ? (
+            <audio src={src} className="w-full" controls preload="metadata">
+              Your browser does not support the audio tag.
+            </audio>
+          ) : (
+            <img
+              src={src}
+              className="w-full h-full object-contain"
+              alt="Media Preview"
+            />
+          )}
+        </div>
       </div>
-    </div>
+    )
   );
 
   return (
     <div className="space-y-4">
-      <input
-        type="file"
-        ref={inputRef}
-        accept="video/*, image/*, audio/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-
-      <div className="space-y-4">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={() => inputRef.current?.click()}
-          disabled={isLoading}
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          {currentMedia ? "Change Media" : "Upload Media"}
-        </Button>
-
-        {mediaError && <p className="text-sm text-destructive">{mediaError}</p>}
-
-        {currentMedia?.url && currentMedia.type && (
-          <MediaPreview src={currentMedia.url} type={currentMedia.type} />
+      <div
+        {...getRootProps()}
+        className={cn(
+          "border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer",
+          isDragActive
+            ? "border-primary bg-primary/10"
+            : "border-muted hover:border-primary/50",
+          isLoading && "opacity-50 cursor-wait"
         )}
+      >
+        <input {...getInputProps()} />
+        <div className="flex flex-col items-center justify-center space-y-2 text-center">
+          <Upload className="w-8 h-8 text-muted-foreground" />
+          <div className="text-sm">
+            <p className="font-medium">
+              {isDragActive ? "Drop the file here" : "Drag & drop media here"}
+            </p>
+            <p className="text-muted-foreground">or click to select files</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Supports video, audio, and image files
+          </p>
+        </div>
       </div>
+
+      {mediaError && <p className="text-sm text-destructive">{mediaError}</p>}
+
+      {currentMedia?.url && currentMedia.type && (
+        <MediaPreview src={currentMedia.url} type={currentMedia.type} />
+      )}
     </div>
   );
 };
