@@ -1,6 +1,6 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
-import { Music } from "lucide-react";
+import { Music, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import MediaUpload from "@/components/MediaUpload";
@@ -29,20 +29,20 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-sm text-muted-foreground mb-2 block">
+        <label className="text-muted-foreground mb-2 block">
           Overlay Media
         </label>
         {overlayMedia ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span>{overlayMedia.name}</span>
+              <span className="text-sm text-muted-foreground">{overlayMedia.name}</span>
               <Button
                 type="button"
                 variant="destructive"
                 size="sm"
                 onClick={onMediaDelete}
               >
-                Delete
+                <Trash2 className="w-4 h-4 text-destructive" />
               </Button>
             </div>
 
