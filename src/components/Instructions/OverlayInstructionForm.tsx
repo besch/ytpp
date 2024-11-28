@@ -127,6 +127,8 @@ const OverlayControls: React.FC = () => {
       </div>
 
       {watch("pauseMainVideo") && <PauseControls />}
+
+      <DurationInputs />
     </>
   );
 };
@@ -151,8 +153,6 @@ const PauseControls: React.FC = () => {
           </label>
         </div>
       )}
-
-      <DurationInputs />
     </>
   );
 };
@@ -164,32 +164,33 @@ const DurationInputs: React.FC = () => {
     formState: { errors },
   } = useFormContext();
   const useOverlayDuration = watch("useOverlayDuration");
+  const pauseMainVideo = watch("pauseMainVideo");
   const overlayMedia = watch("overlayMedia");
-
-  if (useOverlayDuration) return null;
 
   return (
     <>
-      <div>
-        <label className="text-sm text-muted-foreground">
-          Pause Duration (seconds)
-        </label>
-        <Input
-          type="number"
-          step="0.1"
-          {...register("pauseDuration", {
-            required: true,
-            min: 0,
-            valueAsNumber: true,
-          })}
-          disabled={useOverlayDuration}
-        />
-        {errors.pauseDuration && (
-          <span className="text-xs text-destructive">
-            This field is required
-          </span>
-        )}
-      </div>
+      {pauseMainVideo && !useOverlayDuration && (
+        <div>
+          <label className="text-sm text-muted-foreground">
+            Pause Duration (seconds)
+          </label>
+          <Input
+            type="number"
+            step="0.1"
+            {...register("pauseDuration", {
+              required: true,
+              min: 0,
+              valueAsNumber: true,
+            })}
+            disabled={useOverlayDuration}
+          />
+          {errors.pauseDuration && (
+            <span className="text-xs text-destructive">
+              This field is required
+            </span>
+          )}
+        </div>
+      )}
 
       <div>
         <label className="text-sm text-muted-foreground">
