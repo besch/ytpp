@@ -31,15 +31,21 @@ const Navigation: React.FC = () => {
   };
 
   return (
-    <nav className="flex justify-between items-center px-6 py-4 bg-background border-b border-border">
+    <nav className="flex justify-between items-center px-8 py-6 bg-background border-b border-border">
       <div
-        className="cursor-pointer hover:text-primary"
+        className="cursor-pointer hover:text-primary flex items-center gap-3 text-lg"
         onClick={() => navigate("/")}
       >
         <Home className="h-6 w-6" />
+        <span>Home</span>
       </div>
-      <Button variant="ghost" onMouseDown={handleDragStart} title="Drag window">
-        <Move className="h-4 w-4" />
+      <Button
+        variant="ghost"
+        onMouseDown={handleDragStart}
+        title="Drag window"
+        size="sm"
+      >
+        <Move className="h-5 w-5" />
       </Button>
     </nav>
   );

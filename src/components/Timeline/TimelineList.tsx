@@ -96,27 +96,27 @@ const TimelineList: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Timelines</h1>
+        <h1 className="text-2xl font-semibold">Timelines</h1>
         <Button onClick={handleCreateTimeline}>
-          <Plus size={16} className="mr-2" />
+          <Plus size={16} className="mr-3" />
           New Timeline
         </Button>
       </div>
 
       {error && (
-        <div className="text-destructive text-center py-4">{error}</div>
+        <div className="text-destructive text-lg text-center py-6">{error}</div>
       )}
 
       {loading ? (
-        <div className="text-center py-4">Loading timelines...</div>
+        <div className="text-lg text-center py-6">Loading timelines...</div>
       ) : timelines.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {timelines.map((timeline) => (
             <div
               key={timeline.id}
-              className="flex items-center justify-between p-4 bg-card rounded-lg hover:bg-muted/10"
+              className="flex items-center justify-between p-6 bg-card rounded-lg hover:bg-muted/10"
             >
               <div className="flex-1">
                 {editingTitleId === timeline.id ? (
@@ -128,11 +128,11 @@ const TimelineList: React.FC = () => {
                         handleTitleUpdate(timeline.id);
                       }
                     }}
-                    className="h-9"
+                    className="h-12 text-lg"
                   />
                 ) : (
                   <p
-                    className="font-medium cursor-pointer hover:text-primary"
+                    className="text-lg font-medium cursor-pointer hover:text-primary"
                     onClick={() => handleEditTimeline(timeline)}
                   >
                     {timeline.title}
@@ -160,7 +160,7 @@ const TimelineList: React.FC = () => {
                   <>
                     <Button
                       variant="ghost"
-                      size="lg"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         startEditingTitle(timeline);
@@ -170,7 +170,7 @@ const TimelineList: React.FC = () => {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="lg"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteTimeline(timeline.id);
@@ -185,7 +185,7 @@ const TimelineList: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-12 text-lg text-muted-foreground">
           You have no timelines. Click "New Timeline" to create one.
         </div>
       )}

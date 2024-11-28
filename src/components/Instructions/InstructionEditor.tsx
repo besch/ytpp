@@ -475,9 +475,9 @@ const InstructionEditor: React.FC = () => {
             <ArrowLeft size={16} className="mr-2" />
             Back
           </Button>
-          <h3 className="text-lg font-medium">
+          <h1 className="text-lg font-medium">
             {isEditing ? "Edit Instruction" : "Add Instruction"}
-          </h3>
+          </h1>
         </div>
 
         <FormProvider {...methods}>

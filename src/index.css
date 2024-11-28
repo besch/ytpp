@@ -477,4 +477,101 @@
     background-color: theme("colors.muted");
     overflow: hidden;
   }
+
+  /* Add these base text styles */
+  & h1 {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  & h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  & h3 {
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+    font-weight: 500 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  & p,
+  & span,
+  & label {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  /* Update text utility classes */
+  & .text-lg {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  & .text-xl {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+
+  & .text-sm {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  /* Add consistent spacing for form elements */
+  & .form-group {
+    margin-bottom: 1.5rem !important;
+  }
+
+  & label {
+    display: block !important;
+    margin-bottom: 0.5rem !important;
+    font-weight: 500 !important;
+  }
+
+  /* Improve button sizing */
+  & button {
+    font-size: 1rem !important;
+    padding: 0.75rem 1.25rem !important;
+  }
+
+  & button.btn-sm {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 1rem !important;
+  }
+
+  & button.btn-lg {
+    font-size: 1.125rem !important;
+    padding: 1rem 1.5rem !important;
+  }
+
+  /* Update link and hover styles */
+  & a, 
+  & .hover\:text-primary:hover,
+  & [class*="hover:text-primary"]:hover {
+    color: theme("colors.accent") !important;
+    transition: color 200ms ease-out !important;
+  }
+
+  & .text-primary {
+    color: theme("colors.accent") !important;
+  }
+
+  /* Update cursor hover styles */
+  & .cursor-pointer:hover {
+    color: theme("colors.accent") !important;
+  }
+
+  /* Update any elements with hover:text-primary */
+  & .hover\:text-primary:hover p,
+  & .hover\:text-primary:hover span,
+  & p.hover\:text-primary:hover,
+  & span.hover\:text-primary:hover {
+    color: theme("colors.accent") !important;
+  }
 }
