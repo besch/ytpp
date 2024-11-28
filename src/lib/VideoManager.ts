@@ -77,12 +77,12 @@ export class VideoManager {
 
   private handleVideoPlay = (): void => {
     // Resume any active overlay media when main video plays
-    this.videoOverlayManager?.resumeOverlayMedia();
+    // this.videoOverlayManager?.resumeOverlayMedia();
   };
 
   private handleVideoPause = (): void => {
     // Pause any active overlay media when main video is paused
-    this.videoOverlayManager?.pauseOverlayMedia();
+    // this.videoOverlayManager?.pauseOverlayMedia();
   };
 
   private handleVideoSeeking = (event: Event): void => {
