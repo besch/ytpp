@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { selectVideoElementId } from "@/store/timelineSlice";
 import { OverlayMedia } from "@/types";
+import config from "@/lib/config";
 
 interface MediaPositionerProps {
   media: OverlayMedia;
@@ -43,8 +44,8 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
     ) as HTMLVideoElement;
     if (videoElement && containerRef.current) {
       const rect = videoElement.getBoundingClientRect();
-      const scale = 290 / rect.width;
-      containerRef.current.style.width = "290px";
+      const scale = config.mediaPositionerWidth / rect.width;
+      containerRef.current.style.width = `${config.mediaPositionerWidth}px`;
       containerRef.current.style.height = `${rect.height * scale}px`;
 
       if (!initialPosition) {
@@ -170,7 +171,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
     <div
       ref={containerRef}
       className="relative bg-black/50 rounded-lg overflow-hidden mx-auto"
-      style={{ maxWidth: "320px" }}
+      style={{ maxWidth: config.mediaPositionerWidth }}
     >
       <div
         className="absolute cursor-move"
