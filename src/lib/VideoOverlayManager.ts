@@ -1,3 +1,5 @@
+import config from "@/lib/config";
+
 export class VideoOverlayManager {
   private videoElement: HTMLVideoElement;
   private overlayElement: HTMLElement | null = null;
@@ -95,7 +97,7 @@ export class VideoOverlayManager {
         if (position) {
           const containerRect = this.container?.getBoundingClientRect();
           const videoRect = this.videoElement.getBoundingClientRect();
-          const scale = videoRect.width / 320;
+          const scale = videoRect.width / config.mediaPositionerWidth;
 
           overlayVideo.style.position = "absolute";
           overlayVideo.style.left = `${position.x * scale}px`;
@@ -127,7 +129,7 @@ export class VideoOverlayManager {
         if (position) {
           const containerRect = this.container?.getBoundingClientRect();
           const videoRect = this.videoElement.getBoundingClientRect();
-          const scale = videoRect.width / 320;
+          const scale = videoRect.width / config.mediaPositionerWidth;
 
           overlayImage.style.position = "absolute";
           overlayImage.style.left = `${position.x * scale}px`;
