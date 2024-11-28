@@ -26,7 +26,7 @@ export class VideoManager {
   }
 
   public async findAndStoreVideoElement(): Promise<void> {
-    this.videoElement = document.querySelector("video:not(.timelines-video)");
+    this.videoElement = document.querySelector("video");
 
     if (this.videoElement) {
       if (!this.videoElement.id) {
