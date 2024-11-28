@@ -35,14 +35,16 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
         {overlayMedia ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{overlayMedia.name}</span>
+              <span className="text-sm text-muted-foreground">
+                {overlayMedia.name}
+              </span>
               <Button
+                variant="ghost"
                 type="button"
-                variant="destructive"
                 size="sm"
                 onClick={onMediaDelete}
               >
-                <Trash2 className="w-4 h-4 text-destructive" />
+                <Trash2 size={16} />
               </Button>
             </div>
 

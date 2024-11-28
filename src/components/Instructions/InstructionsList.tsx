@@ -133,21 +133,21 @@ const InstructionsList: React.FC = () => {
                       dispatch(seekToTime(instruction.triggerTime))
                     }
                   >
-                    <Play className="w-4 h-4" />
+                    <Play size={16} />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEdit(instruction)}
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 size={16} />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(instruction.id)}
                   >
-                    <Trash2 className="w-4 h-4 text-destructive" />
+                    <Trash2 size={16} className="text-destructive" />
                   </Button>
                 </div>
               </div>
