@@ -28,6 +28,14 @@ const InstructionTypeSelect: React.FC<InstructionTypeSelectProps> = ({
         >
           Skip Instruction
         </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full"
+          onClick={() => onSelect("text-overlay")}
+        >
+          Text Overlay
+        </Button>
       </div>
     </div>
   );

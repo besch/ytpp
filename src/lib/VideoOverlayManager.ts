@@ -1,4 +1,5 @@
 import config from "@/lib/config";
+import { TextStyle } from "@/types";
 
 export class VideoOverlayManager {
   private videoElement: HTMLVideoElement;
@@ -254,6 +255,55 @@ export class VideoOverlayManager {
           console.error("Error resuming overlay audio:", error);
         });
       }
+    }
+  }
+
+  public async displayTextOverlay(
+    text: string,
+    style: TextStyle,
+    position: { x: number; y: number; width: number; height: number },
+    duration: number
+  ): Promise<void> {
+    if (!this.overlayElement) return;
+
+    // Clear existing overlay
+    while (this.overlayElement.firstChild) {
+      this.overlayElement.removeChild(this.overlayElement.firstChild);
+    }
+
+    const textElement = document.createElement("div");
+    Object.assign(textElement.style, {
+      position: "absolute",
+      left: `${position.x}px`,
+      top: `${position.y}px`,
+      width: `${position.width}px`,
+      height: `${position.height}px`,
+      fontFamily: style.fontFamily,
+      fontSize: `${style.fontSize}px`,
+      color: style.color,
+      backgroundColor: style.transparentBackground
+        ? "transparent"
+        : style.backgroundColor || "transparent",
+      fontWeight: style.fontWeight,
+      fontStyle: style.fontStyle,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "8px",
+      overflow: "hidden",
+    });
+
+    textElement.textContent = text;
+    this.overlayElement.appendChild(textElement);
+    this.overlayElement.style.display = "block";
+
+    if (duration) {
+      this.overlayTimeout = window.setTimeout(() => {
+        this.hideOverlay();
+        if (this.overlayEndedCallback) {
+          this.overlayEndedCallback();
+        }
+      }, duration * 1000);
     }
   }
 }

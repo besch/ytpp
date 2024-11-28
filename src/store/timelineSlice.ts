@@ -1,6 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
-import { Timeline, Instruction, ElementStyle } from "@/types";
+import {
+  Timeline,
+  Instruction,
+  ElementStyle,
+  TextStyle,
+  TextOverlayMedia,
+  TextOverlayInstruction,
+} from "@/types";
 import { createSelector } from "@reduxjs/toolkit";
 import type { Draft } from "@reduxjs/toolkit";
 
@@ -49,6 +56,10 @@ interface ElementUpdate {
     scaleMode: "responsive" | "fixed";
   };
   muteOverlayVideo?: boolean;
+  textOverlay?: {
+    text: string;
+    style: TextStyle;
+  };
 }
 
 export const timelineSlice = createSlice({
@@ -153,6 +164,23 @@ export const timelineSlice = createSlice({
     seekToTime: (state, action: PayloadAction<number>) => {
       state.currentTime = action.payload;
     },
+    updateTextOverlay: (
+      state,
+      action: PayloadAction<{
+        instructionId: string;
+        textOverlay: TextOverlayMedia;
+      }>
+    ) => {
+      if (state.currentTimeline) {
+        const instruction = state.currentTimeline.instructions.find(
+          (i) => i.id === action.payload.instructionId
+        ) as TextOverlayInstruction | undefined;
+
+        if (instruction) {
+          instruction.textOverlay = action.payload.textOverlay;
+        }
+      }
+    },
   },
 });
 
@@ -177,6 +205,7 @@ export const {
   setError,
   setVideoElement,
   seekToTime,
+  updateTextOverlay,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>
@@ -212,5 +241,13 @@ export const selectTimelineLoading = (state: RootState) =>
 export const selectTimelineError = (state: RootState) => state.timeline.error;
 export const selectVideoElementId = (state: RootState) =>
   state.timeline.videoElementId;
+export const selectTextOverlayInstructions = createSelector(
+  [selectInstructions],
+  (instructions) =>
+    instructions.filter(
+      (instruction): instruction is TextOverlayInstruction =>
+        instruction.type === "text-overlay"
+    )
+);
 
 export default timelineSlice.reducer;

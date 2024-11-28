@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm, FormProvider } from "react-hook-form";
-import { ArrowLeft, Music } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 import {
   selectCurrentTime,
   setCurrentTime,
@@ -14,18 +13,19 @@ import {
   setCurrentTimeline,
 } from "@/store/timelineSlice";
 import { TimeInput } from "../ui/TimeInput";
-import MediaUpload from "@/components/MediaUpload";
 import { api } from "@/lib/api";
 import {
   Instruction,
   SkipInstruction,
   TimeInput as TimeInputInterface,
   OverlayInstruction,
+  TextOverlayInstruction,
 } from "@/types";
 import InstructionsList from "./InstructionsList";
-import MediaPositioner, { MediaPosition } from "./MediaPositioner";
+import { MediaPosition } from "./MediaPositioner";
 import OverlayInstructionForm from "./OverlayInstructionForm";
 import SkipInstructionForm from "./SkipInstructionForm";
+import TextOverlayInstructionForm from "./TextOverlayInstructionForm";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -75,7 +75,10 @@ const InstructionEditor: React.FC = () => {
 
       if (editingInstruction.type === "overlay") {
         const overlayInstruction = editingInstruction as OverlayInstruction;
-        methods.setValue("pauseMainVideo", overlayInstruction.pauseMainVideo || false);
+        methods.setValue(
+          "pauseMainVideo",
+          overlayInstruction.pauseMainVideo || false
+        );
         methods.setValue("pauseDuration", overlayInstruction.pauseDuration);
         methods.setValue(
           "useOverlayDuration",
@@ -118,6 +121,37 @@ const InstructionEditor: React.FC = () => {
         methods.setValue("skipToHours", skipHours);
         methods.setValue("skipToMinutes", skipMinutes);
         methods.setValue("skipToSeconds", skipSeconds);
+      } else if (editingInstruction.type === "text-overlay") {
+        const textOverlayInstruction =
+          editingInstruction as TextOverlayInstruction;
+
+        // Set text overlay values
+        methods.setValue("textOverlay", {
+          text: textOverlayInstruction.textOverlay.text,
+          style: {
+            fontFamily: textOverlayInstruction.textOverlay.style.fontFamily,
+            fontSize: textOverlayInstruction.textOverlay.style.fontSize,
+            color: textOverlayInstruction.textOverlay.style.color,
+            backgroundColor:
+              textOverlayInstruction.textOverlay.style.backgroundColor ||
+              "#000000",
+            fontWeight: textOverlayInstruction.textOverlay.style.fontWeight,
+            fontStyle:
+              textOverlayInstruction.textOverlay.style.fontStyle || "normal",
+            transparentBackground:
+              textOverlayInstruction.textOverlay.style.transparentBackground ||
+              false,
+          },
+          position: textOverlayInstruction.textOverlay.position || {
+            x: 32,
+            y: 18,
+            width: 160,
+            height: 90,
+          },
+        });
+
+        methods.setValue("duration", textOverlayInstruction.duration);
+        methods.setValue("pauseMainVideo", textOverlayInstruction.pauseMainVideo || false);
       }
     }
   }, [isEditing, editingInstruction, methods]);
@@ -140,9 +174,16 @@ const InstructionEditor: React.FC = () => {
   useEffect(() => {
     if (methods.watch("useOverlayDuration")) {
       // If useOverlayDuration is checked, disable pauseDuration input
-      methods.setValue("pauseDuration", methods.watch("overlayMedia")?.duration || 0);
+      methods.setValue(
+        "pauseDuration",
+        methods.watch("overlayMedia")?.duration || 0
+      );
     }
-  }, [methods.watch("useOverlayDuration"), methods.watch("overlayMedia"), methods]);
+  }, [
+    methods.watch("useOverlayDuration"),
+    methods.watch("overlayMedia"),
+    methods,
+  ]);
 
   // Add this new effect to watch for trigger time updates
   useEffect(() => {
@@ -280,6 +321,15 @@ const InstructionEditor: React.FC = () => {
         triggerTime,
         skipToTime,
       } as SkipInstruction;
+    } else if (selectedType === "text-overlay") {
+      newInstruction = {
+        id: editingInstruction?.id || Date.now().toString(),
+        type: "text-overlay",
+        triggerTime,
+        textOverlay: data.textOverlay,
+        duration: Number(data.duration),
+        pauseMainVideo: data.pauseMainVideo,
+      } as TextOverlayInstruction;
     } else {
       return;
     }
@@ -429,7 +479,7 @@ const InstructionEditor: React.FC = () => {
             {isEditing ? "Edit Instruction" : "Add Instruction"}
           </h3>
         </div>
-        
+
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
@@ -478,6 +528,14 @@ const InstructionEditor: React.FC = () => {
 
             {selectedType === "skip" && (
               <SkipInstructionForm onTimeChange={handleSkipToTimeChange} />
+            )}
+
+            {selectedType === "text-overlay" && (
+              <TextOverlayInstructionForm
+                onPositionChange={(position) => {
+                  methods.setValue("textOverlay.position", position);
+                }}
+              />
             )}
 
             <Button type="submit" className="w-full">

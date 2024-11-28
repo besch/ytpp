@@ -86,7 +86,38 @@ export interface SkipInstruction extends BaseInstruction {
   skipToTime: number;
 }
 
-export type Instruction = SkipInstruction | OverlayInstruction;
+export interface TextOverlayMedia {
+  text: string;
+  style: TextStyle;
+  position?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+
+export interface TextStyle {
+  fontFamily: string;
+  fontSize: number;
+  color: string;
+  backgroundColor?: string;
+  fontWeight: "normal" | "bold";
+  fontStyle: "normal" | "italic";
+  transparentBackground?: boolean;
+}
+
+export interface TextOverlayInstruction extends BaseInstruction {
+  type: "text-overlay";
+  textOverlay: TextOverlayMedia;
+  duration: number;
+  pauseMainVideo?: boolean;
+}
+
+export type Instruction =
+  | SkipInstruction
+  | OverlayInstruction
+  | TextOverlayInstruction;
 
 export interface InstructionsState {
   instructions: Instruction[];
@@ -152,6 +183,7 @@ export interface OverlayMedia {
     width: number;
     height: number;
   };
+  preview?: React.ReactNode;
 }
 
 export interface MediaData {

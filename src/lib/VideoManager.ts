@@ -1,7 +1,13 @@
-import { Instruction, OverlayInstruction, SkipInstruction } from "@/types";
+import {
+  Instruction,
+  OverlayInstruction,
+  SkipInstruction,
+  TextOverlayInstruction,
+} from "@/types";
 import { VideoOverlayManager } from "./VideoOverlayManager";
 import { store } from "@/store";
 import { seekToTime } from "@/store/timelineSlice";
+import config from "./config";
 
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
@@ -153,6 +159,9 @@ export class VideoManager {
               "Video is paused, skip instruction will not be executed"
             );
           }
+        } else if (instruction.type === "text-overlay") {
+          const textOverlayInstruction = instruction as TextOverlayInstruction;
+          await this.handleTextOverlayInstruction(textOverlayInstruction);
         }
       }
     }
@@ -316,5 +325,52 @@ export class VideoManager {
     }
     this.videoOverlayManager = new VideoOverlayManager(video);
     this.handleVideo(video);
+  }
+
+  private async handleTextOverlayInstruction(
+    instruction: TextOverlayInstruction
+  ): Promise<void> {
+    if (!this.videoElement || this.videoElement.paused) {
+      console.log(
+        "Video is paused, text overlay instruction will not be executed"
+      );
+      return;
+    }
+
+    const { textOverlay, duration, pauseMainVideo } = instruction;
+
+    // Calculate position based on video size
+    const videoRect = this.videoElement.getBoundingClientRect();
+    const scale = videoRect.width / config.mediaPositionerWidth;
+
+    const scaledPosition = {
+      x: textOverlay.position!.x * scale,
+      y: textOverlay.position!.y * scale,
+      width: textOverlay.position!.width * scale,
+      height: textOverlay.position!.height * scale,
+    };
+
+    // Pause main video if specified
+    if (pauseMainVideo) {
+      this.videoElement.pause();
+    }
+
+    await this.videoOverlayManager?.displayTextOverlay(
+      textOverlay.text,
+      textOverlay.style,
+      scaledPosition,
+      duration
+    );
+
+    // If pauseMainVideo is true, resume after duration
+    if (pauseMainVideo) {
+      setTimeout(() => {
+        if (this.videoElement && this.videoElement.paused) {
+          this.videoElement.play().catch((error) => {
+            console.error("Error resuming video:", error);
+          });
+        }
+      }, duration * 1000);
+    }
   }
 }

@@ -31,12 +31,18 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState<MediaPosition>(
     initialPosition || {
-      x: 0,
-      y: 0,
+      x: 32,
+      y: 18,
       width: 160,
       height: 90,
     }
   );
+
+  useEffect(() => {
+    if (initialPosition) {
+      setPosition(initialPosition);
+    }
+  }, [initialPosition]);
 
   useEffect(() => {
     const videoElement = document.getElementById(
@@ -47,17 +53,8 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
       const scale = config.mediaPositionerWidth / rect.width;
       containerRef.current.style.width = `${config.mediaPositionerWidth}px`;
       containerRef.current.style.height = `${rect.height * scale}px`;
-
-      if (!initialPosition) {
-        setPosition({
-          x: 32,
-          y: rect.height * scale * 0.1,
-          width: 160,
-          height: 90,
-        });
-      }
     }
-  }, [videoElementId, initialPosition]);
+  }, [videoElementId]);
 
   const handleMouseDown = (
     e: React.MouseEvent,
@@ -167,6 +164,32 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
     }
   }, [isDragging, isResizing, position, startPos, resizeDirection]);
 
+  const renderMedia = () => {
+    if (media.type === "text") {
+      return media.preview;
+    }
+
+    if (media.type.startsWith("video/")) {
+      return (
+        <video
+          ref={mediaRef as React.RefObject<HTMLVideoElement>}
+          src={media.url}
+          className="w-full h-full object-cover pointer-events-none"
+          muted
+        />
+      );
+    }
+
+    return (
+      <img
+        ref={mediaRef as React.RefObject<HTMLImageElement>}
+        src={media.url}
+        className="w-full h-full object-cover pointer-events-none"
+        alt="Overlay media"
+      />
+    );
+  };
+
   return (
     <div
       ref={containerRef}
@@ -182,21 +205,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
           height: `${position.height}px`,
         }}
       >
-        {media.type.startsWith("video/") ? (
-          <video
-            ref={mediaRef as React.RefObject<HTMLVideoElement>}
-            src={media.url}
-            className="w-full h-full object-cover pointer-events-none"
-            muted
-          />
-        ) : (
-          <img
-            ref={mediaRef as React.RefObject<HTMLImageElement>}
-            src={media.url}
-            className="w-full h-full object-cover pointer-events-none"
-            alt="Overlay media"
-          />
-        )}
+        {renderMedia()}
 
         {/* Drag handle */}
         <div
