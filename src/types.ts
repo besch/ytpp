@@ -153,3 +153,11 @@ export interface OverlayMedia {
     height: number;
   };
 }
+
+export interface MediaData {
+  file?: File;
+  url: string;
+  duration?: number;
+  name: string;
+  type: string;
+}

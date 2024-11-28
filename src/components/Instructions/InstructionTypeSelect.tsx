@@ -18,7 +18,7 @@ const InstructionTypeSelect: React.FC<InstructionTypeSelectProps> = ({
           className="w-full"
           onClick={() => onSelect("overlay")}
         >
-          Overlay Instruction
+          Media Instruction
         </Button>
         <Button
           variant="outline"

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { ArrowLeft, Music } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -24,6 +24,8 @@ import {
 } from "@/types";
 import InstructionsList from "./InstructionsList";
 import MediaPositioner, { MediaPosition } from "./MediaPositioner";
+import OverlayInstructionForm from "./OverlayInstructionForm";
+import SkipInstructionForm from "./SkipInstructionForm";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -44,14 +46,7 @@ const InstructionEditor: React.FC = () => {
     );
   };
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    reset,
-    watch,
-  } = useForm<any>({
+  const methods = useForm<any>({
     defaultValues: {
       hours: 0,
       minutes: 0,
@@ -74,44 +69,44 @@ const InstructionEditor: React.FC = () => {
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = Math.floor(totalSeconds % 60);
 
-      setValue("hours", hours, { shouldValidate: false });
-      setValue("minutes", minutes, { shouldValidate: false });
-      setValue("seconds", seconds, { shouldValidate: false });
+      methods.setValue("hours", hours, { shouldValidate: false });
+      methods.setValue("minutes", minutes, { shouldValidate: false });
+      methods.setValue("seconds", seconds, { shouldValidate: false });
 
       if (editingInstruction.type === "overlay") {
         const overlayInstruction = editingInstruction as OverlayInstruction;
-        setValue("pauseMainVideo", overlayInstruction.pauseMainVideo || false);
-        setValue("pauseDuration", overlayInstruction.pauseDuration);
-        setValue(
+        methods.setValue("pauseMainVideo", overlayInstruction.pauseMainVideo || false);
+        methods.setValue("pauseDuration", overlayInstruction.pauseDuration);
+        methods.setValue(
           "useOverlayDuration",
           overlayInstruction.useOverlayDuration || false
         );
-        setValue(
+        methods.setValue(
           "muteOverlayMedia",
           overlayInstruction.muteOverlayMedia || false
         );
-        setValue(
+        methods.setValue(
           "overlayDuration",
           overlayInstruction.overlayMedia?.duration || 5
         );
 
         const overlayMedia = overlayInstruction.overlayMedia;
         if (overlayMedia) {
-          setValue("overlayMedia", {
+          methods.setValue("overlayMedia", {
             url: overlayMedia.url,
             duration: overlayMedia.duration,
             name: overlayMedia.name,
             type: overlayMedia.type || "video/mp4",
             position: overlayMedia.position,
           });
-          setValue(
+          methods.setValue(
             "overlayMediaType",
             (overlayMedia.type || "video/mp4").startsWith("video/")
               ? "video"
               : "image"
           );
         } else {
-          setValue("overlayMedia", null);
+          methods.setValue("overlayMedia", null);
         }
       } else if (editingInstruction.type === "skip") {
         const skipToTime =
@@ -120,12 +115,12 @@ const InstructionEditor: React.FC = () => {
         const skipMinutes = Math.floor((skipToTime % 3600) / 60);
         const skipSeconds = Math.floor(skipToTime % 60);
 
-        setValue("skipToHours", skipHours);
-        setValue("skipToMinutes", skipMinutes);
-        setValue("skipToSeconds", skipSeconds);
+        methods.setValue("skipToHours", skipHours);
+        methods.setValue("skipToMinutes", skipMinutes);
+        methods.setValue("skipToSeconds", skipSeconds);
       }
     }
-  }, [isEditing, editingInstruction, setValue]);
+  }, [isEditing, editingInstruction, methods]);
 
   // Sync form inputs with currentTime when not editing
   useEffect(() => {
@@ -135,23 +130,23 @@ const InstructionEditor: React.FC = () => {
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = Math.floor(totalSeconds % 60);
 
-      setValue("hours", hours);
-      setValue("minutes", minutes);
-      setValue("seconds", seconds);
+      methods.setValue("hours", hours);
+      methods.setValue("minutes", minutes);
+      methods.setValue("seconds", seconds);
     }
-  }, [currentTime, isEditing, selectedType, setValue]);
+  }, [currentTime, isEditing, selectedType, methods]);
 
   // Disable pauseDuration input based on useOverlayDuration
   useEffect(() => {
-    if (watch("useOverlayDuration")) {
+    if (methods.watch("useOverlayDuration")) {
       // If useOverlayDuration is checked, disable pauseDuration input
-      setValue("pauseDuration", watch("overlayMedia")?.duration || 0);
+      methods.setValue("pauseDuration", methods.watch("overlayMedia")?.duration || 0);
     }
-  }, [watch("useOverlayDuration"), watch("overlayMedia"), setValue]);
+  }, [methods.watch("useOverlayDuration"), methods.watch("overlayMedia"), methods]);
 
   // Add this new effect to watch for trigger time updates
   useEffect(() => {
-    const subscription = watch((value, { name, type }) => {
+    const subscription = methods.watch((value, { name, type }) => {
       // Only update if hours, minutes, or seconds changes
       if (name?.match(/^(hours|minutes|seconds)$/)) {
         const triggerTime = parseTimeInput({
@@ -179,11 +174,11 @@ const InstructionEditor: React.FC = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, isEditing, editingInstruction, instructions]);
+  }, [methods.watch, isEditing, editingInstruction, instructions]);
 
   const handleBack = () => {
     // Reset form values including media state
-    reset({
+    methods.reset({
       hours: 0,
       minutes: 0,
       seconds: 0,
@@ -306,12 +301,12 @@ const InstructionEditor: React.FC = () => {
     }
 
     dispatch(setCurrentTime(triggerTime));
-    reset();
+    methods.reset();
     dispatch(setEditingInstruction(null));
   };
 
   const handleDeleteOverlayMedia = async () => {
-    const mediaURL = watch("overlayMedia")?.url;
+    const mediaURL = methods.watch("overlayMedia")?.url;
     if (mediaURL) {
       try {
         await api.timelines.deleteMedia(mediaURL);
@@ -320,7 +315,7 @@ const InstructionEditor: React.FC = () => {
       }
     }
 
-    setValue("overlayMedia", null);
+    methods.setValue("overlayMedia", null);
 
     // Update instructions by setting overlayMedia to null if we're editing
     if (editingInstruction?.id) {
@@ -344,9 +339,9 @@ const InstructionEditor: React.FC = () => {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = Math.floor(totalSeconds % 60);
 
-    setValue("hours", hours);
-    setValue("minutes", minutes);
-    setValue("seconds", seconds);
+    methods.setValue("hours", hours);
+    methods.setValue("minutes", minutes);
+    methods.setValue("seconds", seconds);
   };
 
   const handleSkipToTimeChange = (time: number) => {
@@ -355,16 +350,16 @@ const InstructionEditor: React.FC = () => {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = Math.floor(totalSeconds % 60);
 
-    setValue("skipToHours", hours);
-    setValue("skipToMinutes", minutes);
-    setValue("skipToSeconds", seconds);
+    methods.setValue("skipToHours", hours);
+    methods.setValue("skipToMinutes", minutes);
+    methods.setValue("skipToSeconds", seconds);
   };
 
   // Add this effect to reset form when editingInstruction changes
   useEffect(() => {
     if (!editingInstruction) {
       // Reset form values when not editing
-      reset({
+      methods.reset({
         hours: Math.floor(currentTime / 1000 / 3600),
         minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
         seconds: Math.floor((currentTime / 1000) % 60),
@@ -378,19 +373,19 @@ const InstructionEditor: React.FC = () => {
         overlayMediaType: "video",
       });
     }
-  }, [editingInstruction, currentTime, reset]);
+  }, [editingInstruction, currentTime, methods]);
 
   useEffect(() => {
-    const overlayMedia = watch("overlayMedia");
+    const overlayMedia = methods.watch("overlayMedia");
     if (overlayMedia?.type?.startsWith("video/")) {
-      setValue("useOverlayDuration", true);
+      methods.setValue("useOverlayDuration", true);
     }
-  }, [watch("overlayMedia"), setValue]);
+  }, [methods.watch("overlayMedia"), methods]);
 
   const handleMediaPositionChange = (position: MediaPosition) => {
-    const overlayMedia = watch("overlayMedia");
+    const overlayMedia = methods.watch("overlayMedia");
     if (overlayMedia) {
-      setValue("overlayMedia", {
+      methods.setValue("overlayMedia", {
         ...overlayMedia,
         position,
       });
@@ -434,227 +429,62 @@ const InstructionEditor: React.FC = () => {
             {isEditing ? "Edit Instruction" : "Add Instruction"}
           </h3>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">
-              Trigger Time
-            </label>
-            <TimeInput
-              value={parseTimeInput({
-                hours: watch("hours") || 0,
-                minutes: watch("minutes") || 0,
-                seconds: watch("seconds") || 0,
-              })}
-              onChange={handleTimeChange}
-            />
-          </div>
-
-          {selectedType === "overlay" && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Overlay Media
-                </label>
-                {watch("overlayMedia") ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span>{watch("overlayMedia").name}</span>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleDeleteOverlayMedia}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-
-                    <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
-                      {watch("overlayMedia").type.startsWith("video/") ? (
-                        <video
-                          src={watch("overlayMedia").url}
-                          className="w-full h-full object-contain"
-                          controls
-                          preload="metadata"
-                        >
-                          Your browser does not support the video tag.
-                        </video>
-                      ) : watch("overlayMedia").type.startsWith("audio/") ? (
-                        <div className="flex flex-col items-center justify-center h-full">
-                          <Music
-                            size={48}
-                            className="text-muted-foreground mb-2"
-                          />
-                          <audio
-                            src={watch("overlayMedia").url}
-                            controls
-                            className="w-3/4"
-                            preload="metadata"
-                          >
-                            Your browser does not support the audio tag.
-                          </audio>
-                        </div>
-                      ) : (
-                        <img
-                          src={watch("overlayMedia").url}
-                          className="w-full h-full object-contain"
-                          alt="Overlay Media"
-                        />
-                      )}
-                    </div>
-
-                    {!watch("overlayMedia").type.startsWith("audio/") && (
-                      <MediaPositioner
-                        media={watch("overlayMedia")}
-                        onPositionChange={handleMediaPositionChange}
-                        initialPosition={watch("overlayMedia").position}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <MediaUpload
-                    onMediaSelected={(mediaData) => {
-                      setValue(
-                        "overlayDuration",
-                        Math.ceil(mediaData.duration ?? 5)
-                      );
-                      setValue("overlayMedia", {
-                        file: mediaData.file,
-                        url: mediaData.url,
-                        duration: mediaData.duration ?? 5,
-                        name: mediaData.name,
-                        type: mediaData.type,
-                        position: {
-                          x: 32,
-                          y: 18,
-                          width: 160,
-                          height: 90,
-                        },
-                      });
-                      setValue(
-                        "overlayMediaType",
-                        mediaData.type.startsWith("video/") ? "video" : "image"
-                      );
-                    }}
-                    currentMedia={watch("overlayMedia")}
-                  />
-                )}
-              </div>
-
-              {watch("overlayMedia") && (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      {...register("pauseMainVideo")}
-                      id="pauseMainVideo"
-                    />
-                    <label htmlFor="pauseMainVideo" className="text-sm">
-                      Pause Main Video
-                    </label>
-                  </div>
-
-                  {watch("pauseMainVideo") && (
-                    <>
-                      {(watch("overlayMedia").type.startsWith("video/") ||
-                        watch("overlayMedia").type === "image/gif") && (
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            {...register("useOverlayDuration")}
-                            id="useOverlayDuration"
-                          />
-                          <label
-                            htmlFor="useOverlayDuration"
-                            className="text-sm"
-                          >
-                            Pause for ful media file duration
-                          </label>
-                        </div>
-                      )}
-
-                      {!watch("useOverlayDuration") && (
-                        <div>
-                          <label className="text-sm text-muted-foreground">
-                            Pause Duration (seconds)
-                          </label>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            {...register("pauseDuration", {
-                              required: true,
-                              min: 0,
-                              valueAsNumber: true,
-                            })}
-                            disabled={watch("useOverlayDuration")}
-                          />
-                          {errors.pauseDuration && (
-                            <span className="text-xs text-destructive">
-                              This field is required
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {watch("overlayMedia").type.startsWith("video/") && (
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        {...register("muteOverlayMedia")}
-                        id="muteOverlayMedia"
-                      />
-                      <label htmlFor="muteOverlayMedia" className="text-sm">
-                        Mute Overlay Media
-                      </label>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {!watch("useOverlayDuration") && watch("overlayMedia") && (
-                <div>
-                  <label className="text-sm text-muted-foreground">
-                    Overlay Duration (seconds)
-                  </label>
-                  <Input
-                    type="number"
-                    {...register("overlayDuration", {
-                      required: true,
-                      min: 1,
-                    })}
-                  />
-                  {errors.overlayDuration && (
-                    <span className="text-xs text-destructive">
-                      This field is required
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {selectedType === "skip" && (
+        
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">
-                Skip to Time
+                Trigger Time
               </label>
               <TimeInput
                 value={parseTimeInput({
-                  hours: watch("skipToHours") || 0,
-                  minutes: watch("skipToMinutes") || 0,
-                  seconds: watch("skipToSeconds") || 0,
+                  hours: methods.watch("hours") || 0,
+                  minutes: methods.watch("minutes") || 0,
+                  seconds: methods.watch("seconds") || 0,
                 })}
-                onChange={handleSkipToTimeChange}
+                onChange={handleTimeChange}
               />
             </div>
-          )}
 
-          <Button type="submit" className="w-full">
-            {isEditing ? "Update Instruction" : "Add Instruction"}
-          </Button>
-        </form>
+            {selectedType === "overlay" && (
+              <OverlayInstructionForm
+                onMediaDelete={handleDeleteOverlayMedia}
+                onMediaSelected={(mediaData) => {
+                  methods.setValue(
+                    "overlayDuration",
+                    Math.ceil(mediaData.duration ?? 5)
+                  );
+                  methods.setValue("overlayMedia", {
+                    file: mediaData.file,
+                    url: mediaData.url,
+                    duration: mediaData.duration ?? 5,
+                    name: mediaData.name,
+                    type: mediaData.type,
+                    position: {
+                      x: 32,
+                      y: 18,
+                      width: 160,
+                      height: 90,
+                    },
+                  });
+                  methods.setValue(
+                    "overlayMediaType",
+                    mediaData.type.startsWith("video/") ? "video" : "image"
+                  );
+                }}
+                onPositionChange={handleMediaPositionChange}
+              />
+            )}
+
+            {selectedType === "skip" && (
+              <SkipInstructionForm onTimeChange={handleSkipToTimeChange} />
+            )}
+
+            <Button type="submit" className="w-full">
+              {isEditing ? "Update Instruction" : "Add Instruction"}
+            </Button>
+          </form>
+        </FormProvider>
       </div>
     );
   };
