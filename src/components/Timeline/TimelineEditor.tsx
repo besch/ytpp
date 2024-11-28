@@ -27,7 +27,7 @@ const TimelineEditor: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between mb-4">
-        <Button
+        {/* <Button
           variant="ghost"
           size="sm"
           onClick={handleBack}
@@ -35,8 +35,8 @@ const TimelineEditor: React.FC = () => {
         >
           <ArrowLeft size={16} />
           Back to Timelines
-        </Button>
-        <h2 className="text-lg font-semibold">{currentTimeline.title}</h2>
+        </Button> */}
+        <h1 className="text-lg font-semibold">{currentTimeline.title}</h1>
       </div>
 
       <InstructionEditor />
