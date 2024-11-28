@@ -37,6 +37,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
       height: 90,
     }
   );
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
   useEffect(() => {
     if (initialPosition) {
@@ -55,6 +56,78 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
       containerRef.current.style.height = `${rect.height * scale}px`;
     }
   }, [videoElementId]);
+
+  useEffect(() => {
+    if (!mediaRef.current || !containerRef.current) return;
+
+    const mediaElement = mediaRef.current;
+    const container = containerRef.current;
+
+    const updateDimensions = () => {
+      let naturalWidth: number;
+      let naturalHeight: number;
+
+      if (mediaElement instanceof HTMLVideoElement) {
+        naturalWidth = mediaElement.videoWidth;
+        naturalHeight = mediaElement.videoHeight;
+      } else if (mediaElement instanceof HTMLImageElement) {
+        naturalWidth = mediaElement.naturalWidth;
+        naturalHeight = mediaElement.naturalHeight;
+      } else {
+        return;
+      }
+
+      // Store the aspect ratio
+      const ratio = naturalWidth / naturalHeight;
+      setAspectRatio(ratio);
+
+      // Calculate the aspect ratio
+      const aspectRatio = naturalWidth / naturalHeight;
+
+      // Get container dimensions
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+
+      // Calculate dimensions that fit within container while preserving aspect ratio
+      let width = containerWidth * 0.5; // Start with 50% of container width
+      let height = width / aspectRatio;
+
+      // If height is too tall, scale based on height instead
+      if (height > containerHeight * 0.8) {
+        height = containerHeight * 0.8;
+        width = height * aspectRatio;
+      }
+
+      // Calculate centered position
+      const x = (containerWidth - width) / 2;
+      const y = (containerHeight - height) / 2;
+
+      // Update position state
+      setPosition({
+        x,
+        y,
+        width,
+        height,
+      });
+      onPositionChange({ x, y, width, height });
+    };
+
+    // For videos, wait for loadedmetadata event
+    if (mediaElement instanceof HTMLVideoElement) {
+      mediaElement.addEventListener("loadedmetadata", updateDimensions);
+    } else {
+      // For images, wait for load event
+      mediaElement.addEventListener("load", updateDimensions);
+    }
+
+    return () => {
+      if (mediaElement instanceof HTMLVideoElement) {
+        mediaElement.removeEventListener("loadedmetadata", updateDimensions);
+      } else {
+        mediaElement.removeEventListener("load", updateDimensions);
+      }
+    };
+  }, [media.url, onPositionChange]);
 
   const handleMouseDown = (
     e: React.MouseEvent,
@@ -103,24 +176,60 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
       let newX = position.x;
       let newY = position.y;
 
+      // Check if shift key is pressed and we have an aspect ratio
+      const preserveAspectRatio = e.shiftKey && aspectRatio !== null;
+
+      const updateDimensions = (widthDelta: number, heightDelta: number) => {
+        if (preserveAspectRatio) {
+          // Use the larger delta to determine the scaling
+          const absWidthDelta = Math.abs(widthDelta);
+          const absHeightDelta = Math.abs(heightDelta);
+
+          if (absWidthDelta > absHeightDelta) {
+            // Width is driving the resize
+            const width = Math.max(50, position.width + widthDelta);
+            return {
+              width,
+              height: width / aspectRatio!,
+            };
+          } else {
+            // Height is driving the resize
+            const height = Math.max(50, position.height + heightDelta);
+            return {
+              width: height * aspectRatio!,
+              height,
+            };
+          }
+        } else {
+          return {
+            width: Math.max(50, position.width + widthDelta),
+            height: Math.max(50, position.height + heightDelta),
+          };
+        }
+      };
+
       switch (resizeDirection) {
         case "se": // bottom-right
-          newWidth = Math.max(50, position.width + deltaX);
-          newHeight = Math.max(50, position.height + deltaY);
+          const seDimensions = updateDimensions(deltaX, deltaY);
+          newWidth = seDimensions.width;
+          newHeight = seDimensions.height;
           break;
         case "sw": // bottom-left
-          newWidth = Math.max(50, position.width - deltaX);
-          newHeight = Math.max(50, position.height + deltaY);
+          const swDimensions = updateDimensions(-deltaX, deltaY);
+          newWidth = swDimensions.width;
+          newHeight = swDimensions.height;
           newX = position.x + deltaX;
           break;
         case "ne": // top-right
-          newWidth = Math.max(50, position.width + deltaX);
-          newHeight = Math.max(50, position.height - deltaY);
+          const neDimensions = updateDimensions(deltaX, -deltaY);
+          newWidth = neDimensions.width;
+          newHeight = neDimensions.height;
           newY = position.y + deltaY;
           break;
         case "nw": // top-left
-          newWidth = Math.max(50, position.width - deltaX);
-          newHeight = Math.max(50, position.height - deltaY);
+          const nwDimensions = updateDimensions(-deltaX, -deltaY);
+          newWidth = nwDimensions.width;
+          newHeight = nwDimensions.height;
           newX = position.x + deltaX;
           newY = position.y + deltaY;
           break;
@@ -174,8 +283,9 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
         <video
           ref={mediaRef as React.RefObject<HTMLVideoElement>}
           src={media.url}
-          className="w-full h-full object-cover pointer-events-none"
+          className="w-full h-full object-contain pointer-events-none"
           muted
+          preload="metadata"
         />
       );
     }
@@ -184,7 +294,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
       <img
         ref={mediaRef as React.RefObject<HTMLImageElement>}
         src={media.url}
-        className="w-full h-full object-cover pointer-events-none"
+        className="w-full h-full object-contain pointer-events-none"
         alt="Overlay media"
       />
     );
