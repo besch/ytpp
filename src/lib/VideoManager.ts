@@ -75,13 +75,24 @@ export class VideoManager {
     this.videoOverlayManager = null;
   }
 
-  private handleVideoPlay = (): void => {};
+  private handleVideoPlay = (): void => {
+    // Resume any active overlay media when main video plays
+    this.videoOverlayManager?.resumeOverlayMedia();
+  };
 
-  private handleVideoPause = (): void => {};
+  private handleVideoPause = (): void => {
+    // Pause any active overlay media when main video is paused
+    this.videoOverlayManager?.pauseOverlayMedia();
+  };
 
   private handleVideoSeeking = (event: Event): void => {
     // Reset lastInstructionId to allow instructions to trigger again upon seeking
     this.lastInstructionId = null;
+
+    // Clear any active overlay when seeking
+    this.videoOverlayManager?.hideOverlay();
+    this.activeOverlayInstruction = null;
+    this.activeOverlayEndTime = null;
 
     // Clear any existing resume timeout
     if ((this.videoElement as any)._resumeTimeout) {

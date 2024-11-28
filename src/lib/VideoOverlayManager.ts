@@ -222,4 +222,38 @@ export class VideoOverlayManager {
   public onOverlayEnded(callback: () => void): void {
     this.overlayEndedCallback = callback;
   }
+
+  /**
+   * Pauses the currently playing overlay media
+   */
+  public pauseOverlayMedia(): void {
+    if (this.overlayElement) {
+      const videoOverlay = this.overlayElement.querySelector("video");
+      if (videoOverlay) {
+        videoOverlay.pause();
+      }
+      if (this.audioElement) {
+        this.audioElement.pause();
+      }
+    }
+  }
+
+  /**
+   * Resumes the currently playing overlay media
+   */
+  public resumeOverlayMedia(): void {
+    if (this.overlayElement) {
+      const videoOverlay = this.overlayElement.querySelector("video");
+      if (videoOverlay) {
+        videoOverlay.play().catch((error) => {
+          console.error("Error resuming overlay video:", error);
+        });
+      }
+      if (this.audioElement) {
+        this.audioElement.play().catch((error) => {
+          console.error("Error resuming overlay audio:", error);
+        });
+      }
+    }
+  }
 }
