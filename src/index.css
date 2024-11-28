@@ -1,49 +1,42 @@
-/* Apply base styles only to our app containers */
 #timeline-container,
-#react-overlay-root {
+#react-overlay-root,
+#visibility-toggler {
   @tailwind base;
 }
 
-/* These can remain global since they're prefixed with classes */
 @tailwind components;
 @tailwind utilities;
 
-/* Reset inherited styles from host page */
 #timeline-container,
-#react-overlay-root {
+#react-overlay-root,
+#visibility-toggler {
   all: initial;
 
-  /* Restore basic styling context */
   display: block;
   box-sizing: border-box;
-
-  /* Establish a new stacking context */
   position: relative;
   z-index: 9999;
 
-  /* Ensure proper text rendering */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Set your app's base text color and background */
   color: theme("colors.foreground");
   background: theme("colors.background");
 
-  /* Restore font settings */
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
   line-height: 1.5;
 }
 
-/* Ensure proper box model for all elements */
 #timeline-container *,
+#visibility-toggler *,
 #react-overlay-root * {
   box-sizing: border-box;
 }
 
-/* Reset button styles */
 #timeline-container button,
+#visibility-toggler button,
 #react-overlay-root button {
   background-color: transparent;
   color: theme("colors.foreground");
@@ -57,13 +50,12 @@
 }
 
 #timeline-container button:hover,
+#visibility-toggler button:hover,
 #react-overlay-root button:hover {
   background-color: rgb(255 255 255 / 0.1);
 }
 
-/* Timeline specific styles */
 #timeline-container {
-  /* Reset the layout context */
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -72,7 +64,6 @@
   border-radius: 0.5rem;
   cursor: pointer !important;
 
-  /* Timeline specific resets */
   & .relative {
     position: relative;
   }
@@ -81,7 +72,7 @@
   }
   & .flex {
     display: flex;
-    flex-direction: row; /* Ensure horizontal layout */
+    flex-direction: row;
   }
   & .h-full {
     height: 100%;
@@ -111,17 +102,15 @@
     height: 1.5rem;
   }
 
-  /* Ensure flex layout works */
   & .justify-between {
     justify-content: space-between;
-    width: 100%; /* Ensure full width */
+    width: 100%;
   }
   & .items-center {
     align-items: center;
-    width: 100%; /* Ensure full width */
+    width: 100%;
   }
 
-  /* Fix positioning */
   & .top-0 {
     top: 0;
   }
@@ -147,7 +136,6 @@
     top: -1.5rem;
   }
 
-  /* Timeline markers */
   & .time-markers {
     display: flex;
     justify-content: space-between;
@@ -175,7 +163,6 @@
     opacity: 0.2;
   }
 
-  /* Timeline track */
   & .timeline-track {
     position: absolute;
     left: 0;
@@ -187,7 +174,6 @@
     transform: translateY(-50%);
   }
 
-  /* Progress bar */
   & .progress-bar {
     position: absolute;
     height: 100%;
@@ -196,7 +182,6 @@
     transition: width 200ms;
   }
 
-  /* Current time marker */
   & .current-time-marker {
     position: absolute;
     top: 0;
@@ -206,7 +191,6 @@
     transition: left 200ms;
   }
 
-  /* Ensure proper spacing */
   & .px-2 {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
@@ -219,7 +203,6 @@
     margin-bottom: 1rem;
   }
 
-  /* Fix text styles */
   & .text-sm {
     font-size: 0.875rem;
     line-height: 1.25rem;
@@ -234,7 +217,6 @@
     color: white;
   }
 
-  /* Fix background and borders */
   & .bg-muted\/5 {
     background-color: rgb(75 85 99 / 0.05);
   }
@@ -260,7 +242,6 @@
     border-radius: 9999px;
   }
 
-  /* Fix transitions */
   & .transition-all {
     transition-property: all;
   }
@@ -268,13 +249,11 @@
     transition-duration: 200ms;
   }
 
-  /* Fix shadows */
   & .shadow-lg {
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
       0 4px 6px -4px rgb(0 0 0 / 0.1);
   }
 
-  /* Fix instruction markers */
   & .instruction-marker {
     display: flex !important;
     align-items: center !important;
@@ -287,7 +266,6 @@
     cursor: pointer !important;
   }
 
-  /* Fix popover visibility */
   & .instruction-popover {
     display: none !important;
     position: absolute !important;
@@ -299,25 +277,21 @@
     pointer-events: none !important;
   }
 
-  /* Show popover only on hover */
   & .instruction-marker:hover + .instruction-popover,
   & .instruction-marker:focus + .instruction-popover,
   & .instruction-popover.visible {
     display: block !important;
   }
 
-  /* Ensure proper marker shapes */
   & .rounded-full {
     border-radius: 9999px !important;
     overflow: hidden !important;
   }
 
-  /* Ensure all elements inside timeline are clickable */
   & * {
     pointer-events: auto !important;
   }
 
-  /* Ensure ALL instruction markers are circles */
   & [class*="instruction-marker"] {
     display: flex !important;
     align-items: center !important;
@@ -330,20 +304,17 @@
     cursor: pointer !important;
   }
 
-  /* Remove any transparency from background elements */
   & .bg-background,
   & .bg-background\/95 {
     background-color: theme("colors.background") !important;
   }
 
-  /* Ensure proper circle shape for all rounded elements */
   & .rounded-full,
   & [class*="rounded-full"] {
     border-radius: 9999px !important;
     overflow: hidden !important;
   }
 
-  /* Instruction marker colors with stronger specificity */
   & .instruction-marker[class*="instruction-marker"] {
     display: flex !important;
     align-items: center !important;
@@ -356,7 +327,6 @@
     cursor: pointer !important;
   }
 
-  /* Force specific colors for each instruction type */
   & .instruction-marker[data-type="pause"] {
     background-color: theme("colors.secondary") !important;
   }
@@ -378,14 +348,12 @@
     background-color: rgb(5 150 105 / 0.8) !important; /* accent/80 */
   }
 
-  /* Selected instruction marker styles */
   & .instruction-marker[data-selected="true"] {
     transform: scale(1.25) !important;
     box-shadow: 0 0 0 2px theme("colors.background"),
       0 0 0 4px theme("colors.white") !important;
   }
 
-  /* Type-specific selected states */
   & .instruction-marker[data-type="pause"][data-selected="true"] {
     box-shadow: 0 0 0 2px theme("colors.background"),
       0 0 0 4px theme("colors.secondary") !important;
@@ -401,7 +369,6 @@
       0 0 0 4px theme("colors.accent") !important;
   }
 
-  /* Enhance hover states */
   & .instruction-marker {
     transition: all 200ms ease-out !important;
   }
@@ -414,7 +381,6 @@
     transform: scale(1.35) !important;
   }
 
-  /* Fix button styles to match Navigation */
   & .flex.gap-2 {
     width: auto !important;
   }
@@ -441,12 +407,10 @@
     height: 1rem !important;
   }
 
-  /* Specific styles for ghost variant */
   & button[variant="ghost"] {
     background-color: transparent !important;
   }
 
-  /* Text overlay styles */
   & .text-overlay {
     position: absolute;
     pointer-events: none;
@@ -458,7 +422,6 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
-  /* Text overlay marker styles */
   & .instruction-marker[data-type="text-overlay"] {
     background-color: theme("colors.yellow.500") !important;
   }
@@ -470,7 +433,6 @@
       0 0 0 4px theme("colors.yellow.500") !important;
   }
 
-  /* Text overlay preview styles */
   & .text-overlay-preview {
     border: 1px solid theme("colors.border");
     border-radius: theme("borderRadius.md");
@@ -478,7 +440,6 @@
     overflow: hidden;
   }
 
-  /* Add these base text styles */
   & h1 {
     font-size: 1.5rem !important;
     line-height: 2rem !important;
@@ -507,7 +468,6 @@
     line-height: 1.5rem !important;
   }
 
-  /* Update text utility classes */
   & .text-lg {
     font-size: 1.25rem !important;
     line-height: 1.75rem !important;
@@ -523,7 +483,6 @@
     line-height: 1.25rem !important;
   }
 
-  /* Add consistent spacing for form elements */
   & .form-group {
     margin-bottom: 1.5rem !important;
   }
@@ -534,7 +493,6 @@
     font-weight: 500 !important;
   }
 
-  /* Improve button sizing */
   & button {
     font-size: 1rem !important;
     padding: 0.75rem 1.25rem !important;
@@ -550,8 +508,7 @@
     padding: 1rem 1.5rem !important;
   }
 
-  /* Update link and hover styles */
-  & a, 
+  & a,
   & .hover\:text-primary:hover,
   & [class*="hover:text-primary"]:hover {
     color: theme("colors.accent") !important;
@@ -562,12 +519,10 @@
     color: theme("colors.accent") !important;
   }
 
-  /* Update cursor hover styles */
   & .cursor-pointer:hover {
     color: theme("colors.accent") !important;
   }
 
-  /* Update any elements with hover:text-primary */
   & .hover\:text-primary:hover p,
   & .hover\:text-primary:hover span,
   & p.hover\:text-primary:hover,

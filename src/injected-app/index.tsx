@@ -17,7 +17,7 @@ function init() {
     const videoElement = videoManager.getVideoElement();
     if (videoElement) {
       // Store the video element's ID instead of the element itself
-      store.dispatch(setVideoElement(videoElement.id || 'video-player'));
+      store.dispatch(setVideoElement(videoElement.id || "video-player"));
     }
   });
 
@@ -25,9 +25,9 @@ function init() {
   const toggleContainer = document.createElement("div");
   toggleContainer.id = "timeline-toggle-container";
   toggleContainer.style.cssText = `
-    position: fixed;
+    position: absolute;
     top: 20px;
-    left: 20px;
+    right: 20px;
     z-index: 2147483647;
     contain: layout style;
     isolation: isolate;
@@ -65,7 +65,7 @@ function init() {
   container.id = "react-overlay-root";
   container.style.cssText = `
     position: absolute;
-    top: 20px;
+    top: 80px;
     right: 20px;
     width: 350px;
     z-index: 9999;

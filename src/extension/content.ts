@@ -40,6 +40,11 @@ class ContentScript {
       timelineContainer.remove();
     }
 
+    const visibilityToggler = document.getElementById("visibility-toggler");
+    if (visibilityToggler) {
+      visibilityToggler.remove();
+    }
+
     // Unsubscribe from event listeners
     this.eventListeners.forEach((unsubscribe) => unsubscribe());
     this.eventListeners = [];

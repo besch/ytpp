@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Eye, EyeOff } from "lucide-react";
 import { RootState } from "@/store";
 import { setCanvasVisibility } from "@/store/timelineSlice";
+import Button from "./ui/Button";
 
 const VisibilityToggle: React.FC = () => {
   const dispatch = useDispatch();
@@ -24,17 +25,15 @@ const VisibilityToggle: React.FC = () => {
   };
 
   return (
-    <button
-      onClick={toggleVisibility}
-      className="flex items-center justify-center w-10 h-10 rounded-full bg-background border border-border shadow-lg hover:bg-accent transition-colors duration-200"
-      style={{
-        color: "white",
-        cursor: "pointer",
-      }}
-      title={isVisible ? "Hide Timeline" : "Show Timeline"}
-    >
-      {isVisible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-    </button>
+    <div id="visibility-toggler">
+      <Button
+        onClick={toggleVisibility}
+        size="lg"
+        title={isVisible ? "Hide Timeline" : "Show Timeline"}
+      >
+        {isVisible ? <EyeOff size={20} /> : <Eye size={20} />}
+      </Button>
+    </div>
   );
 };
 
