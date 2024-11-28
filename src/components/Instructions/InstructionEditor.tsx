@@ -367,18 +367,18 @@ const InstructionEditor: React.FC = () => {
 
     methods.setValue("overlayMedia", null);
 
-    if (editingInstruction?.id && currentTimeline) {
+    if (editingInstruction?.id) {
       const updatedInstructions = instructions.map((instruction) =>
         instruction.id === editingInstruction.id
           ? { ...instruction, overlayMedia: null }
           : instruction
       );
 
-      const updatedTimeline = {
-        ...currentTimeline,
-        instructions: updatedInstructions,
-      };
-      dispatch(setCurrentTimeline(updatedTimeline));
+      try {
+        await handleSaveInstructions(updatedInstructions);
+      } catch (error) {
+        console.error("Failed to update instruction:", error);
+      }
     }
   };
 
