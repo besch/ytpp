@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Move } from "lucide-react";
+import { Move, Home } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 const Navigation: React.FC = () => {
@@ -32,18 +32,13 @@ const Navigation: React.FC = () => {
 
   return (
     <nav className="flex justify-between items-center px-6 py-4 bg-background border-b border-border">
-      <h1
-        className="text-xl font-semibold text-foreground cursor-pointer hover:text-primary"
+      <div
+        className="cursor-pointer hover:text-primary"
         onClick={() => navigate("/")}
       >
-        Timelines
-      </h1>
-      <Button
-        variant="ghost"
-        size="lg"
-        onMouseDown={handleDragStart}
-        title="Drag window"
-      >
+        <Home className="h-6 w-6" />
+      </div>
+      <Button variant="ghost" onMouseDown={handleDragStart} title="Drag window">
         <Move className="h-4 w-4" />
       </Button>
     </nav>

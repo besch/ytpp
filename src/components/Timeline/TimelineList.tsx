@@ -98,7 +98,7 @@ const TimelineList: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Your Timelines</h2>
+        <h1 className="text-xl font-semibold">Timelines</h1>
         <Button onClick={handleCreateTimeline}>
           <Plus size={16} className="mr-2" />
           New Timeline
@@ -160,25 +160,23 @@ const TimelineList: React.FC = () => {
                   <>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="lg"
                       onClick={(e) => {
                         e.stopPropagation();
                         startEditingTitle(timeline);
                       }}
                     >
-                      <Edit2 size={16} className="mr-2" />
-                      Edit
+                      <Edit2 size={16} />
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="lg"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteTimeline(timeline.id);
                       }}
                     >
-                      <Trash2 size={16} className="mr-2 text-destructive" />
-                      Delete
+                      <Trash2 size={16} className="text-destructive" />
                     </Button>
                   </>
                 )}

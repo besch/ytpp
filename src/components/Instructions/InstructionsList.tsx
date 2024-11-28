@@ -83,7 +83,7 @@ const InstructionsList: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Instructions</h3>
+        <h1 className="text-lg font-medium">Instructions</h1>
         <div>
           {showTypeSelect ? (
             <Button
@@ -94,8 +94,8 @@ const InstructionsList: React.FC = () => {
               Cancel
             </Button>
           ) : (
-            <Button onClick={handleAddNew} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
+            <Button onClick={handleAddNew}>
+              <Plus className="w-4 h-4 mr-4" />
               Add Instruction
             </Button>
           )}
@@ -115,15 +115,15 @@ const InstructionsList: React.FC = () => {
                 className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 flex items-center justify-between"
               >
                 <div>
-                  <span className="font-medium capitalize">
+                  <h1 className="font-medium capitalize">
                     {instruction.type} Instruction
-                  </span>
-                  <span className="text-sm text-muted-foreground ml-2">
+                  </h1>
+                  <p className="text-sm text-muted-foreground ml-2">
                     at {formatTime(instruction.triggerTime)}
-                  </span>
-                  <div className="text-sm text-muted-foreground mt-1">
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
                     {getInstructionDescription(instruction)}
-                  </div>
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button

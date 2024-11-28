@@ -27,9 +27,9 @@ const Button: React.FC<ButtonProps> = ({
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground":
             variant === "outline",
           "hover:bg-accent hover:text-accent-foreground": variant === "ghost",
-          "h-10 py-2 px-4": size === "default",
+          "h-14 py-2 px-4": size === "default",
           "h-9 px-3 rounded-md": size === "sm",
-          "h-11 px-8 rounded-md": size === "lg",
+          "h-19 px-8 rounded-md": size === "lg",
         },
         className
       )}

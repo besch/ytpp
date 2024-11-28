@@ -471,7 +471,7 @@ const InstructionEditor: React.FC = () => {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={handleBack}>
+          <Button variant="ghost" onClick={handleBack}>
             <ArrowLeft size={16} className="mr-2" />
             Back
           </Button>
@@ -483,7 +483,7 @@ const InstructionEditor: React.FC = () => {
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">
+              <label className="text-lg text-muted-foreground">
                 Trigger Time
               </label>
               <TimeInput

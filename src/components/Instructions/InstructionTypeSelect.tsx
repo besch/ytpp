@@ -10,11 +10,9 @@ const InstructionTypeSelect: React.FC<InstructionTypeSelectProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Select Instruction Type</h3>
       <div className="space-y-2">
         <Button
           variant="outline"
-          size="lg"
           className="w-full"
           onClick={() => onSelect("overlay")}
         >
@@ -22,7 +20,6 @@ const InstructionTypeSelect: React.FC<InstructionTypeSelectProps> = ({
         </Button>
         <Button
           variant="outline"
-          size="lg"
           className="w-full"
           onClick={() => onSelect("skip")}
         >
@@ -30,7 +27,6 @@ const InstructionTypeSelect: React.FC<InstructionTypeSelectProps> = ({
         </Button>
         <Button
           variant="outline"
-          size="lg"
           className="w-full"
           onClick={() => onSelect("text-overlay")}
         >
