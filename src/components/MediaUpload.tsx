@@ -3,6 +3,7 @@ import { useDropzone } from "react-dropzone";
 import Button from "@/components/ui/Button";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getMediaUrl } from "@/lib/api";
 
 interface MediaData {
   file: File;
@@ -131,7 +132,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
           {type.startsWith("video/") ? (
             <video
-              src={src}
+              src={src.startsWith('blob:') ? src : getMediaUrl(src)}
               className="w-full h-full object-contain"
               controls
               preload="metadata"
@@ -139,12 +140,17 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
               Your browser does not support the video tag.
             </video>
           ) : type.startsWith("audio/") ? (
-            <audio src={src} className="w-full" controls preload="metadata">
+            <audio 
+              src={src.startsWith('blob:') ? src : getMediaUrl(src)} 
+              className="w-full" 
+              controls 
+              preload="metadata"
+            >
               Your browser does not support the audio tag.
             </audio>
           ) : (
             <img
-              src={src}
+              src={src.startsWith('blob:') ? src : getMediaUrl(src)}
               className="w-full h-full object-contain"
               alt="Media Preview"
             />

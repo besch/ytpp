@@ -3,6 +3,12 @@ import { Timeline, Instruction, MediaFile } from "@/types";
 
 const API_BASE_URL = "http://localhost:3000/api";
 
+export const getMediaUrl = (path: string): string => {
+  if (!path) return '';
+  const filename = path.split('/').pop();
+  return `${API_BASE_URL}/media/${filename}`;
+};
+
 export const api = {
   timelines: {
     getAll: async (videoUrl?: string): Promise<Timeline[]> => {
@@ -56,12 +62,14 @@ export const api = {
           "Content-Type": "multipart/form-data",
         },
       });
-      return response.data;
+      return {
+        url: getMediaUrl(response.data.url)
+      };
     },
 
     deleteMedia: async (url: string): Promise<void> => {
       await axios.delete(`${API_BASE_URL}/media`, {
-        data: { url },
+        data: { url: url.split("/").pop() },
       });
     },
 

@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { selectVideoElementId } from "@/store/timelineSlice";
 import { OverlayMedia } from "@/types";
 import config from "@/lib/config";
+import { getMediaUrl } from "@/lib/api";
 
 interface MediaPositionerProps {
   media: OverlayMedia;
@@ -284,7 +285,9 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
       return (
         <video
           ref={mediaRef as React.RefObject<HTMLVideoElement>}
-          src={media.url}
+          src={
+            media.url.startsWith("blob:") ? media.url : getMediaUrl(media.url)
+          }
           className="w-full h-full object-contain pointer-events-none"
           muted
           preload="metadata"
@@ -295,7 +298,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
     return (
       <img
         ref={mediaRef as React.RefObject<HTMLImageElement>}
-        src={media.url}
+        src={media.url.startsWith("blob:") ? media.url : getMediaUrl(media.url)}
         className="w-full h-full object-contain pointer-events-none"
         alt="Overlay media"
       />
