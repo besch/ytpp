@@ -105,56 +105,78 @@ const Timeline: React.FC = () => {
     dispatch(setEditingInstruction(instruction));
   };
 
+  const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
+    if (!currentTimeline) return;
+
+    try {
+      const updatedTimeline = {
+        ...currentTimeline,
+        instructions: updatedInstructions,
+      };
+
+      const savedTimeline = await api.timelines.update(
+        currentTimeline.id,
+        updatedTimeline
+      );
+      dispatch(setCurrentTimeline(savedTimeline));
+    } catch (error) {
+      console.error("Failed to save instructions:", error);
+    }
+  };
+
   const handleInstructionDrag = (
     e: React.MouseEvent,
     instruction: Instruction
   ) => {
     e.stopPropagation();
-    setDraggingInstructionId(instruction.id);
-    setDraggingTime(instruction.triggerTime);
-
     const startX = e.clientX;
+    const startY = e.clientY;
     const startTime = instruction.triggerTime;
+    let isDragging = false;
+    const dragThreshold = 3; // pixels
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const rect = timelineRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      const deltaX = Math.abs(moveEvent.clientX - startX);
+      const deltaY = Math.abs(moveEvent.clientY - startY);
 
-      const deltaX = moveEvent.clientX - startX;
-      const timePerPixel = duration / rect.width;
-      const timeDelta = deltaX * timePerPixel;
+      // Only start dragging if mouse has moved beyond threshold
+      if (!isDragging && (deltaX > dragThreshold || deltaY > dragThreshold)) {
+        isDragging = true;
+        setDraggingInstructionId(instruction.id);
+        setDraggingTime(instruction.triggerTime);
+      }
 
-      const newTime = Math.max(0, Math.min(duration, startTime + timeDelta));
-      setDraggingTime(newTime);
+      if (isDragging) {
+        const rect = timelineRef.current?.getBoundingClientRect();
+        if (!rect) return;
 
-      // Update instruction with new time
-      const updatedInstruction = {
-        ...instruction,
-        triggerTime: Math.round(newTime),
-      };
+        const deltaX = moveEvent.clientX - startX;
+        const timePerPixel = duration / rect.width;
+        const timeDelta = deltaX * timePerPixel;
 
-      // Update both the instruction and editing instruction
-      dispatch(updateInstruction(updatedInstruction));
-      dispatch(setEditingInstruction(updatedInstruction));
+        const newTime = Math.max(0, Math.min(duration, startTime + timeDelta));
+        setDraggingTime(newTime);
+
+        const updatedInstruction = {
+          ...instruction,
+          triggerTime: Math.round(newTime),
+        };
+        dispatch(updateInstruction(updatedInstruction));
+        dispatch(setEditingInstruction(updatedInstruction));
+      }
     };
 
     const handleMouseUp = async () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-      setDraggingInstructionId(null);
-      setDraggingTime(null);
 
-      if (currentTimeline && instructions) {
-        const updatedTimeline: ITimeline = {
-          ...currentTimeline,
-          instructions,
-        };
+      if (isDragging) {
+        setDraggingInstructionId(null);
+        setDraggingTime(null);
 
-        const savedTimeline = await api.timelines.update(
-          currentTimeline.id,
-          updatedTimeline
-        );
-        dispatch(setCurrentTimeline(savedTimeline));
+        if (currentTimeline && instructions) {
+          await handleSaveInstructions(instructions);
+        }
       }
     };
 
@@ -167,48 +189,49 @@ const Timeline: React.FC = () => {
     instruction: SkipInstruction
   ) => {
     e.stopPropagation();
-
     const startX = e.clientX;
+    const startY = e.clientY;
     const startTime = instruction.skipToTime;
+    let isDragging = false;
+    const dragThreshold = 3; // pixels
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const rect = timelineRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      const deltaX = Math.abs(moveEvent.clientX - startX);
+      const deltaY = Math.abs(moveEvent.clientY - startY);
 
-      const deltaX = moveEvent.clientX - startX;
-      const timePerPixel = duration / rect.width;
-      const timeDelta = deltaX * timePerPixel;
+      // Only start dragging if mouse has moved beyond threshold
+      if (!isDragging && (deltaX > dragThreshold || deltaY > dragThreshold)) {
+        isDragging = true;
+      }
 
-      const newTime = Math.max(
-        instruction.triggerTime,
-        Math.min(duration, startTime + timeDelta)
-      );
+      if (isDragging) {
+        const rect = timelineRef.current?.getBoundingClientRect();
+        if (!rect) return;
 
-      // Update instruction with new skipToTime
-      const updatedInstruction = {
-        ...instruction,
-        skipToTime: Math.round(newTime),
-      };
+        const deltaX = moveEvent.clientX - startX;
+        const timePerPixel = duration / rect.width;
+        const timeDelta = deltaX * timePerPixel;
 
-      dispatch(updateInstruction(updatedInstruction));
-      dispatch(setEditingInstruction(updatedInstruction));
+        const newTime = Math.max(
+          instruction.triggerTime,
+          Math.min(duration, startTime + timeDelta)
+        );
+
+        const updatedInstruction = {
+          ...instruction,
+          skipToTime: Math.round(newTime),
+        };
+        dispatch(updateInstruction(updatedInstruction));
+        dispatch(setEditingInstruction(updatedInstruction));
+      }
     };
 
     const handleMouseUp = async () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
-      if (currentTimeline && instructions) {
-        const updatedTimeline: ITimeline = {
-          ...currentTimeline,
-          instructions,
-        };
-
-        const savedTimeline = await api.timelines.update(
-          currentTimeline.id,
-          updatedTimeline
-        );
-        dispatch(setCurrentTimeline(savedTimeline));
+      if (isDragging && currentTimeline && instructions) {
+        await handleSaveInstructions(instructions);
       }
     };
 
