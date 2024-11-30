@@ -114,25 +114,20 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     });
   };
 
-  const MediaPreview = React.memo<{ src: string; type: string }>(
-    ({ src, type }) => (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Media Preview</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              onMediaSelected({ file: null, url: "", type: "" } as any)
-            }
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+  const MediaPreview: React.FC<{ src: string; type: string }> = React.memo(
+    ({ src, type }) => {
+      const mediaUrl = React.useMemo(() => {
+        if (src.startsWith("blob:")) {
+          return src;
+        }
+        return getMediaUrl(src);
+      }, [src]);
+
+      return (
         <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
           {type.startsWith("video/") ? (
             <video
-              src={src.startsWith('blob:') ? src : getMediaUrl(src)}
+              src={mediaUrl}
               className="w-full h-full object-contain"
               controls
               preload="metadata"
@@ -140,24 +135,25 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
               Your browser does not support the video tag.
             </video>
           ) : type.startsWith("audio/") ? (
-            <audio 
-              src={src.startsWith('blob:') ? src : getMediaUrl(src)} 
-              className="w-full" 
-              controls 
+            <audio
+              src={mediaUrl}
+              className="w-full"
+              controls
               preload="metadata"
             >
               Your browser does not support the audio tag.
             </audio>
           ) : (
             <img
-              src={src.startsWith('blob:') ? src : getMediaUrl(src)}
+              src={mediaUrl}
               className="w-full h-full object-contain"
               alt="Media Preview"
+              loading="lazy"
             />
           )}
         </div>
-      </div>
-    )
+      );
+    }
   );
 
   return (
