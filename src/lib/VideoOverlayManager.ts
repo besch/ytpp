@@ -97,65 +97,60 @@ export class VideoOverlayManager {
 
       this.mediaBlobUrl = mediaUrl;
 
-      if (mediaType === "video") {
-        const overlayVideo = document.createElement("video");
-        overlayVideo.src = mediaUrl;
-        overlayVideo.muted = muteOverlay;
+      if (mediaType === "video" || mediaType === "image") {
+        const mediaElement =
+          mediaType === "video"
+            ? document.createElement("video")
+            : document.createElement("img");
+
+        mediaElement.src = mediaUrl;
+        if (mediaElement instanceof HTMLVideoElement) {
+          mediaElement.muted = muteOverlay;
+        }
 
         if (position) {
           const videoRect = this.videoElement.getBoundingClientRect();
           const scale = videoRect.width / config.mediaPositionerWidth;
 
-          overlayVideo.style.position = "absolute";
-          overlayVideo.style.left = `${position.x * scale}px`;
-          overlayVideo.style.top = `${position.y * scale}px`;
-          overlayVideo.style.width = `${position.width * scale}px`;
-          overlayVideo.style.height = `${position.height * scale}px`;
-          overlayVideo.style.objectFit = "fill";
+          // Create a container div to maintain aspect ratio
+          const containerDiv = document.createElement("div");
+          containerDiv.style.position = "absolute";
+          containerDiv.style.left = `${position.x * scale}px`;
+          containerDiv.style.top = `${position.y * scale}px`;
+          containerDiv.style.width = `${position.width * scale}px`;
+          containerDiv.style.height = `${position.height * scale}px`;
+
+          // Style the media element to maintain aspect ratio
+          mediaElement.style.position = "absolute";
+          mediaElement.style.width = "100%";
+          mediaElement.style.height = "100%";
+          mediaElement.style.objectFit = "contain";
+
+          containerDiv.appendChild(mediaElement);
+          overlayContainer.appendChild(containerDiv);
         } else {
-          overlayVideo.style.width = "100%";
-          overlayVideo.style.height = "100%";
-          overlayVideo.style.objectFit = "contain";
+          mediaElement.style.width = "100%";
+          mediaElement.style.height = "100%";
+          mediaElement.style.objectFit = "contain";
+          overlayContainer.appendChild(mediaElement);
         }
 
-        overlayVideo.addEventListener("ended", () => {
-          this.hideOverlay(id);
-          if (this.overlayEndedCallback) {
-            this.overlayEndedCallback();
-          }
-        });
-
-        overlayContainer.appendChild(overlayVideo);
-        await overlayVideo.play();
-      } else if (mediaType === "image") {
-        const overlayImage = document.createElement("img");
-        overlayImage.src = mediaUrl;
-
-        if (position) {
-          const videoRect = this.videoElement.getBoundingClientRect();
-          const scale = videoRect.width / config.mediaPositionerWidth;
-
-          overlayImage.style.position = "absolute";
-          overlayImage.style.left = `${position.x * scale}px`;
-          overlayImage.style.top = `${position.y * scale}px`;
-          overlayImage.style.width = `${position.width * scale}px`;
-          overlayImage.style.height = `${position.height * scale}px`;
-          overlayImage.style.objectFit = "fill";
-        } else {
-          overlayImage.style.width = "100%";
-          overlayImage.style.height = "100%";
-          overlayImage.style.objectFit = "contain";
+        if (mediaElement instanceof HTMLVideoElement) {
+          mediaElement.addEventListener("ended", () => {
+            this.hideOverlay(id);
+            if (this.overlayEndedCallback) {
+              this.overlayEndedCallback();
+            }
+          });
+          await mediaElement.play();
+        } else if (duration) {
+          this.overlayTimeout = window.setTimeout(() => {
+            this.hideOverlay(id);
+            if (this.overlayEndedCallback) {
+              this.overlayEndedCallback();
+            }
+          }, duration * 1000);
         }
-
-        overlayContainer.appendChild(overlayImage);
-
-        const displayDuration = duration ? duration * 1000 : 5000;
-        this.overlayTimeout = window.setTimeout(() => {
-          this.hideOverlay(id);
-          if (this.overlayEndedCallback) {
-            this.overlayEndedCallback();
-          }
-        }, displayDuration);
       } else if (mediaType === "audio") {
         this.audioElement = document.createElement("audio");
         this.audioElement.src = mediaUrl;
