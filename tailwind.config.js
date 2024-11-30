@@ -20,7 +20,6 @@ module.exports = {
         1: "0.25rem",
         2: "0.5rem",
         10: "2.5rem",
-        // added more spacing options
         4: "1rem",
         6: "1.5rem",
         8: "2rem",
@@ -31,12 +30,10 @@ module.exports = {
         base: ["1rem", { lineHeight: "1.5rem" }],
         lg: ["1.125rem", { lineHeight: "1.75rem" }],
         xl: ["1.25rem", { lineHeight: "1.75rem" }],
-        // added larger font sizes
         "2xl": ["1.5rem", { lineHeight: "2rem" }],
         "3xl": ["1.875rem", { lineHeight: "2.25rem" }],
       },
       borderRadius: {
-        // added custom border radius
         md: "0.375rem",
         lg: "0.5rem",
         xl: "0.75rem",
@@ -48,12 +45,10 @@ module.exports = {
     function ({ addBase, theme }) {
       addBase({
         "#timeline-container, #react-overlay-root": {
-          // Add base styles for containers
           "--tw-shadow": "none",
           "--tw-ring-shadow": "none",
         },
         "#timeline-container button, #react-overlay-root button": {
-          // Reset button styles
           background: "transparent",
           border: "none",
           padding: "0.5rem 1rem",
@@ -66,7 +61,6 @@ module.exports = {
           },
         },
         "#timeline-container *, #react-overlay-root *": {
-          // Ensure proper box model
           "box-sizing": "border-box",
         },
         "#react-overlay-root [role='button']": {
