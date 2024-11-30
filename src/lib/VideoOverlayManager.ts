@@ -10,6 +10,7 @@ export class VideoOverlayManager {
   private overlayEndedCallback: (() => void) | null = null;
   private overlayTimeout: number | null = null;
   private audioElement: HTMLAudioElement | null = null;
+  private overlayElements: Map<string, HTMLElement> = new Map();
 
   constructor(videoElement: HTMLVideoElement) {
     this.videoElement = videoElement;
@@ -25,7 +26,7 @@ export class VideoOverlayManager {
 
   private setupOverlayElement(): void {
     this.overlayElement = document.createElement("div");
-    this.overlayElement.classList.add("timelines-overlay");
+    this.overlayElement.classList.add("timelines-overlay-container");
 
     Object.assign(this.overlayElement.style, {
       position: "absolute",
@@ -33,9 +34,8 @@ export class VideoOverlayManager {
       left: "0",
       width: "100%",
       height: "100%",
-      display: "none",
       zIndex: "2",
-      pointerEvents: "none", // Allow clicks through overlay
+      pointerEvents: "none",
     });
 
     if (this.container) {
@@ -72,17 +72,24 @@ export class VideoOverlayManager {
    */
   public async playOverlayMedia(
     mediaUrl: string,
-    muteOverlay: boolean = false,
+    muteOverlay: boolean,
     mediaType: "video" | "image" | "audio",
+    id: string,
     duration?: number,
     position?: { x: number; y: number; width: number; height: number }
   ): Promise<void> {
     if (!this.overlayElement) return;
 
     try {
-      while (this.overlayElement.firstChild) {
-        this.overlayElement.removeChild(this.overlayElement.firstChild);
-      }
+      const overlayContainer = document.createElement("div");
+      overlayContainer.style.position = "absolute";
+      overlayContainer.style.top = "0";
+      overlayContainer.style.left = "0";
+      overlayContainer.style.width = "100%";
+      overlayContainer.style.height = "100%";
+
+      this.overlayElements.set(id, overlayContainer);
+      this.overlayElement.appendChild(overlayContainer);
 
       if (this.mediaBlobUrl) {
         URL.revokeObjectURL(this.mediaBlobUrl);
@@ -96,7 +103,6 @@ export class VideoOverlayManager {
         overlayVideo.muted = muteOverlay;
 
         if (position) {
-          const containerRect = this.container?.getBoundingClientRect();
           const videoRect = this.videoElement.getBoundingClientRect();
           const scale = videoRect.width / config.mediaPositionerWidth;
 
@@ -113,22 +119,19 @@ export class VideoOverlayManager {
         }
 
         overlayVideo.addEventListener("ended", () => {
-          this.hideOverlay();
+          this.hideOverlay(id);
           if (this.overlayEndedCallback) {
             this.overlayEndedCallback();
           }
         });
 
-        this.overlayElement.appendChild(overlayVideo);
-        this.overlayElement.style.display = "block";
-
+        overlayContainer.appendChild(overlayVideo);
         await overlayVideo.play();
       } else if (mediaType === "image") {
         const overlayImage = document.createElement("img");
         overlayImage.src = mediaUrl;
 
         if (position) {
-          const containerRect = this.container?.getBoundingClientRect();
           const videoRect = this.videoElement.getBoundingClientRect();
           const scale = videoRect.width / config.mediaPositionerWidth;
 
@@ -144,12 +147,11 @@ export class VideoOverlayManager {
           overlayImage.style.objectFit = "contain";
         }
 
-        this.overlayElement.appendChild(overlayImage);
-        this.overlayElement.style.display = "block";
+        overlayContainer.appendChild(overlayImage);
 
         const displayDuration = duration ? duration * 1000 : 5000;
         this.overlayTimeout = window.setTimeout(() => {
-          this.hideOverlay();
+          this.hideOverlay(id);
           if (this.overlayEndedCallback) {
             this.overlayEndedCallback();
           }
@@ -160,7 +162,7 @@ export class VideoOverlayManager {
         this.audioElement.muted = muteOverlay;
 
         this.audioElement.addEventListener("ended", () => {
-          this.hideOverlay();
+          this.hideOverlay(id);
           if (this.overlayEndedCallback) {
             this.overlayEndedCallback();
           }
@@ -170,7 +172,7 @@ export class VideoOverlayManager {
 
         if (duration) {
           this.overlayTimeout = window.setTimeout(() => {
-            this.hideOverlay();
+            this.hideOverlay(id);
             if (this.overlayEndedCallback) {
               this.overlayEndedCallback();
             }
@@ -179,23 +181,18 @@ export class VideoOverlayManager {
       }
     } catch (error) {
       console.error("Error playing overlay media:", error);
-      this.hideOverlay();
+      this.hideOverlay(id);
     }
   }
 
   /**
    * Hides the overlay media.
    */
-  public hideOverlay = (): void => {
-    if (this.overlayElement) {
-      this.overlayElement.style.display = "none";
-      while (this.overlayElement.firstChild) {
-        this.overlayElement.removeChild(this.overlayElement.firstChild);
-      }
-      if (this.mediaBlobUrl) {
-        URL.revokeObjectURL(this.mediaBlobUrl);
-        this.mediaBlobUrl = null;
-      }
+  public hideOverlay = (id: string): void => {
+    const overlayElement = this.overlayElements.get(id);
+    if (overlayElement) {
+      overlayElement.remove();
+      this.overlayElements.delete(id);
     }
     if (this.overlayTimeout) {
       clearTimeout(this.overlayTimeout);
@@ -212,12 +209,9 @@ export class VideoOverlayManager {
    */
   public destroy(): void {
     this.resizeObserver?.disconnect();
-    if (this.overlayElement) {
-      this.overlayElement.remove();
-    }
-    if (this.overlayTimeout) {
-      clearTimeout(this.overlayTimeout);
-    }
+    this.overlayElements.forEach((element) => element.remove());
+    this.overlayElements.clear();
+    this.overlayElement?.remove();
   }
 
   public onOverlayEnded(callback: () => void): void {
@@ -262,14 +256,20 @@ export class VideoOverlayManager {
     text: string,
     style: TextStyle,
     position: { x: number; y: number; width: number; height: number },
-    duration: number
+    duration: number,
+    id: string
   ): Promise<void> {
     if (!this.overlayElement) return;
 
-    // Clear existing overlay
-    while (this.overlayElement.firstChild) {
-      this.overlayElement.removeChild(this.overlayElement.firstChild);
-    }
+    const overlayContainer = document.createElement("div");
+    overlayContainer.style.position = "absolute";
+    overlayContainer.style.top = "0";
+    overlayContainer.style.left = "0";
+    overlayContainer.style.width = "100%";
+    overlayContainer.style.height = "100%";
+
+    this.overlayElements.set(id, overlayContainer);
+    this.overlayElement.appendChild(overlayContainer);
 
     const textElement = document.createElement("div");
     Object.assign(textElement.style, {
@@ -294,12 +294,11 @@ export class VideoOverlayManager {
     });
 
     textElement.textContent = text;
-    this.overlayElement.appendChild(textElement);
-    this.overlayElement.style.display = "block";
+    overlayContainer.appendChild(textElement);
 
     if (duration) {
       this.overlayTimeout = window.setTimeout(() => {
-        this.hideOverlay();
+        this.hideOverlay(id);
         if (this.overlayEndedCallback) {
           this.overlayEndedCallback();
         }

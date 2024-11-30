@@ -17,9 +17,13 @@ export class VideoManager {
   private cleanupListeners: Array<() => void> = [];
   private videoOverlayManager: VideoOverlayManager | null = null;
   private instructions: Instruction[] = [];
-  private lastInstructionId: string | null = null;
-  private activeOverlayInstruction: OverlayInstruction | null = null;
-  private activeOverlayEndTime: number | null = null;
+  private activeInstructions: Map<
+    string,
+    {
+      instruction: Instruction;
+      endTime: number | null;
+    }
+  > = new Map();
 
   constructor() {
     this.cleanupListeners = [];
@@ -92,13 +96,11 @@ export class VideoManager {
   };
 
   private handleVideoSeeking = (event: Event): void => {
-    // Reset lastInstructionId to allow instructions to trigger again upon seeking
-    this.lastInstructionId = null;
-
-    // Clear any active overlay when seeking
-    this.videoOverlayManager?.hideOverlay();
-    this.activeOverlayInstruction = null;
-    this.activeOverlayEndTime = null;
+    // Clear any active overlays when seeking
+    this.activeInstructions.forEach((_, id) => {
+      this.videoOverlayManager?.hideOverlay(id);
+    });
+    this.activeInstructions.clear();
 
     // Clear any existing resume timeout
     if ((this.videoElement as any)._resumeTimeout) {
@@ -125,17 +127,20 @@ export class VideoManager {
     lastTime: number,
     currentTime: number
   ): Promise<void> {
-    // Handle active overlay check as before
-    if (
-      this.activeOverlayInstruction &&
-      currentTime >= this.activeOverlayEndTime!
-    ) {
-      this.videoOverlayManager?.hideOverlay();
-      this.activeOverlayInstruction = null;
-      this.activeOverlayEndTime = null;
+    // Check for expired instructions
+    for (const [id, activeInstr] of this.activeInstructions) {
+      if (activeInstr.endTime && currentTime >= activeInstr.endTime) {
+        if (
+          activeInstr.instruction.type === "overlay" ||
+          activeInstr.instruction.type === "text-overlay"
+        ) {
+          this.videoOverlayManager?.hideOverlay(id);
+        }
+        this.activeInstructions.delete(id);
+      }
     }
 
-    // Find instructions that should trigger between lastTime and currentTime
+    // Find new instructions to trigger
     const instructionsToTrigger = this.instructions.filter(
       (instr: Instruction) => {
         const instrTime = instr.triggerTime / 1000;
@@ -144,9 +149,7 @@ export class VideoManager {
     );
 
     for (const instruction of instructionsToTrigger) {
-      if (this.lastInstructionId !== instruction.id) {
-        this.lastInstructionId = instruction.id;
-
+      if (!this.activeInstructions.has(instruction.id)) {
         if (instruction.type === "overlay") {
           const overlayInstruction = instruction as OverlayInstruction;
           await this.handleOverlayInstruction(overlayInstruction);
@@ -154,10 +157,6 @@ export class VideoManager {
           if (this.videoElement && !this.videoElement.paused) {
             const skipInstruction = instruction as SkipInstruction;
             this.handleInstructionSkip(skipInstruction.skipToTime);
-          } else {
-            console.log(
-              "Video is paused, skip instruction will not be executed"
-            );
           }
         } else if (instruction.type === "text-overlay") {
           const textOverlayInstruction = instruction as TextOverlayInstruction;
@@ -170,8 +169,6 @@ export class VideoManager {
   private async handleOverlayInstruction(
     instruction: OverlayInstruction
   ): Promise<void> {
-    console.log("Handling overlay instruction:", instruction);
-
     if (!this.videoElement || this.videoElement.paused) {
       console.log("Video is paused, overlay instruction will not be executed");
       return;
@@ -183,18 +180,22 @@ export class VideoManager {
       ? "audio"
       : "image";
 
-    this.activeOverlayInstruction = instruction;
-
+    let endTime = null;
     if (instruction.useOverlayDuration) {
       const duration =
         mediaType === "video" || mediaType === "audio"
           ? instruction.overlayMedia!.duration
           : instruction.overlayMedia!.duration || 5;
-      this.activeOverlayEndTime = instruction.triggerTime / 1000 + duration;
+      endTime = instruction.triggerTime / 1000 + duration;
     } else {
       const duration = instruction.overlayMedia!.duration || 5;
-      this.activeOverlayEndTime = instruction.triggerTime / 1000 + duration;
+      endTime = instruction.triggerTime / 1000 + duration;
     }
+
+    this.activeInstructions.set(instruction.id, {
+      instruction,
+      endTime,
+    });
 
     // Pause main video if specified
     if (instruction.pauseMainVideo) {
@@ -205,6 +206,7 @@ export class VideoManager {
       instruction.overlayMedia!.url,
       instruction.muteOverlayMedia || false,
       mediaType,
+      instruction.id,
       instruction.useOverlayDuration
         ? instruction.overlayMedia!.duration
         : instruction.overlayMedia!.duration,
@@ -307,7 +309,6 @@ export class VideoManager {
 
   public setInstructions(instructions: Instruction[]): void {
     this.instructions = instructions;
-    this.lastInstructionId = null; // Reset when instructions change
   }
 
   public getDuration(): number {
@@ -331,13 +332,16 @@ export class VideoManager {
     instruction: TextOverlayInstruction
   ): Promise<void> {
     if (!this.videoElement || this.videoElement.paused) {
-      console.log(
-        "Video is paused, text overlay instruction will not be executed"
-      );
       return;
     }
 
-    const { textOverlay, duration, pauseMainVideo } = instruction;
+    const endTime = instruction.triggerTime / 1000 + instruction.duration;
+    this.activeInstructions.set(instruction.id, {
+      instruction,
+      endTime,
+    });
+
+    const { textOverlay, pauseMainVideo } = instruction;
 
     // Calculate position based on video size
     const videoRect = this.videoElement.getBoundingClientRect();
@@ -359,7 +363,8 @@ export class VideoManager {
       textOverlay.text,
       textOverlay.style,
       scaledPosition,
-      duration
+      instruction.duration,
+      instruction.id // Pass instruction ID
     );
 
     // If pauseMainVideo is true, resume after duration
@@ -370,7 +375,7 @@ export class VideoManager {
             console.error("Error resuming video:", error);
           });
         }
-      }, duration * 1000);
+      }, instruction.duration * 1000);
     }
   }
 }
