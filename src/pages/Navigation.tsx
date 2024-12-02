@@ -12,6 +12,7 @@ import {
   setLoading,
 } from "@/store/authSlice";
 import { toast } from "react-toastify";
+import { api } from "@/lib/api";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
@@ -96,8 +97,9 @@ const Navigation: React.FC = () => {
         throw new Error(response?.error || "Login failed");
       }
 
-      // Set the user in Redux store
+      // Save user to database before setting in Redux store
       if (response.user) {
+        await api.users.createOrUpdate(response.user);
         dispatch(setUser(response.user));
         toast.success("Successfully logged in!");
       } else {

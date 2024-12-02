@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from './index';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "./index";
 
 interface User {
   id: string;
@@ -23,7 +23,7 @@ const initialState: AuthState = {
 };
 
 export const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     setUser: (state, action: PayloadAction<User | null>) => {
@@ -31,6 +31,12 @@ export const authSlice = createSlice({
       state.isAuthenticated = !!action.payload;
       state.loading = false;
       state.error = null;
+
+      if (action.payload) {
+        localStorage.setItem("user", JSON.stringify(action.payload));
+      } else {
+        localStorage.removeItem("user");
+      }
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -51,7 +57,8 @@ export const authSlice = createSlice({
 export const { setUser, setLoading, setError, logout } = authSlice.actions;
 
 export const selectUser = (state: RootState) => state.auth.user;
-export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
+export const selectIsAuthenticated = (state: RootState) =>
+  state.auth.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.auth.loading;
 export const selectAuthError = (state: RootState) => state.auth.error;
 

@@ -125,13 +125,19 @@ export interface InstructionsState {
 
 export interface Timeline {
   id: string;
-  title?: string;
+  title: string;
   video_url: string;
   elements: any[];
   instructions: Instruction[];
+  user_id: string;
+  users?: {
+    id: string;
+    name: string;
+    picture: string;
+  };
+  isOwner?: boolean;
   created_at: string;
   updated_at: string;
-  media_files: MediaFile[];
 }
 
 export interface MediaFile {

@@ -16,6 +16,7 @@ import {
 import { Timeline } from "@/types";
 import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
+import { selectUser } from "@/store/authSlice";
 
 const TimelineList: React.FC = () => {
   const dispatch = useDispatch();
@@ -26,6 +27,7 @@ const TimelineList: React.FC = () => {
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const videoUrl = window.location.href.split("&")[0];
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     const fetchTimelines = async () => {
@@ -95,6 +97,10 @@ const TimelineList: React.FC = () => {
     }
   };
 
+  const isTimelineOwner = (timeline: Timeline) => {
+    return user?.id === timeline.user_id;
+  };
+
   return (
     <div className="p-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -131,32 +137,32 @@ const TimelineList: React.FC = () => {
                     className="h-12 text-lg"
                   />
                 ) : (
-                  <p
-                    className="text-lg font-medium cursor-pointer hover:text-primary"
-                    onClick={() => handleEditTimeline(timeline)}
-                  >
-                    {timeline.title}
-                  </p>
+                  <>
+                    <p
+                      className="text-lg font-medium cursor-pointer hover:text-primary"
+                      onClick={() => handleEditTimeline(timeline)}
+                    >
+                      {timeline.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      {timeline.users && (
+                        <>
+                          <img
+                            src={timeline.users.picture}
+                            alt={timeline.users.name}
+                            className="w-5 h-5 rounded-full"
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            {timeline.users.name}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
               <div className="flex items-center space-x-2">
-                {editingTitleId === timeline.id ? (
-                  <>
-                    <Button
-                      size="sm"
-                      onClick={() => handleTitleUpdate(timeline.id)}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingTitleId(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
+                {isTimelineOwner(timeline) && (
                   <>
                     <Button
                       variant="ghost"
