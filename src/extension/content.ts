@@ -41,6 +41,9 @@ class ContentScript {
         case "HANDLE_LOGOUT":
           response = await this.handleAuthMessage("HANDLE_LOGOUT");
           break;
+        case "CHECK_AUTH_STATE":
+          response = await this.handleAuthMessage("CHECK_AUTH_STATE");
+          break;
       }
 
       // Send response back to injected app

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Move, Home, LogOut, LogIn, User } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -105,7 +105,8 @@ const Navigation: React.FC = () => {
       }
     } catch (error) {
       console.error("Navigation: Login error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Login failed";
+      const errorMessage =
+        error instanceof Error ? error.message : "Login failed";
       dispatch(setError(errorMessage));
       toast.error(errorMessage);
     } finally {
@@ -127,11 +128,31 @@ const Navigation: React.FC = () => {
       toast.success("Successfully logged out!");
     } catch (error) {
       console.error("Logout error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Logout failed";
+      const errorMessage =
+        error instanceof Error ? error.message : "Logout failed";
       dispatch(setError(errorMessage));
       toast.error(errorMessage);
     }
   };
+
+  useEffect(() => {
+    const checkAuthState = async () => {
+      try {
+        const response = await sendMessageToContentScript({
+          type: "CHECK_AUTH_STATE",
+        });
+
+        if (response?.success && response.user) {
+          dispatch(setUser(response.user));
+        }
+      } catch (error) {
+        console.error("Failed to check auth state:", error);
+        dispatch(setError("Failed to check auth state"));
+      }
+    };
+
+    checkAuthState();
+  }, [dispatch]);
 
   return (
     <nav className="flex justify-between items-center px-8 py-6 bg-background border-b border-border">
