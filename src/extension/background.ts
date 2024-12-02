@@ -35,20 +35,21 @@ class BackgroundService {
   private initializeListeners(): void {
     chrome.runtime.onInstalled.addListener(this.onInstalled.bind(this));
     chrome.runtime.onStartup.addListener(this.onStartup.bind(this));
-    chrome.runtime.onMessage.addListener(this.onMessage.bind(this));
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      this.handleMessage(message, sender, sendResponse);
+      return true;
+    });
   }
 
-  private async onInstalled(): Promise<void> {
-    // await chrome.storage.local.clear();
-  }
+  private async onInstalled(): Promise<void> {}
 
   private async onStartup(): Promise<void> {}
 
-  private async onMessage(
+  private async handleMessage(
     message: any,
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
-  ): Promise<boolean> {
+  ): Promise<void> {
     switch (message.action) {
       case "HANDLE_LOGIN":
         try {
@@ -61,7 +62,7 @@ class BackgroundService {
 
           if (!auth?.token) {
             sendResponse({ success: false, error: "No auth token received" });
-            return true;
+            return;
           }
 
           console.log("Background: Fetching user info");
@@ -81,7 +82,7 @@ class BackgroundService {
               success: false,
               error: `Failed to fetch user info: ${response.status}`,
             });
-            return true;
+            return;
           }
 
           const userData = await response.json();
@@ -111,19 +112,20 @@ class BackgroundService {
             error: error instanceof Error ? error.message : "Unknown error",
           });
         }
-        return true;
+        break;
 
       case "HANDLE_LOGOUT":
         try {
           const auth = await chrome.identity.getAuthToken({
             interactive: false,
           });
+
           if (auth?.token) {
             await chrome.identity.removeCachedAuthToken({ token: auth.token });
           }
+
           await chrome.storage.local.remove("user");
 
-          // Notify content script
           if (sender.tab?.id) {
             await chrome.tabs.sendMessage(sender.tab.id, {
               action: "AUTH_STATE_CHANGED",
@@ -139,9 +141,11 @@ class BackgroundService {
             error: error instanceof Error ? error.message : "Unknown error",
           });
         }
-        return true;
+        break;
+
+      default:
+        sendResponse({ success: false, error: "Unknown action" });
     }
-    return true;
   }
 }
 
