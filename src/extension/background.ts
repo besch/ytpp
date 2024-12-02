@@ -43,15 +43,19 @@ class BackgroundService {
 
   private async verifyToken(): Promise<boolean> {
     try {
-      const auth = await chrome.identity.getAuthToken({ interactive: false });
-      if (!auth?.token) return false;
+      const auth = await chrome.identity.getAuthToken({ 
+        interactive: false 
+      } as chrome.identity.TokenDetails);
+      
+      const token = (auth as { token: string }).token;
+      if (!token) return false;
 
       const response = await fetch(
         "https://www.googleapis.com/oauth2/v3/tokeninfo",
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${auth.token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -137,11 +141,12 @@ class BackgroundService {
           console.log("Background: Starting login process");
           const auth = await chrome.identity.getAuthToken({
             interactive: true,
-          });
+          } as chrome.identity.TokenDetails);
 
           console.log("Background: Auth result:", auth);
 
-          if (!auth?.token) {
+          const token = (auth as { token: string }).token;
+          if (!token) {
             sendResponse({ success: false, error: "No auth token received" });
             return;
           }
@@ -151,7 +156,7 @@ class BackgroundService {
             "https://www.googleapis.com/oauth2/v3/userinfo",
             {
               headers: {
-                Authorization: `Bearer ${auth.token}`,
+                Authorization: `Bearer ${token}`,
               },
             }
           );
@@ -199,10 +204,20 @@ class BackgroundService {
         try {
           const auth = await chrome.identity.getAuthToken({
             interactive: false,
-          });
+          } as chrome.identity.TokenDetails);
 
-          if (auth?.token) {
-            await chrome.identity.removeCachedAuthToken({ token: auth.token });
+          const token = (auth as { token: string }).token;
+          if (token) {
+            // First revoke the token
+            await fetch(
+              `https://accounts.google.com/o/oauth2/revoke?token=${token}`
+            );
+
+            // Then remove it from Chrome's cache
+            await chrome.identity.removeCachedAuthToken({ token });
+
+            // Clear any additional tokens
+            await chrome.identity.clearAllCachedAuthTokens();
           }
 
           await chrome.storage.local.remove("user");
