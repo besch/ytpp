@@ -41,6 +41,83 @@ class BackgroundService {
     });
   }
 
+  private async verifyToken(): Promise<boolean> {
+    try {
+      const auth = await chrome.identity.getAuthToken({ interactive: false });
+      if (!auth?.token) return false;
+
+      const response = await fetch(
+        "https://www.googleapis.com/oauth2/v3/tokeninfo",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
+        }
+      );
+
+      return response.ok;
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      return false;
+    }
+  }
+
+  private async checkAndRefreshAuthState(
+    sender: chrome.runtime.MessageSender,
+    sendResponse: (response: any) => void
+  ): Promise<void> {
+    try {
+      const isValid = await this.verifyToken();
+
+      if (!isValid) {
+        // Clear invalid auth state
+        await chrome.storage.local.remove("user");
+        sendResponse({ success: true, user: null });
+        return;
+      }
+
+      // Token is valid, get user data from storage
+      const { user } = await chrome.storage.local.get("user");
+
+      if (user) {
+        // Verify user info is still valid
+        const auth = await chrome.identity.getAuthToken({ interactive: false });
+        const userInfoResponse = await fetch(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${auth.token}`,
+            },
+          }
+        );
+
+        if (userInfoResponse.ok) {
+          const userData = await userInfoResponse.json();
+          const updatedUser = {
+            id: userData.sub,
+            email: userData.email,
+            name: userData.name,
+            picture: userData.picture,
+          };
+
+          // Update stored user data
+          await chrome.storage.local.set({ user: updatedUser });
+          sendResponse({ success: true, user: updatedUser });
+        } else {
+          // User info fetch failed, clear auth state
+          await chrome.storage.local.remove("user");
+          sendResponse({ success: true, user: null });
+        }
+      } else {
+        sendResponse({ success: true, user: null });
+      }
+    } catch (error) {
+      console.error("Auth state check failed:", error);
+      sendResponse({ success: false, error: "Failed to check auth state" });
+    }
+  }
+
   private async onInstalled(): Promise<void> {}
 
   private async onStartup(): Promise<void> {}
@@ -51,6 +128,10 @@ class BackgroundService {
     sendResponse: (response?: any) => void
   ): Promise<void> {
     switch (message.action) {
+      case "CHECK_AUTH_STATE":
+        await this.checkAndRefreshAuthState(sender, sendResponse);
+        break;
+
       case "HANDLE_LOGIN":
         try {
           console.log("Background: Starting login process");

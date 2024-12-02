@@ -1,5 +1,16 @@
 import { addCustomEventListener } from "@/lib/eventSystem";
 
+interface AuthResponse {
+  success: boolean;
+  error?: string;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    picture: string;
+  };
+}
+
 class ContentScript {
   private isAppVisible: boolean = false;
   private eventListeners: Array<() => void> = [];
@@ -68,12 +79,25 @@ class ContentScript {
   }
 
   private async checkAuthState(): Promise<void> {
-    // Get auth state from storage and dispatch to injected app
-    chrome.storage.local.get(["user"], (result) => {
-      if (result.user) {
-        this.dispatchToInjectedApp("AUTH_STATE_CHANGED", { user: result.user });
+    try {
+      // Check auth state with background script
+      const response = await new Promise<AuthResponse>((resolve) => {
+        chrome.runtime.sendMessage(
+          { action: "CHECK_AUTH_STATE" },
+          (response: AuthResponse) => {
+            resolve(response || { success: false });
+          }
+        );
+      });
+
+      if (response?.success && response.user) {
+        this.dispatchToInjectedApp("AUTH_STATE_CHANGED", {
+          user: response.user,
+        });
       }
-    });
+    } catch (error) {
+      console.error("Failed to check auth state:", error);
+    }
   }
 
   private dispatchToInjectedApp(type: string, payload: any): void {
