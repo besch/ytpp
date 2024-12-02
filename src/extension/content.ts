@@ -10,6 +10,74 @@ class ContentScript {
 
   private initialize(): void {
     this.setupMessageListener();
+    this.setupWindowMessageListener();
+    this.checkAuthState();
+  }
+
+  private setupWindowMessageListener(): void {
+    window.addEventListener("message", async (event) => {
+      // Only accept messages from our injected app
+      if (event.data.source !== "injected-app") return;
+
+      const { messageId, type } = event.data;
+
+      let response = { success: false };
+
+      switch (type) {
+        case "HANDLE_LOGIN":
+          response = await this.handleAuthMessage("HANDLE_LOGIN");
+          break;
+        case "HANDLE_LOGOUT":
+          response = await this.handleAuthMessage("HANDLE_LOGOUT");
+          break;
+      }
+
+      // Send response back to injected app
+      window.postMessage(
+        {
+          source: "content-script",
+          type: "RESPONSE",
+          messageId,
+          payload: response,
+        },
+        "*"
+      );
+    });
+  }
+
+  private async handleAuthMessage(
+    action: string
+  ): Promise<{ success: boolean; error?: string; user?: any }> {
+    try {
+      console.log("Content: Sending auth message to background", action);
+      return new Promise((resolve) => {
+        chrome.runtime.sendMessage({ action }, (response) => {
+          console.log("Content: Received response from background", response);
+          resolve(
+            response || { success: false, error: "No response from background" }
+          );
+        });
+      });
+    } catch (error) {
+      console.error(`Content: ${action} error:`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  private async checkAuthState(): Promise<void> {
+    // Get auth state from storage and dispatch to injected app
+    chrome.storage.local.get(["user"], (result) => {
+      if (result.user) {
+        this.dispatchToInjectedApp("AUTH_STATE_CHANGED", { user: result.user });
+      }
+    });
+  }
+
+  private dispatchToInjectedApp(type: string, payload: any): void {
+    window.postMessage({ source: "content-script", type, payload }, "*");
   }
 
   private async toggleAppVisiblity(): Promise<void> {
@@ -66,9 +134,15 @@ class ContentScript {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ): Promise<boolean> {
-    if (message.action === "TOGGLE_APP_VISIBILITY") {
-      await this.toggleAppVisiblity();
-      sendResponse({ success: true });
+    switch (message.action) {
+      case "TOGGLE_APP_VISIBILITY":
+        await this.toggleAppVisiblity();
+        sendResponse({ success: true });
+        break;
+      case "AUTH_STATE_CHANGED":
+        this.dispatchToInjectedApp("AUTH_STATE_CHANGED", message.payload);
+        sendResponse({ success: true });
+        break;
     }
     return true;
   }

@@ -1,10 +1,23 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Move, Home } from "lucide-react";
+import { Move, Home, LogOut, LogIn, User } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectUser,
+  selectIsAuthenticated,
+  setUser,
+  logout,
+  setError,
+  setLoading,
+} from "@/store/authSlice";
+import { toast } from "react-toastify";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   const handleDragStart = (e: React.MouseEvent) => {
     const container = document.getElementById("react-overlay-root");
@@ -30,6 +43,96 @@ const Navigation: React.FC = () => {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
+  const sendMessageToContentScript = (message: any): Promise<any> => {
+    return new Promise((resolve) => {
+      // Create a unique message ID
+      const messageId = Date.now().toString();
+
+      // Create a one-time message listener
+      const handleResponse = (event: MessageEvent) => {
+        if (
+          event.data &&
+          event.data.source === "content-script" &&
+          event.data.type === "RESPONSE" &&
+          event.data.messageId === messageId
+        ) {
+          window.removeEventListener("message", handleResponse);
+          resolve(event.data.payload);
+        }
+      };
+
+      window.addEventListener("message", handleResponse);
+
+      // Send message to content script
+      window.postMessage(
+        {
+          source: "injected-app",
+          messageId,
+          ...message,
+        },
+        "*"
+      );
+
+      // Cleanup listener after timeout
+      setTimeout(() => {
+        window.removeEventListener("message", handleResponse);
+        resolve({ success: false });
+      }, 5000);
+    });
+  };
+
+  const handleLogin = async () => {
+    try {
+      dispatch(setLoading(true));
+      console.log("Navigation: Starting login process");
+
+      const response = await sendMessageToContentScript({
+        type: "HANDLE_LOGIN",
+      });
+
+      console.log("Navigation: Received login response", response);
+
+      if (!response?.success) {
+        throw new Error(response?.error || "Login failed");
+      }
+
+      // Set the user in Redux store
+      if (response.user) {
+        dispatch(setUser(response.user));
+        toast.success("Successfully logged in!");
+      } else {
+        throw new Error("No user data received");
+      }
+    } catch (error) {
+      console.error("Navigation: Login error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Login failed";
+      dispatch(setError(errorMessage));
+      toast.error(errorMessage);
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await sendMessageToContentScript({
+        type: "HANDLE_LOGOUT",
+      });
+
+      if (!response?.success) {
+        throw new Error(response?.error || "Logout failed");
+      }
+
+      dispatch(logout());
+      toast.success("Successfully logged out!");
+    } catch (error) {
+      console.error("Logout error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Logout failed";
+      dispatch(setError(errorMessage));
+      toast.error(errorMessage);
+    }
+  };
+
   return (
     <nav className="flex justify-between items-center px-8 py-6 bg-background border-b border-border">
       <div
@@ -39,14 +142,46 @@ const Navigation: React.FC = () => {
         <Home className="h-6 w-6" />
         <span>Home</span>
       </div>
-      <Button
-        variant="ghost"
-        onMouseDown={handleDragStart}
-        title="Drag window"
-        size="sm"
-      >
-        <Move className="h-5 w-5" />
-      </Button>
+
+      <div className="flex items-center gap-4">
+        {isAuthenticated ? (
+          <>
+            <div className="flex items-center gap-2">
+              {user?.picture && (
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
+              <span className="text-sm">{user?.name}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-red-500"
+            >
+              <LogOut className="h-5 w-5 mr-2" />
+              Logout
+            </Button>
+          </>
+        ) : (
+          <Button variant="ghost" size="sm" onClick={handleLogin}>
+            <LogIn className="h-5 w-5 mr-2" />
+            Login
+          </Button>
+        )}
+
+        <Button
+          variant="ghost"
+          onMouseDown={handleDragStart}
+          title="Drag window"
+          size="sm"
+        >
+          <Move className="h-5 w-5" />
+        </Button>
+      </div>
     </nav>
   );
 };

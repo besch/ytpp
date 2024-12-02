@@ -9,8 +9,20 @@ import App from "@/App";
 import { MemoryRouter as Router } from "react-router-dom";
 import { VideoManager } from "@/lib/VideoManager";
 import { setVideoElement } from "@/store/timelineSlice";
+import { setUser } from "@/store/authSlice";
 
 function init() {
+  // Listen for messages from content script
+  window.addEventListener('message', (event) => {
+    if (event.data.source === 'content-script') {
+      switch (event.data.type) {
+        case 'AUTH_STATE_CHANGED':
+          store.dispatch(setUser(event.data.payload.user));
+          break;
+      }
+    }
+  });
+
   // Initialize VideoManager first
   const videoManager = new VideoManager();
   videoManager.findAndStoreVideoElement().then(() => {
