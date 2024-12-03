@@ -13,6 +13,7 @@ import {
 } from "@/store/authSlice";
 import { toast } from "react-toastify";
 import { api } from "@/lib/api";
+import { setTimelines } from "@/store/timelineSlice";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
@@ -133,6 +134,18 @@ const Navigation: React.FC = () => {
     }
   };
 
+  const handleHomeClick = async () => {
+    try {
+      const videoUrl = window.location.href.split("&")[0];
+      const fetchedTimelines = await api.timelines.getAll(videoUrl);
+      dispatch(setTimelines(fetchedTimelines));
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to fetch timelines:", error);
+      toast.error("Failed to fetch timelines");
+    }
+  };
+
   useEffect(() => {
     const checkAuthState = async () => {
       try {
@@ -156,7 +169,7 @@ const Navigation: React.FC = () => {
     <nav className="flex justify-between items-center px-8 py-6 bg-background border-b border-border">
       <div
         className="cursor-pointer hover:text-primary flex items-center gap-3 text-lg"
-        onClick={() => navigate("/")}
+        onClick={handleHomeClick}
       >
         <Home className="h-6 w-6" />
         <span>Home</span>
