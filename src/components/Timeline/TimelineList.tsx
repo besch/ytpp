@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus, Trash2, Edit2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 import {
   selectTimelines,
   selectTimelineLoading,
@@ -24,8 +23,6 @@ const TimelineList: React.FC = () => {
   const timelines = useSelector(selectTimelines);
   const loading = useSelector(selectTimelineLoading);
   const error = useSelector(selectTimelineError);
-  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
-  const [newTitle, setNewTitle] = useState("");
   const videoUrl = window.location.href.split("&")[0];
   const user = useSelector(selectUser);
 
@@ -80,23 +77,6 @@ const TimelineList: React.FC = () => {
     }
   };
 
-  const startEditingTitle = (timeline: Timeline) => {
-    setEditingTitleId(timeline.id);
-    setNewTitle(timeline.title || "");
-  };
-
-  const handleTitleUpdate = async (timelineId: string) => {
-    try {
-      await api.timelines.update(timelineId, { title: newTitle });
-      const updatedTimelines = await api.timelines.getAll(videoUrl);
-      dispatch(setTimelines(updatedTimelines));
-      setEditingTitleId(null);
-    } catch (error) {
-      console.error("Failed to update timeline title:", error);
-      dispatch(setError("Failed to update timeline title"));
-    }
-  };
-
   const isTimelineOwner = (timeline: Timeline) => {
     return user?.id === timeline.user_id;
   };
@@ -125,66 +105,39 @@ const TimelineList: React.FC = () => {
               className="flex items-center justify-between p-6 bg-card rounded-lg hover:bg-muted/10"
             >
               <div className="flex-1">
-                {editingTitleId === timeline.id ? (
-                  <Input
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleTitleUpdate(timeline.id);
-                      }
-                    }}
-                    className="h-12 text-lg"
-                  />
-                ) : (
-                  <>
-                    <p
-                      className="text-lg font-medium cursor-pointer hover:text-primary"
-                      onClick={() => handleEditTimeline(timeline)}
-                    >
-                      {timeline.title}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      {timeline.users && (
-                        <>
-                          <img
-                            src={timeline.users.picture}
-                            alt={timeline.users.name}
-                            className="w-5 h-5 rounded-full"
-                          />
-                          <span className="text-sm text-muted-foreground">
-                            {timeline.users.name}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </>
-                )}
+                <p
+                  className="text-lg font-medium cursor-pointer hover:text-primary"
+                  onClick={() => handleEditTimeline(timeline)}
+                >
+                  {timeline.title}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  {timeline.users && (
+                    <>
+                      <img
+                        src={timeline.users.picture}
+                        alt={timeline.users.name}
+                        className="w-5 h-5 rounded-full"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {timeline.users.name}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 {isTimelineOwner(timeline) && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startEditingTitle(timeline);
-                      }}
-                    >
-                      <Edit2 size={16} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTimeline(timeline.id);
-                      }}
-                    >
-                      <Trash2 size={16} className="text-destructive" />
-                    </Button>
-                  </>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTimeline(timeline.id);
+                    }}
+                  >
+                    <Trash2 size={16} className="text-destructive" />
+                  </Button>
                 )}
               </div>
             </div>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus, Edit2, Trash2, Play } from "lucide-react";
+import { Plus, Edit2, Trash2, Play, Check, X } from "lucide-react";
 import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 import {
   selectInstructions,
   setEditingInstruction,
@@ -9,6 +10,7 @@ import {
   selectCurrentTimeline,
   selectEditingInstruction,
   seekToTime,
+  setCurrentTimeline,
 } from "@/store/timelineSlice";
 import { selectUser } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
@@ -23,6 +25,8 @@ const InstructionsList: React.FC = () => {
   const editingInstruction = useSelector(selectEditingInstruction);
   const user = useSelector(selectUser);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
 
   const isTimelineOwner = () => {
     return user?.id === currentTimeline?.user_id;
@@ -86,10 +90,63 @@ const InstructionsList: React.FC = () => {
     return "";
   };
 
+  const handleStartEditingTitle = () => {
+    setEditingTitle(true);
+    setNewTitle(currentTimeline?.title || "");
+  };
+
+  const handleSaveTitle = async () => {
+    if (!currentTimeline) return;
+
+    try {
+      await api.timelines.update(currentTimeline.id, { title: newTitle });
+      dispatch(setCurrentTimeline({ ...currentTimeline, title: newTitle }));
+      setEditingTitle(false);
+    } catch (error) {
+      console.error("Failed to update timeline title:", error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium">{currentTimeline?.title}</h1>
+        {editingTitle ? (
+          <div className="flex items-center gap-2">
+            <Input
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSaveTitle();
+                }
+              }}
+              className="h-8 text-lg"
+            />
+            <Button variant="ghost" size="sm" onClick={handleSaveTitle}>
+              <Check size={16} className="text-green-500" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditingTitle(false)}
+            >
+              <X size={16} className="text-destructive" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-medium">{currentTimeline?.title}</h1>
+            {isTimelineOwner() && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleStartEditingTitle}
+              >
+                <Edit2 size={16} />
+              </Button>
+            )}
+          </div>
+        )}
         <div>
           {isTimelineOwner() && (
             <>
