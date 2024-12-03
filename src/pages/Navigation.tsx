@@ -14,6 +14,7 @@ import {
 import { toast } from "react-toastify";
 import { api } from "@/lib/api";
 import { setTimelines } from "@/store/timelineSlice";
+import Account from "@/components/Account/Account";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
@@ -177,27 +178,7 @@ const Navigation: React.FC = () => {
 
       <div className="flex items-center gap-4">
         {isAuthenticated ? (
-          <>
-            <div className="flex items-center gap-2">
-              {user?.picture && (
-                <img
-                  src={user.picture}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full"
-                />
-              )}
-              <span className="text-sm">{user?.name}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-red-500"
-            >
-              <LogOut className="h-5 w-5 mr-2" />
-              Logout
-            </Button>
-          </>
+          <Account sendMessageToContentScript={sendMessageToContentScript} />
         ) : (
           <Button variant="ghost" size="sm" onClick={handleLogin}>
             <LogIn className="h-5 w-5 mr-2" />
