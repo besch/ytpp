@@ -43,10 +43,10 @@ class BackgroundService {
 
   private async verifyToken(): Promise<boolean> {
     try {
-      const auth = await chrome.identity.getAuthToken({ 
-        interactive: false 
+      const auth = await chrome.identity.getAuthToken({
+        interactive: false,
       } as chrome.identity.TokenDetails);
-      
+
       const token = (auth as { token: string }).token;
       if (!token) return false;
 
@@ -141,12 +141,17 @@ class BackgroundService {
           console.log("Background: Starting login process");
           const auth = await chrome.identity.getAuthToken({
             interactive: true,
+            scopes: [
+              "https://www.googleapis.com/auth/userinfo.email",
+              "https://www.googleapis.com/auth/userinfo.profile",
+            ],
           } as chrome.identity.TokenDetails);
 
           console.log("Background: Auth result:", auth);
 
           const token = (auth as { token: string }).token;
           if (!token) {
+            console.error("Background: No auth token received");
             sendResponse({ success: false, error: "No auth token received" });
             return;
           }
@@ -193,9 +198,16 @@ class BackgroundService {
           sendResponse({ success: true, user });
         } catch (error) {
           console.error("Background: Login error:", error);
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : typeof error === "string"
+              ? error
+              : "Failed to complete authentication";
+
           sendResponse({
             success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: errorMessage,
           });
         }
         break;

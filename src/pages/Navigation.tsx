@@ -46,10 +46,8 @@ const Navigation: React.FC = () => {
 
   const sendMessageToContentScript = (message: any): Promise<any> => {
     return new Promise((resolve) => {
-      // Create a unique message ID
       const messageId = Date.now().toString();
 
-      // Create a one-time message listener
       const handleResponse = (event: MessageEvent) => {
         if (
           event.data &&
@@ -64,7 +62,6 @@ const Navigation: React.FC = () => {
 
       window.addEventListener("message", handleResponse);
 
-      // Send message to content script
       window.postMessage(
         {
           source: "injected-app",
@@ -74,11 +71,10 @@ const Navigation: React.FC = () => {
         "*"
       );
 
-      // Cleanup listener after timeout
       setTimeout(() => {
         window.removeEventListener("message", handleResponse);
-        resolve({ success: false });
-      }, 5000);
+        resolve({ success: false, error: "Request timed out" });
+      }, 120000);
     });
   };
 
