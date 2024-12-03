@@ -10,6 +10,7 @@ import {
   selectEditingInstruction,
   seekToTime,
 } from "@/store/timelineSlice";
+import { selectUser } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
 import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
@@ -20,7 +21,12 @@ const InstructionsList: React.FC = () => {
   const currentTimeline = useSelector(selectCurrentTimeline);
   const instructions = useSelector(selectInstructions);
   const editingInstruction = useSelector(selectEditingInstruction);
+  const user = useSelector(selectUser);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
+
+  const isTimelineOwner = () => {
+    return user?.id === currentTimeline?.user_id;
+  };
 
   useEffect(() => {
     if (editingInstruction) {
@@ -85,24 +91,28 @@ const InstructionsList: React.FC = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-medium">{currentTimeline?.title}</h1>
         <div>
-          {showTypeSelect ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowTypeSelect(false)}
-            >
-              Cancel
-            </Button>
-          ) : (
-            <Button onClick={handleAddNew}>
-              <Plus className="w-4 h-4 mr-4" />
-              Add Instruction
-            </Button>
+          {isTimelineOwner() && (
+            <>
+              {showTypeSelect ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTypeSelect(false)}
+                >
+                  Cancel
+                </Button>
+              ) : (
+                <Button onClick={handleAddNew}>
+                  <Plus className="w-4 h-4 mr-4" />
+                  Add Instruction
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {showTypeSelect ? (
+      {showTypeSelect && isTimelineOwner() ? (
         <InstructionTypeSelect onSelect={handleTypeSelect} />
       ) : instructions.length > 0 ? (
         <div className="space-y-2 max-h-[600px] overflow-y-auto">
@@ -135,27 +145,32 @@ const InstructionsList: React.FC = () => {
                   >
                     <Play size={16} />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(instruction)}
-                  >
-                    <Edit2 size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(instruction.id)}
-                  >
-                    <Trash2 size={16} className="text-destructive" />
-                  </Button>
+                  {isTimelineOwner() && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(instruction)}
+                      >
+                        <Edit2 size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(instruction.id)}
+                      >
+                        <Trash2 size={16} className="text-destructive" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
         </div>
       ) : (
         <div className="text-center py-8 text-muted-foreground">
-          No instructions yet. Click the button above to add one.
+          No instructions yet.{" "}
+          {isTimelineOwner() && "Click the button above to add one."}
         </div>
       )}
     </div>
