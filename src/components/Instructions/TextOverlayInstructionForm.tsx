@@ -177,24 +177,32 @@ const TextOverlayInstructionForm: React.FC<{
         </div>
       </div>
 
-      {/* Colors */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="form-group">
-          <label className="block text-sm font-medium text-muted-foreground mb-2">
-            Text Color
-          </label>
-          <Input
-            type="color"
-            {...register("textOverlay.style.color")}
-            defaultValue="#ffffff"
-          />
-        </div>
+      {/* Colors and Background */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-muted-foreground">
+          Colors and Background
+        </label>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Text Color</label>
+            <Input
+              type="color"
+              {...register("textOverlay.style.color")}
+              defaultValue="#ffffff"
+            />
+          </div>
 
-        <div className="form-group">
-          <label className="block text-sm font-medium text-muted-foreground mb-2">
-            Background
-          </label>
-          <div className="space-y-2">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Background</label>
+            <Input
+              type="color"
+              {...register("textOverlay.style.backgroundColor")}
+              defaultValue="#000000"
+              disabled={transparentBackground}
+            />
+          </div>
+
+          <div className="flex items-center">
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -202,15 +210,9 @@ const TextOverlayInstructionForm: React.FC<{
                 id="transparentBackground"
               />
               <label htmlFor="transparentBackground" className="text-sm">
-                Transparent Background
+                Transparent
               </label>
             </div>
-            <Input
-              type="color"
-              {...register("textOverlay.style.backgroundColor")}
-              defaultValue="#000000"
-              disabled={transparentBackground}
-            />
           </div>
         </div>
       </div>
@@ -288,7 +290,7 @@ const TextOverlayInstructionForm: React.FC<{
       </div>
 
       {/* Pause Controls */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center space-x-2">
           <input
             type="checkbox"
@@ -301,13 +303,11 @@ const TextOverlayInstructionForm: React.FC<{
         </div>
 
         {pauseMainVideo && (
-          <div className="form-group">
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Pause Duration (seconds)
-            </label>
+          <div className="form-group m-0">
             <Input
               type="number"
               step="0.1"
+              placeholder="Pause duration (seconds)"
               {...register("pauseDuration", {
                 required: pauseMainVideo,
                 min: 0,
