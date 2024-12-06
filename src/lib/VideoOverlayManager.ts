@@ -247,6 +247,21 @@ export class VideoOverlayManager {
     }
   }
 
+  private getAnimationClass(animation: string): string {
+    switch (animation) {
+      case "fade":
+        return "animate-fade-in";
+      case "slide":
+        return "animate-slide-in";
+      case "bounce":
+        return "animate-bounce-in";
+      case "scale":
+        return "animate-scale-in";
+      default:
+        return "";
+    }
+  }
+
   public async displayTextOverlay(
     text: string,
     style: TextStyle,
@@ -266,6 +281,10 @@ export class VideoOverlayManager {
     this.overlayElements.set(id, overlayContainer);
     this.overlayElement.appendChild(overlayContainer);
 
+    // Calculate scale based on video size
+    const videoRect = this.videoElement.getBoundingClientRect();
+    const scale = videoRect.width / config.mediaPositionerWidth;
+
     const textElement = document.createElement("div");
     Object.assign(textElement.style, {
       position: "absolute",
@@ -274,7 +293,8 @@ export class VideoOverlayManager {
       width: `${position.width}px`,
       height: `${position.height}px`,
       fontFamily: style.fontFamily,
-      fontSize: `${style.fontSize}px`,
+      // Scale the font size
+      fontSize: `${Math.round(style.fontSize * scale)}px`,
       color: style.color,
       backgroundColor: style.transparentBackground
         ? "transparent"
@@ -283,20 +303,31 @@ export class VideoOverlayManager {
       fontStyle: style.fontStyle,
       display: "flex",
       alignItems: "center",
-      justifyContent: "center",
-      padding: "8px",
+      justifyContent: style.textAlign || "center",
+      // Scale the padding
+      padding: `${Math.round((style.padding || 8) * scale)}px`,
+      opacity: style.opacity || 1,
+      // Scale the border radius
+      borderRadius: `${Math.round((style.borderRadius || 0) * scale)}px`,
+      textShadow: style.textShadow ? "2px 2px 4px rgba(0,0,0,0.5)" : "none",
+      transition: "opacity 0.3s ease-in-out",
       overflow: "hidden",
     });
 
     textElement.textContent = text;
+    textElement.className = this.getAnimationClass(style.animation || "none");
     overlayContainer.appendChild(textElement);
 
     if (duration) {
       this.overlayTimeout = window.setTimeout(() => {
-        this.hideOverlay(id);
-        if (this.overlayEndedCallback) {
-          this.overlayEndedCallback();
-        }
+        // Add fade-out animation before removing
+        textElement.style.opacity = "0";
+        setTimeout(() => {
+          this.hideOverlay(id);
+          if (this.overlayEndedCallback) {
+            this.overlayEndedCallback();
+          }
+        }, 300); // Wait for fade-out animation
       }, duration * 1000);
     }
   }

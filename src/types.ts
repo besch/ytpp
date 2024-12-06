@@ -105,12 +105,19 @@ export interface TextStyle {
   fontWeight: "normal" | "bold";
   fontStyle: "normal" | "italic";
   transparentBackground?: boolean;
+  textAlign?: "left" | "center" | "right";
+  opacity?: number;
+  animation?: string;
+  textShadow?: boolean;
+  borderRadius?: number;
+  padding?: number;
 }
 
 export interface TextOverlayInstruction extends BaseInstruction {
   type: "text-overlay";
   textOverlay: TextOverlayMedia;
   duration: number;
+  pauseDuration?: number;
   pauseMainVideo?: boolean;
 }
 

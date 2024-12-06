@@ -1,10 +1,9 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Move, Home, LogOut, LogIn, User } from "lucide-react";
+import { Move, Home, LogIn } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  selectUser,
   selectIsAuthenticated,
   setUser,
   logout,
@@ -19,7 +18,6 @@ import Account from "@/components/Account/Account";
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const user = useSelector(selectUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
   const handleDragStart = (e: React.MouseEvent) => {

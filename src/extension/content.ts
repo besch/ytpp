@@ -1,4 +1,3 @@
-import { addCustomEventListener } from "@/lib/eventSystem";
 import { api } from "@/lib/api";
 
 interface AuthResponse {
@@ -71,10 +70,20 @@ class ContentScript {
           if (response.user.id) {
             // Call the async function without await
             api.users.createOrUpdate(response.user).then(() => {
-              resolve(response || { success: false, error: "No response from background" });
+              resolve(
+                response || {
+                  success: false,
+                  error: "No response from background",
+                }
+              );
             });
           } else {
-            resolve(response || { success: false, error: "No response from background" });
+            resolve(
+              response || {
+                success: false,
+                error: "No response from background",
+              }
+            );
           }
         });
       });

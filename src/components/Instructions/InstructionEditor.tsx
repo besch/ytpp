@@ -125,7 +125,7 @@ const InstructionEditor: React.FC = () => {
         const textOverlayInstruction =
           editingInstruction as TextOverlayInstruction;
 
-        // Set text overlay values
+        // Set text overlay values with all properties
         methods.setValue("textOverlay", {
           text: textOverlayInstruction.textOverlay.text,
           style: {
@@ -141,6 +141,17 @@ const InstructionEditor: React.FC = () => {
             transparentBackground:
               textOverlayInstruction.textOverlay.style.transparentBackground ||
               false,
+            // Add new properties
+            textAlign:
+              textOverlayInstruction.textOverlay.style.textAlign || "center",
+            opacity: textOverlayInstruction.textOverlay.style.opacity || 1,
+            animation:
+              textOverlayInstruction.textOverlay.style.animation || "none",
+            textShadow:
+              textOverlayInstruction.textOverlay.style.textShadow || false,
+            borderRadius:
+              textOverlayInstruction.textOverlay.style.borderRadius || 0,
+            padding: textOverlayInstruction.textOverlay.style.padding || 8,
           },
           position: textOverlayInstruction.textOverlay.position || {
             x: 32,
@@ -150,8 +161,15 @@ const InstructionEditor: React.FC = () => {
           },
         });
 
-        methods.setValue("duration", textOverlayInstruction.duration);
-        methods.setValue("pauseMainVideo", textOverlayInstruction.pauseMainVideo || false);
+        methods.setValue("duration", textOverlayInstruction.pauseDuration);
+        methods.setValue(
+          "pauseMainVideo",
+          textOverlayInstruction.pauseMainVideo || false
+        );
+        methods.setValue(
+          "pauseDuration",
+          textOverlayInstruction.pauseDuration || 5
+        );
       }
     }
   }, [isEditing, editingInstruction, methods]);
@@ -258,7 +276,38 @@ const InstructionEditor: React.FC = () => {
     const triggerTime = parseTimeInput(data);
     let newInstruction: Instruction;
 
-    if (selectedType === "overlay") {
+    if (selectedType === "text-overlay") {
+      newInstruction = {
+        id: editingInstruction?.id || Date.now().toString(),
+        type: "text-overlay",
+        triggerTime,
+        textOverlay: {
+          text: data.textOverlay.text,
+          style: {
+            fontFamily: data.textOverlay.style.fontFamily,
+            fontSize: Number(data.textOverlay.style.fontSize),
+            color: data.textOverlay.style.color,
+            backgroundColor: data.textOverlay.style.backgroundColor,
+            fontWeight: data.textOverlay.style.fontWeight,
+            fontStyle: data.textOverlay.style.fontStyle,
+            transparentBackground: data.textOverlay.style.transparentBackground,
+            // Add new properties
+            textAlign: data.textOverlay.style.textAlign,
+            opacity: Number(data.textOverlay.style.opacity),
+            animation: data.textOverlay.style.animation,
+            textShadow: data.textOverlay.style.textShadow,
+            borderRadius: Number(data.textOverlay.style.borderRadius),
+            padding: Number(data.textOverlay.style.padding),
+          },
+          position: data.textOverlay.position,
+        },
+        duration: Number(data.duration),
+        pauseMainVideo: data.pauseMainVideo,
+        pauseDuration: data.pauseMainVideo
+          ? Number(data.pauseDuration)
+          : undefined,
+      } as TextOverlayInstruction;
+    } else if (selectedType === "overlay") {
       let overlayMedia =
         editingInstruction?.type === "overlay"
           ? (editingInstruction as OverlayInstruction).overlayMedia
@@ -321,15 +370,6 @@ const InstructionEditor: React.FC = () => {
         triggerTime,
         skipToTime,
       } as SkipInstruction;
-    } else if (selectedType === "text-overlay") {
-      newInstruction = {
-        id: editingInstruction?.id || Date.now().toString(),
-        type: "text-overlay",
-        triggerTime,
-        textOverlay: data.textOverlay,
-        duration: Number(data.duration),
-        pauseMainVideo: data.pauseMainVideo,
-      } as TextOverlayInstruction;
     } else {
       return;
     }
