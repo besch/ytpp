@@ -12,7 +12,7 @@ import {
 } from "@/store/authSlice";
 import { toast } from "react-toastify";
 import { api } from "@/lib/api";
-import { setTimelines } from "@/store/timelineSlice";
+import { setCurrentTimeline, setTimelines } from "@/store/timelineSlice";
 import Account from "@/components/Account/Account";
 
 const Navigation: React.FC = () => {
@@ -137,6 +137,7 @@ const Navigation: React.FC = () => {
     try {
       const videoUrl = window.location.href.split("&")[0];
       const fetchedTimelines = await api.timelines.getAll(videoUrl);
+      dispatch(setCurrentTimeline(null));
       dispatch(setTimelines(fetchedTimelines));
       navigate("/");
     } catch (error) {
