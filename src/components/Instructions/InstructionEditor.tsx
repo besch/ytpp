@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm, FormProvider } from "react-hook-form";
-import { ArrowLeft, Check, X, Edit2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
   selectCurrentTime,
@@ -30,9 +30,6 @@ import TextOverlayInstructionForm from "./TextOverlayInstructionForm";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import Input from "@/components/ui/Input";
-import { selectIsTimelineOwner } from "@/store/authSlice";
-import { RootState } from "@/store";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -42,15 +39,9 @@ const InstructionEditor: React.FC = () => {
   const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
   const navigate = useNavigate();
-  const isOwner = useSelector((state: RootState) => 
-    selectIsTimelineOwner(state, currentTimeline)
-  );
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
-
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
 
   const parseTimeInput = (data: TimeInputInterface) => {
     return (
@@ -352,25 +343,11 @@ const InstructionEditor: React.FC = () => {
     onSuccess: (savedTimeline) => {
       dispatch(setCurrentTimeline(savedTimeline));
       queryClient.invalidateQueries({ queryKey: ["timelines"] });
-      setEditingTitle(false);
     },
     onError: (error) => {
       console.error("Failed to update timeline title:", error);
     },
   });
-
-  const handleStartEditingTitle = () => {
-    setEditingTitle(true);
-    setNewTitle(currentTimeline?.title || "");
-  };
-
-  const handleSaveTitle = async () => {
-    if (!currentTimeline) return;
-    updateTitleMutation.mutate({
-      id: currentTimeline.id,
-      title: newTitle,
-    });
-  };
 
   const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
     await saveInstructionsMutation.mutateAsync(updatedInstructions);
