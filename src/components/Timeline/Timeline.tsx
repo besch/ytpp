@@ -197,12 +197,12 @@ const Timeline: React.FC = () => {
     const startTime = instruction.skipToTime;
     let isDragging = false;
     const dragThreshold = 3; // pixels
+    let updatedInstruction: SkipInstruction | null = null;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = Math.abs(moveEvent.clientX - startX);
       const deltaY = Math.abs(moveEvent.clientY - startY);
 
-      // Only start dragging if mouse has moved beyond threshold
       if (!isDragging && (deltaX > dragThreshold || deltaY > dragThreshold)) {
         isDragging = true;
       }
@@ -220,7 +220,7 @@ const Timeline: React.FC = () => {
           Math.min(duration, startTime + timeDelta)
         );
 
-        const updatedInstruction = {
+        updatedInstruction = {
           ...instruction,
           skipToTime: Math.round(newTime),
         };
@@ -233,8 +233,11 @@ const Timeline: React.FC = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
-      if (isDragging && currentTimeline && instructions) {
-        await handleSaveInstructions(instructions);
+      if (isDragging && updatedInstruction && currentTimeline) {
+        const updatedInstructions = instructions.map((i) =>
+          i.id === updatedInstruction!.id ? updatedInstruction! : i
+        );
+        await handleSaveInstructions(updatedInstructions);
       }
     };
 
