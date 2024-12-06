@@ -304,7 +304,28 @@ export class VideoManager {
   }
 
   public seekTo(timeMs: number): void {
-    this.handleSeekToTime(timeMs);
+    if (this.videoElement) {
+      // Ensure we're working with a clean number
+      const time = Math.max(0, Math.min(timeMs, this.getDuration())) / 1000;
+
+      // Set the time directly on the video element
+      this.videoElement.currentTime = time;
+
+      // Clear any active overlays when seeking
+      this.activeInstructions.forEach((_, id) => {
+        this.videoOverlayManager?.hideOverlay(id);
+      });
+      this.activeInstructions.clear();
+
+      // Clear any existing timeouts
+      if ((this.videoElement as any)._resumeTimeout) {
+        clearTimeout((this.videoElement as any)._resumeTimeout);
+        (this.videoElement as any)._resumeTimeout = null;
+      }
+
+      // Dispatch the time update to Redux
+      store.dispatch(seekToTime(timeMs));
+    }
   }
 
   public setInstructions(instructions: Instruction[]): void {

@@ -11,6 +11,7 @@ import {
   selectInstructions,
   selectCurrentTimeline,
   setCurrentTimeline,
+  seekToTime,
 } from "@/store/timelineSlice";
 import { TimeInput } from "../ui/TimeInput";
 import { api } from "@/lib/api";
@@ -42,7 +43,8 @@ const InstructionEditor: React.FC = () => {
       (Number(data.hours) * 3600 +
         Number(data.minutes) * 60 +
         Number(data.seconds)) *
-      1000
+        1000 +
+      Number(data.milliseconds || 0)
     );
   };
 
@@ -51,6 +53,7 @@ const InstructionEditor: React.FC = () => {
       hours: 0,
       minutes: 0,
       seconds: 0,
+      milliseconds: 0,
       overlayDuration: 5,
       useOverlayDuration: false,
       muteOverlayMedia: false,
@@ -59,19 +62,22 @@ const InstructionEditor: React.FC = () => {
       skipToHours: 0,
       skipToMinutes: 0,
       skipToSeconds: 0,
+      skipToMilliseconds: 0,
     },
   });
 
   useEffect(() => {
     if (isEditing && editingInstruction) {
-      const totalSeconds = editingInstruction.triggerTime / 1000;
+      const totalSeconds = Math.floor(editingInstruction.triggerTime / 1000);
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = Math.floor(totalSeconds % 60);
+      const milliseconds = editingInstruction.triggerTime % 1000;
 
       methods.setValue("hours", hours, { shouldValidate: false });
       methods.setValue("minutes", minutes, { shouldValidate: false });
       methods.setValue("seconds", seconds, { shouldValidate: false });
+      methods.setValue("milliseconds", milliseconds, { shouldValidate: false });
 
       if (editingInstruction.type === "overlay") {
         const overlayInstruction = editingInstruction as OverlayInstruction;
@@ -121,6 +127,7 @@ const InstructionEditor: React.FC = () => {
         methods.setValue("skipToHours", skipHours);
         methods.setValue("skipToMinutes", skipMinutes);
         methods.setValue("skipToSeconds", skipSeconds);
+        methods.setValue("skipToMilliseconds", skipToTime % 1000);
       } else if (editingInstruction.type === "text-overlay") {
         const textOverlayInstruction =
           editingInstruction as TextOverlayInstruction;
@@ -177,14 +184,16 @@ const InstructionEditor: React.FC = () => {
   // Sync form inputs with currentTime when not editing
   useEffect(() => {
     if (!isEditing && selectedType === null) {
-      const totalSeconds = currentTime / 1000;
+      const totalSeconds = Math.floor(currentTime / 1000);
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = Math.floor(totalSeconds % 60);
+      const milliseconds = currentTime % 1000;
 
       methods.setValue("hours", hours);
       methods.setValue("minutes", minutes);
       methods.setValue("seconds", seconds);
+      methods.setValue("milliseconds", milliseconds);
     }
   }, [currentTime, isEditing, selectedType, methods]);
 
@@ -203,44 +212,59 @@ const InstructionEditor: React.FC = () => {
     methods,
   ]);
 
-  // Add this new effect to watch for trigger time updates
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     const subscription = methods.watch((value, { name, type }) => {
-      // Only update if hours, minutes, or seconds changes
-      if (name?.match(/^(hours|minutes|seconds)$/)) {
-        const triggerTime = parseTimeInput({
-          hours: value.hours || 0,
-          minutes: value.minutes || 0,
-          seconds: value.seconds || 0,
-        });
-
-        if (isEditing && editingInstruction) {
-          // Create updated instruction with new trigger time
-          const updatedInstruction = {
-            ...editingInstruction,
-            triggerTime,
-          };
-
-          // Update the instruction in the timeline
-          const updatedInstructions = instructions.map((i) =>
-            i.id === editingInstruction.id ? updatedInstruction : i
-          );
-
-          // Save the updated instructions
-          handleSaveInstructions(updatedInstructions);
+      // Only update if it's a time-related field
+      if (name?.match(/^(hours|minutes|seconds|milliseconds)$/)) {
+        // Clear any existing timeout
+        if (timeoutId) {
+          clearTimeout(timeoutId);
         }
+
+        // Set a new timeout to batch updates
+        timeoutId = setTimeout(() => {
+          const triggerTime = parseTimeInput({
+            hours: value.hours || 0,
+            minutes: value.minutes || 0,
+            seconds: value.seconds || 0,
+            milliseconds: value.milliseconds || 0,
+          });
+
+          // Update time through Redux
+          dispatch(seekToTime(triggerTime));
+
+          if (isEditing && editingInstruction) {
+            const updatedInstruction = {
+              ...editingInstruction,
+              triggerTime,
+            };
+
+            const updatedInstructions = instructions.map((i) =>
+              i.id === editingInstruction.id ? updatedInstruction : i
+            );
+
+            handleSaveInstructions(updatedInstructions);
+          }
+        }, 300); // Wait 300ms before sending update
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [methods.watch, isEditing, editingInstruction, instructions]);
+    return () => {
+      subscription.unsubscribe();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [methods.watch, isEditing, editingInstruction, instructions, dispatch]);
 
   const handleBack = () => {
-    // Reset form values including media state
     methods.reset({
       hours: 0,
       minutes: 0,
       seconds: 0,
+      milliseconds: 0,
       pauseDuration: 0,
       useOverlayDuration: false,
       muteOverlayMedia: false,
@@ -248,6 +272,7 @@ const InstructionEditor: React.FC = () => {
       skipToHours: 0,
       skipToMinutes: 0,
       skipToSeconds: 0,
+      skipToMilliseconds: 0,
       overlayMediaType: "video",
     });
     dispatch(setEditingInstruction(null));
@@ -273,7 +298,13 @@ const InstructionEditor: React.FC = () => {
   };
 
   const onSubmit = async (data: any) => {
-    const triggerTime = parseTimeInput(data);
+    const triggerTime = parseTimeInput({
+      hours: data.hours || 0,
+      minutes: data.minutes || 0,
+      seconds: data.seconds || 0,
+      milliseconds: data.milliseconds || 0,
+    });
+
     let newInstruction: Instruction;
 
     if (selectedType === "text-overlay") {
@@ -359,9 +390,10 @@ const InstructionEditor: React.FC = () => {
       } as OverlayInstruction;
     } else if (selectedType === "skip") {
       const skipToTime = parseTimeInput({
-        hours: data.skipToHours,
-        minutes: data.skipToMinutes,
-        seconds: data.skipToSeconds,
+        hours: data.skipToHours || 0,
+        minutes: data.skipToMinutes || 0,
+        seconds: data.skipToSeconds || 0,
+        milliseconds: data.skipToMilliseconds || 0,
       });
 
       newInstruction = {
@@ -422,26 +454,45 @@ const InstructionEditor: React.FC = () => {
     }
   };
 
+  // Update handleTimeChange to ensure video time updates
   const handleTimeChange = (time: number) => {
-    const totalSeconds = time / 1000;
+    const totalSeconds = Math.floor(time / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = Math.floor(totalSeconds % 60);
+    const milliseconds = time % 1000;
 
     methods.setValue("hours", hours);
     methods.setValue("minutes", minutes);
     methods.setValue("seconds", seconds);
+    methods.setValue("milliseconds", milliseconds);
+
+    // Get videoManager instance
+    const videoManager = (window as any).videoManager;
+    if (videoManager) {
+      // Ensure the time is within valid bounds
+      const maxTime = videoManager.getDuration();
+      const boundedTime = Math.max(0, Math.min(time, maxTime));
+
+      // Update video time
+      videoManager.seekTo(boundedTime);
+    }
+
+    // Update Redux state
+    dispatch(seekToTime(time));
   };
 
   const handleSkipToTimeChange = (time: number) => {
-    const totalSeconds = time / 1000;
+    const totalSeconds = Math.floor(time / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = Math.floor(totalSeconds % 60);
+    const milliseconds = time % 1000;
 
     methods.setValue("skipToHours", hours);
     methods.setValue("skipToMinutes", minutes);
     methods.setValue("skipToSeconds", seconds);
+    methods.setValue("skipToMilliseconds", milliseconds);
   };
 
   // Add this effect to reset form when editingInstruction changes
@@ -452,6 +503,7 @@ const InstructionEditor: React.FC = () => {
         hours: Math.floor(currentTime / 1000 / 3600),
         minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
         seconds: Math.floor((currentTime / 1000) % 60),
+        milliseconds: 0,
         pauseDuration: 0,
         useOverlayDuration: false,
         muteOverlayMedia: false,
@@ -459,6 +511,7 @@ const InstructionEditor: React.FC = () => {
         skipToHours: 0,
         skipToMinutes: 0,
         skipToSeconds: 0,
+        skipToMilliseconds: 0,
         overlayMediaType: "video",
       });
     }
@@ -530,6 +583,7 @@ const InstructionEditor: React.FC = () => {
                   hours: methods.watch("hours") || 0,
                   minutes: methods.watch("minutes") || 0,
                   seconds: methods.watch("seconds") || 0,
+                  milliseconds: methods.watch("milliseconds") || 0,
                 })}
                 onChange={handleTimeChange}
               />

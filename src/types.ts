@@ -64,6 +64,7 @@ export interface TimeInput {
   hours: number;
   minutes: number;
   seconds: number;
+  milliseconds: number;
 }
 
 export interface BaseInstruction {
