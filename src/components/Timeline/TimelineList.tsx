@@ -1,5 +1,5 @@
-import React from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useMemo } from "react";
+import { useDispatch } from "react-redux";
 import { Plus, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/ui/Button";
@@ -7,16 +7,16 @@ import { setCurrentTimeline, timelineDeleted } from "@/store/timelineSlice";
 import { Timeline } from "@/types";
 import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
-import { selectUser } from "@/store/authSlice";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "react-toastify";
+import { selectIsTimelineOwner } from "@/store/authSlice";
+import { RootState, store } from "@/store";
 
 const TimelineList: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const videoUrl = window.location.href.split("&")[0];
-  const user = useSelector(selectUser);
 
   // Query for fetching timelines
   const {
@@ -57,6 +57,13 @@ const TimelineList: React.FC = () => {
     },
   });
 
+  // Fetch ownership status for each timeline
+  const timelineOwnerships = useMemo(() => {
+    return timelines.map((timeline) => 
+      selectIsTimelineOwner(store.getState() as RootState, timeline)
+    );
+  }, [timelines]);
+
   const handleCreateTimeline = async () => {
     createTimelineMutation.mutate({
       id: Date.now().toString(),
@@ -74,10 +81,6 @@ const TimelineList: React.FC = () => {
 
   const handleDeleteTimeline = async (timelineId: string) => {
     deleteTimelineMutation.mutate(timelineId);
-  };
-
-  const isTimelineOwner = (timeline: Timeline) => {
-    return user?.id === timeline.user_id;
   };
 
   if (error) {
@@ -107,7 +110,7 @@ const TimelineList: React.FC = () => {
         </div>
       ) : timelines.length > 0 ? (
         <div className="space-y-4">
-          {timelines.map((timeline) => (
+          {timelines.map((timeline, index) => (
             <div
               key={timeline.id}
               className="flex items-center justify-between p-6 bg-card rounded-lg hover:bg-muted/10"
@@ -135,7 +138,7 @@ const TimelineList: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {isTimelineOwner(timeline) && (
+                {timelineOwnerships[index] && (
                   <Button
                     variant="ghost"
                     size="sm"

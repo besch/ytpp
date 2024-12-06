@@ -31,6 +31,8 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Input from "@/components/ui/Input";
+import { selectIsTimelineOwner } from "@/store/authSlice";
+import { RootState } from "@/store";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -40,6 +42,9 @@ const InstructionEditor: React.FC = () => {
   const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
   const navigate = useNavigate();
+  const isOwner = useSelector((state: RootState) => 
+    selectIsTimelineOwner(state, currentTimeline)
+  );
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
@@ -601,54 +606,6 @@ const InstructionEditor: React.FC = () => {
     if (!selectedType && !isEditing) {
       return (
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            {editingTitle ? (
-              <div className="flex items-center gap-2">
-                <Input
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSaveTitle();
-                    }
-                  }}
-                  className="h-8 text-lg"
-                  disabled={updateTitleMutation.isPending}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSaveTitle}
-                  disabled={updateTitleMutation.isPending}
-                >
-                  <Check size={16} className="text-green-500" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingTitle(false)}
-                  disabled={updateTitleMutation.isPending}
-                >
-                  <X size={16} className="text-destructive" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-medium">
-                  {currentTimeline?.title}
-                </h1>
-                {isTimelineOwner() && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleStartEditingTitle}
-                  >
-                    <Edit2 size={16} />
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
           <InstructionsList />
         </div>
       );

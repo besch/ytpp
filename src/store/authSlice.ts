@@ -1,7 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "./index";
+import { Timeline } from "@/types";
+import { createSelector } from "@reduxjs/toolkit";
 
-interface User {
+export interface User {
   id: string;
   email: string;
   name: string;
@@ -61,5 +63,16 @@ export const selectIsAuthenticated = (state: RootState) =>
   state.auth.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.auth.loading;
 export const selectAuthError = (state: RootState) => state.auth.error;
+
+export const selectIsTimelineOwner = createSelector(
+  [
+    (state: RootState) => state.auth.user,
+    (_: RootState, timeline: Timeline | null) => timeline,
+  ],
+  (user, timeline): boolean => {
+    if (!timeline || !user) return false;
+    return user.id === timeline.user_id;
+  }
+);
 
 export default authSlice.reducer;
