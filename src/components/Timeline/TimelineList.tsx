@@ -1,60 +1,70 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Plus, Trash2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/ui/Button";
-import {
-  selectTimelines,
-  selectTimelineLoading,
-  selectTimelineError,
-  setCurrentTimeline,
-  setTimelines,
-  timelineDeleted,
-  setLoading,
-  setError,
-} from "@/store/timelineSlice";
+import { setCurrentTimeline, timelineDeleted } from "@/store/timelineSlice";
 import { Timeline } from "@/types";
 import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { selectUser } from "@/store/authSlice";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { toast } from "react-toastify";
 
 const TimelineList: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const timelines = useSelector(selectTimelines);
-  const loading = useSelector(selectTimelineLoading);
-  const error = useSelector(selectTimelineError);
+  const queryClient = useQueryClient();
   const videoUrl = window.location.href.split("&")[0];
   const user = useSelector(selectUser);
 
-  useEffect(() => {
-    const fetchTimelines = async () => {
-      try {
-        const fetchedTimelines = await api.timelines.getAll(videoUrl);
-        dispatch(setTimelines(fetchedTimelines));
-      } catch (error) {
-        console.error("Failed to fetch timelines:", error);
-        dispatch(setError("Failed to fetch timelines"));
-      }
-    };
+  // Query for fetching timelines
+  const {
+    data: timelines = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["timelines", videoUrl],
+    queryFn: () => api.timelines.getAll(videoUrl),
+  });
 
-    fetchTimelines();
-  }, [dispatch, videoUrl]);
-
-  const handleCreateTimeline = async () => {
-    try {
-      const newTimeline = await api.timelines.create({
-        id: Date.now().toString(),
-        title: "New Timeline",
-        video_url: videoUrl,
-        elements: [],
-        instructions: [],
-      });
+  // Mutation for creating timeline
+  const createTimelineMutation = useMutation({
+    mutationFn: (newTimeline: Partial<Timeline>) =>
+      api.timelines.create(newTimeline),
+    onSuccess: (newTimeline) => {
       dispatch(setCurrentTimeline(newTimeline));
       navigate(`/timeline/${newTimeline.id}`);
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+    },
+    onError: (error) => {
       console.error("Failed to create timeline:", error);
-      dispatch(setError("Failed to create timeline"));
-    }
+      toast.error("Failed to create timeline");
+    },
+  });
+
+  // Mutation for deleting timeline
+  const deleteTimelineMutation = useMutation({
+    mutationFn: (timelineId: string) => api.timelines.delete(timelineId),
+    onSuccess: (_, timelineId) => {
+      dispatch(timelineDeleted(timelineId));
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+      toast.success("Timeline deleted successfully");
+    },
+    onError: (error) => {
+      console.error("Failed to delete timeline:", error);
+      toast.error("Failed to delete timeline. Please try again.");
+    },
+  });
+
+  const handleCreateTimeline = async () => {
+    createTimelineMutation.mutate({
+      id: Date.now().toString(),
+      title: "New Timeline",
+      video_url: videoUrl,
+      elements: [],
+      instructions: [],
+    });
   };
 
   const handleEditTimeline = async (timeline: Timeline) => {
@@ -63,40 +73,38 @@ const TimelineList: React.FC = () => {
   };
 
   const handleDeleteTimeline = async (timelineId: string) => {
-    try {
-      dispatch(setLoading(true));
-      await api.timelines.delete(timelineId);
-      dispatch(timelineDeleted(timelineId));
-      const updatedTimelines = await api.timelines.getAll(videoUrl);
-      dispatch(setTimelines(updatedTimelines));
-    } catch (error) {
-      console.error("Failed to delete timeline:", error);
-      dispatch(setError("Failed to delete timeline. Please try again."));
-    } finally {
-      dispatch(setLoading(false));
-    }
+    deleteTimelineMutation.mutate(timelineId);
   };
 
   const isTimelineOwner = (timeline: Timeline) => {
     return user?.id === timeline.user_id;
   };
 
+  if (error) {
+    return (
+      <div className="text-destructive text-lg text-center py-6">
+        {error instanceof Error ? error.message : "Failed to fetch timelines"}
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Timelines</h1>
-        <Button onClick={handleCreateTimeline}>
+        <Button
+          onClick={handleCreateTimeline}
+          disabled={createTimelineMutation.isPending}
+        >
           <Plus size={16} className="mr-3" />
           New Timeline
         </Button>
       </div>
 
-      {error && (
-        <div className="text-destructive text-lg text-center py-6">{error}</div>
-      )}
-
-      {loading ? (
-        <div className="text-lg text-center py-6">Loading timelines...</div>
+      {isLoading || createTimelineMutation.isPending ? (
+        <div className="flex justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
       ) : timelines.length > 0 ? (
         <div className="space-y-4">
           {timelines.map((timeline) => (
@@ -135,6 +143,7 @@ const TimelineList: React.FC = () => {
                       e.stopPropagation();
                       handleDeleteTimeline(timeline.id);
                     }}
+                    disabled={deleteTimelineMutation.isPending}
                   >
                     <Trash2 size={16} className="text-destructive" />
                   </Button>

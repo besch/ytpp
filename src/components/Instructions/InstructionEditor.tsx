@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm, FormProvider } from "react-hook-form";
 import { ArrowLeft } from "lucide-react";
@@ -27,9 +27,12 @@ import { MediaPosition } from "./MediaPositioner";
 import OverlayInstructionForm from "./OverlayInstructionForm";
 import SkipInstructionForm from "./SkipInstructionForm";
 import TextOverlayInstructionForm from "./TextOverlayInstructionForm";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
+  const queryClient = useQueryClient();
   const currentTime = useSelector(selectCurrentTime);
   const editingInstruction = useSelector(selectEditingInstruction);
   const instructions = useSelector(selectInstructions);
@@ -65,6 +68,9 @@ const InstructionEditor: React.FC = () => {
       skipToMilliseconds: 0,
     },
   });
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (isEditing && editingInstruction) {
@@ -278,74 +284,105 @@ const InstructionEditor: React.FC = () => {
     dispatch(setEditingInstruction(null));
   };
 
-  const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
-    if (!currentTimeline) return;
+  // Mutation for saving instructions
+  const saveInstructionsMutation = useMutation({
+    mutationFn: async (updatedInstructions: Instruction[]) => {
+      if (!currentTimeline) throw new Error("No timeline selected");
 
-    try {
       const updatedTimeline = {
         ...currentTimeline,
         instructions: updatedInstructions,
       };
 
-      const savedTimeline = await api.timelines.update(
-        currentTimeline.id,
-        updatedTimeline
-      );
+      return api.timelines.update(currentTimeline.id, updatedTimeline);
+    },
+    onSuccess: (savedTimeline) => {
       dispatch(setCurrentTimeline(savedTimeline));
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+    },
+    onError: (error) => {
       console.error("Failed to save instructions:", error);
-    }
+    },
+  });
+
+  // Mutation for media upload
+  const uploadMediaMutation = useMutation({
+    mutationFn: async ({
+      file,
+      timelineId,
+    }: {
+      file: File;
+      timelineId: string;
+    }) => {
+      return api.timelines.uploadMedia(file, timelineId);
+    },
+    onError: (error) => {
+      console.error("Failed to upload media:", error);
+    },
+  });
+
+  // Mutation for media deletion
+  const deleteMediaMutation = useMutation({
+    mutationFn: (url: string) => api.timelines.deleteMedia(url),
+    onError: (error) => {
+      console.error("Failed to delete media:", error);
+    },
+  });
+
+  const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
+    await saveInstructionsMutation.mutateAsync(updatedInstructions);
   };
 
   const onSubmit = async (data: any) => {
-    const triggerTime = parseTimeInput({
-      hours: data.hours || 0,
-      minutes: data.minutes || 0,
-      seconds: data.seconds || 0,
-      milliseconds: data.milliseconds || 0,
-    });
+    try {
+      const triggerTime = parseTimeInput({
+        hours: data.hours || 0,
+        minutes: data.minutes || 0,
+        seconds: data.seconds || 0,
+        milliseconds: data.milliseconds || 0,
+      });
 
-    let newInstruction: Instruction;
+      let newInstruction: Instruction;
 
-    if (selectedType === "text-overlay") {
-      newInstruction = {
-        id: editingInstruction?.id || Date.now().toString(),
-        type: "text-overlay",
-        triggerTime,
-        textOverlay: {
-          text: data.textOverlay.text,
-          style: {
-            fontFamily: data.textOverlay.style.fontFamily,
-            fontSize: Number(data.textOverlay.style.fontSize),
-            color: data.textOverlay.style.color,
-            backgroundColor: data.textOverlay.style.backgroundColor,
-            fontWeight: data.textOverlay.style.fontWeight,
-            fontStyle: data.textOverlay.style.fontStyle,
-            transparentBackground: data.textOverlay.style.transparentBackground,
-            // Add new properties
-            textAlign: data.textOverlay.style.textAlign,
-            opacity: Number(data.textOverlay.style.opacity),
-            animation: data.textOverlay.style.animation,
-            textShadow: data.textOverlay.style.textShadow,
-            borderRadius: Number(data.textOverlay.style.borderRadius),
-            padding: Number(data.textOverlay.style.padding),
+      if (selectedType === "text-overlay") {
+        newInstruction = {
+          id: editingInstruction?.id || Date.now().toString(),
+          type: "text-overlay",
+          triggerTime,
+          textOverlay: {
+            text: data.textOverlay.text,
+            style: {
+              fontFamily: data.textOverlay.style.fontFamily,
+              fontSize: Number(data.textOverlay.style.fontSize),
+              color: data.textOverlay.style.color,
+              backgroundColor: data.textOverlay.style.backgroundColor,
+              fontWeight: data.textOverlay.style.fontWeight,
+              fontStyle: data.textOverlay.style.fontStyle,
+              transparentBackground:
+                data.textOverlay.style.transparentBackground,
+              // Add new properties
+              textAlign: data.textOverlay.style.textAlign,
+              opacity: Number(data.textOverlay.style.opacity),
+              animation: data.textOverlay.style.animation,
+              textShadow: data.textOverlay.style.textShadow,
+              borderRadius: Number(data.textOverlay.style.borderRadius),
+              padding: Number(data.textOverlay.style.padding),
+            },
+            position: data.textOverlay.position,
           },
-          position: data.textOverlay.position,
-        },
-        duration: Number(data.duration),
-        pauseMainVideo: data.pauseMainVideo,
-        pauseDuration: data.pauseMainVideo
-          ? Number(data.pauseDuration)
-          : undefined,
-      } as TextOverlayInstruction;
-    } else if (selectedType === "overlay") {
-      let overlayMedia =
-        editingInstruction?.type === "overlay"
-          ? (editingInstruction as OverlayInstruction).overlayMedia
-          : null;
+          duration: Number(data.duration),
+          pauseMainVideo: data.pauseMainVideo,
+          pauseDuration: data.pauseMainVideo
+            ? Number(data.pauseDuration)
+            : undefined,
+        } as TextOverlayInstruction;
+      } else if (selectedType === "overlay") {
+        let overlayMedia =
+          editingInstruction?.type === "overlay"
+            ? (editingInstruction as OverlayInstruction).overlayMedia
+            : null;
 
-      if (data.overlayMedia?.file) {
-        try {
+        if (data.overlayMedia?.file) {
           const file = new File(
             [data.overlayMedia.file],
             data.overlayMedia.name,
@@ -354,10 +391,10 @@ const InstructionEditor: React.FC = () => {
             }
           );
 
-          const mediaURL = await api.timelines.uploadMedia(
+          const mediaURL = await uploadMediaMutation.mutateAsync({
             file,
-            currentTimeline!.id
-          );
+            timelineId: currentTimeline!.id,
+          });
 
           overlayMedia = {
             url: mediaURL.url,
@@ -366,91 +403,79 @@ const InstructionEditor: React.FC = () => {
             type: data.overlayMedia.type,
             position: data.overlayMedia.position,
           };
-        } catch (error) {
-          console.error("Failed to upload overlay media:", error);
-          return;
+        } else if (data.overlayMedia) {
+          overlayMedia = {
+            ...data.overlayMedia,
+            duration: Number(data.overlayDuration),
+            position: data.overlayMedia.position,
+          };
         }
-      } else if (data.overlayMedia) {
-        overlayMedia = {
-          ...data.overlayMedia,
-          duration: Number(data.overlayDuration),
-          position: data.overlayMedia.position,
-        };
+
+        newInstruction = {
+          id: editingInstruction?.id || Date.now().toString(),
+          type: "overlay",
+          triggerTime,
+          overlayMedia,
+          useOverlayDuration: data.useOverlayDuration,
+          muteOverlayMedia: data.muteOverlayMedia,
+          pauseMainVideo: data.pauseMainVideo,
+          pauseDuration: Number(data.pauseDuration),
+        } as OverlayInstruction;
+      } else if (selectedType === "skip") {
+        const skipToTime = parseTimeInput({
+          hours: data.skipToHours || 0,
+          minutes: data.skipToMinutes || 0,
+          seconds: data.skipToSeconds || 0,
+          milliseconds: data.skipToMilliseconds || 0,
+        });
+
+        newInstruction = {
+          id: editingInstruction?.id || Date.now().toString(),
+          type: "skip",
+          triggerTime,
+          skipToTime,
+        } as SkipInstruction;
+      } else {
+        return;
       }
 
-      newInstruction = {
-        id: editingInstruction?.id || Date.now().toString(),
-        type: "overlay",
-        triggerTime,
-        overlayMedia,
-        useOverlayDuration: data.useOverlayDuration,
-        muteOverlayMedia: data.muteOverlayMedia,
-        pauseMainVideo: data.pauseMainVideo,
-        pauseDuration: Number(data.pauseDuration),
-      } as OverlayInstruction;
-    } else if (selectedType === "skip") {
-      const skipToTime = parseTimeInput({
-        hours: data.skipToHours || 0,
-        minutes: data.skipToMinutes || 0,
-        seconds: data.skipToSeconds || 0,
-        milliseconds: data.skipToMilliseconds || 0,
-      });
+      let updatedInstructions: Instruction[];
+      if (isEditing) {
+        updatedInstructions = instructions.map((i) =>
+          i.id === newInstruction.id ? newInstruction : i
+        );
+      } else {
+        updatedInstructions = [...instructions, newInstruction];
+      }
 
-      newInstruction = {
-        id: editingInstruction?.id || Date.now().toString(),
-        type: "skip",
-        triggerTime,
-        skipToTime,
-      } as SkipInstruction;
-    } else {
-      return;
-    }
-
-    let updatedInstructions: Instruction[];
-    if (isEditing) {
-      updatedInstructions = instructions.map((i) =>
-        i.id === newInstruction.id ? newInstruction : i
-      );
-    } else {
-      updatedInstructions = [...instructions, newInstruction];
-    }
-
-    try {
       await handleSaveInstructions(updatedInstructions);
+
+      dispatch(setCurrentTime(triggerTime));
+      methods.reset();
+      dispatch(setEditingInstruction(null));
     } catch (error) {
       console.error("Failed to save instruction:", error);
-      return;
     }
-
-    dispatch(setCurrentTime(triggerTime));
-    methods.reset();
-    dispatch(setEditingInstruction(null));
   };
 
   const handleDeleteOverlayMedia = async () => {
     const mediaURL = methods.watch("overlayMedia")?.url;
-    if (mediaURL) {
-      try {
-        await api.timelines.deleteMedia(mediaURL);
-      } catch (error) {
-        console.error("Failed to delete overlay media:", error);
-      }
-    }
+    if (!mediaURL) return;
 
-    methods.setValue("overlayMedia", null);
+    try {
+      await deleteMediaMutation.mutateAsync(mediaURL);
+      methods.setValue("overlayMedia", null);
 
-    if (editingInstruction?.id) {
-      const updatedInstructions = instructions.map((instruction) =>
-        instruction.id === editingInstruction.id
-          ? { ...instruction, overlayMedia: null }
-          : instruction
-      );
-
-      try {
+      if (editingInstruction?.id) {
+        const updatedInstructions = instructions.map((instruction) =>
+          instruction.id === editingInstruction.id
+            ? { ...instruction, overlayMedia: null }
+            : instruction
+        );
         await handleSaveInstructions(updatedInstructions);
-      } catch (error) {
-        console.error("Failed to update instruction:", error);
       }
+    } catch (error) {
+      console.error("Failed to delete media:", error);
     }
   };
 
@@ -531,23 +556,6 @@ const InstructionEditor: React.FC = () => {
         ...overlayMedia,
         position,
       });
-
-      // If we're editing, update the instruction immediately
-      if (editingInstruction?.id) {
-        const updatedInstructions = instructions.map((instruction) =>
-          instruction.id === editingInstruction.id
-            ? {
-                ...instruction,
-                overlayMedia: {
-                  ...overlayMedia,
-                  position,
-                },
-              }
-            : instruction
-        );
-
-        handleSaveInstructions(updatedInstructions);
-      }
     }
   };
 
@@ -640,7 +648,18 @@ const InstructionEditor: React.FC = () => {
     );
   };
 
-  return <div className="p-6">{renderForm()}</div>;
+  return (
+    <div className="p-6">
+      {renderForm()}
+      {(saveInstructionsMutation.isPending ||
+        uploadMediaMutation.isPending ||
+        deleteMediaMutation.isPending) && (
+        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+          <LoadingSpinner size="lg" />
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default InstructionEditor;

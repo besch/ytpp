@@ -4,6 +4,7 @@ import Button from "@/components/ui/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { selectUser, logout, setError } from "@/store/authSlice";
 import { toast } from "react-toastify";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface AccountProps {
   sendMessageToContentScript: (message: any) => Promise<any>;
@@ -15,6 +16,7 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
   const accountRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) {
@@ -38,6 +40,7 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
   }, []);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
       const response = await sendMessageToContentScript({
         type: "HANDLE_LOGOUT",
@@ -55,6 +58,8 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
         error instanceof Error ? error.message : "Logout failed";
       dispatch(setError(errorMessage));
       toast.error(errorMessage);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -91,6 +96,12 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
             <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>
+        </div>
+      )}
+
+      {isLoggingOut && (
+        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+          <LoadingSpinner size="md" />
         </div>
       )}
     </div>
