@@ -21,21 +21,24 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
   const {
     register,
     watch,
-    setValue,
     formState: { errors },
   } = useFormContext();
+
   const overlayMedia = watch("overlayMedia");
+  const pauseMainVideo = watch("pauseMainVideo");
+  const useOverlayDuration = watch("useOverlayDuration");
 
   return (
     <div className="space-y-4">
+      {/* Overlay Media Section */}
       <div>
-        <label className="text-muted-foreground mb-2 block">
+        <label className="text-base text-muted-foreground mb-2 block">
           Overlay Media
         </label>
         {overlayMedia ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-base text-muted-foreground">
                 {overlayMedia.name}
               </span>
               <Button
@@ -66,7 +69,75 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
         )}
       </div>
 
-      {overlayMedia && <OverlayControls />}
+      {/* Pause Controls */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            {...register("pauseMainVideo")}
+            id="pauseMainVideo"
+          />
+          <label htmlFor="pauseMainVideo" className="text-base">
+            Pause Main Video
+          </label>
+        </div>
+
+        {pauseMainVideo && !useOverlayDuration && (
+          <div className="form-group m-0">
+            <Input
+              type="number"
+              step="0.1"
+              placeholder="Pause duration (seconds)"
+              className="text-base"
+              {...register("pauseDuration", {
+                required: pauseMainVideo && !useOverlayDuration,
+                min: 0,
+                valueAsNumber: true,
+              })}
+            />
+            {errors.pauseDuration && (
+              <span className="text-xs text-destructive">
+                Please enter a valid duration
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Use Media Duration Option */}
+      {(overlayMedia?.type.startsWith("video/") ||
+        overlayMedia?.type === "image/gif") && (
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            {...register("useOverlayDuration")}
+            id="useOverlayDuration"
+          />
+          <label htmlFor="useOverlayDuration" className="text-base">
+            Use media duration for pause
+          </label>
+        </div>
+      )}
+
+      {/* Duration Input */}
+      <div className="form-group">
+        <label className="block text-base font-medium text-muted-foreground mb-2">
+          Overlay Duration (seconds)
+        </label>
+        <Input
+          type="number"
+          className="text-base"
+          {...register("overlayDuration", {
+            required: true,
+            min: 1,
+          })}
+        />
+        {errors.overlayDuration && (
+          <span className="text-xs text-destructive">
+            This field is required
+          </span>
+        )}
+      </div>
     </div>
   );
 };
@@ -108,110 +179,6 @@ const MediaPreview: React.FC<{ media: any }> = ({ media }) => {
         alt="Overlay Media"
       />
     </div>
-  );
-};
-
-const OverlayControls: React.FC = () => {
-  const { register, watch } = useFormContext();
-  const overlayMedia = watch("overlayMedia");
-
-  return (
-    <>
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          {...register("pauseMainVideo")}
-          id="pauseMainVideo"
-        />
-        <label htmlFor="pauseMainVideo" className="text-sm">
-          Pause Main Video
-        </label>
-      </div>
-
-      {watch("pauseMainVideo") && <PauseControls />}
-
-      <DurationInputs />
-    </>
-  );
-};
-
-const PauseControls: React.FC = () => {
-  const { register, watch } = useFormContext();
-  const overlayMedia = watch("overlayMedia");
-  const useOverlayDuration = watch("useOverlayDuration");
-
-  return (
-    <>
-      {(overlayMedia.type.startsWith("video/") ||
-        overlayMedia.type === "image/gif") && (
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            {...register("useOverlayDuration")}
-            id="useOverlayDuration"
-          />
-          <label htmlFor="useOverlayDuration" className="text-sm">
-            Pause for full media file duration
-          </label>
-        </div>
-      )}
-    </>
-  );
-};
-
-const DurationInputs: React.FC = () => {
-  const {
-    register,
-    watch,
-    formState: { errors },
-  } = useFormContext();
-  const useOverlayDuration = watch("useOverlayDuration");
-  const pauseMainVideo = watch("pauseMainVideo");
-  const overlayMedia = watch("overlayMedia");
-
-  return (
-    <>
-      {pauseMainVideo && !useOverlayDuration && (
-        <div>
-          <label className="text-sm text-muted-foreground">
-            Pause Duration (seconds)
-          </label>
-          <Input
-            type="number"
-            step="0.1"
-            {...register("pauseDuration", {
-              required: true,
-              min: 0,
-              valueAsNumber: true,
-            })}
-            disabled={useOverlayDuration}
-          />
-          {errors.pauseDuration && (
-            <span className="text-xs text-destructive">
-              This field is required
-            </span>
-          )}
-        </div>
-      )}
-
-      <div>
-        <label className="text-sm text-muted-foreground">
-          Overlay Duration (seconds)
-        </label>
-        <Input
-          type="number"
-          {...register("overlayDuration", {
-            required: true,
-            min: 1,
-          })}
-        />
-        {errors.overlayDuration && (
-          <span className="text-xs text-destructive">
-            This field is required
-          </span>
-        )}
-      </div>
-    </>
   );
 };
 
