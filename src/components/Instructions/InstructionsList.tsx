@@ -17,14 +17,17 @@ import InstructionTypeSelect from "./InstructionTypeSelect";
 import { api } from "@/lib/api";
 import { RootState } from "@/store";
 import TimelineTitle from "./TimelineTitle";
+import { useNavigate, useParams } from "react-router-dom";
 
 const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { id: timelineId } = useParams();
   const currentTimeline = useSelector(selectCurrentTimeline);
   const instructions = useSelector(selectInstructions);
   const editingInstruction = useSelector(selectEditingInstruction);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
-  const isOwner = useSelector((state: RootState) => 
+  const isOwner = useSelector((state: RootState) =>
     selectIsTimelineOwner(state, currentTimeline)
   );
 
@@ -41,11 +44,13 @@ const InstructionsList: React.FC = () => {
   const handleTypeSelect = (type: string) => {
     dispatch(setEditingInstruction({ type } as Instruction));
     setShowTypeSelect(false);
+    navigate(`/timeline/${timelineId}/instruction`);
   };
 
   const handleEdit = (instruction: Instruction) => {
     dispatch(setEditingInstruction(instruction));
     dispatch(seekToTime(instruction.triggerTime));
+    navigate(`/timeline/${timelineId}/instruction/${instruction.id}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -87,7 +92,7 @@ const InstructionsList: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-8">
       <div className="flex items-center justify-between">
         <TimelineTitle />
         <div>
@@ -169,9 +174,7 @@ const InstructionsList: React.FC = () => {
         </div>
       ) : (
         <div className="text-center py-8 text-muted-foreground">
-          No instructions yet.{" "}
-          {isOwner &&
-            "Click the button above to add one."}
+          No instructions yet. {isOwner && "Click the button above to add one."}
         </div>
       )}
     </div>

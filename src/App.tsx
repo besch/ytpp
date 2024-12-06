@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Navigation from "@/pages/Navigation";
 import TimelineList from "@/components/Timeline/TimelineList";
 import InstructionEditor from "@/components/Instructions/InstructionEditor";
+import InstructionsList from "@/components/Instructions/InstructionsList";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,7 +24,11 @@ const App: React.FC = () => {
           <div className="flex-grow overflow-auto">
             <Routes>
               <Route path="/" element={<TimelineList />} />
-              <Route path="/timeline/:id" element={<InstructionEditor />} />
+              <Route path="/timeline/:id" element={<InstructionsList />} />
+              <Route
+                path="/timeline/:id/instruction/:instructionId?"
+                element={<InstructionEditor />}
+              />
               <Route path="/timeline/new" element={<InstructionEditor />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

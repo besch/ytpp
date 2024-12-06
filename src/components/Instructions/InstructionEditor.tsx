@@ -29,7 +29,7 @@ import SkipInstructionForm from "./SkipInstructionForm";
 import TextOverlayInstructionForm from "./TextOverlayInstructionForm";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -39,6 +39,7 @@ const InstructionEditor: React.FC = () => {
   const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
   const navigate = useNavigate();
+  const { id: timelineId, instructionId } = useParams();
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
@@ -287,7 +288,7 @@ const InstructionEditor: React.FC = () => {
       overlayMediaType: "video",
     });
     dispatch(setEditingInstruction(null));
-    navigate("/");
+    navigate(`/timeline/${timelineId}`);
   };
 
   // Mutation for saving instructions
@@ -473,6 +474,7 @@ const InstructionEditor: React.FC = () => {
       dispatch(setCurrentTime(triggerTime));
       methods.reset();
       dispatch(setEditingInstruction(null));
+      navigate(`/timeline/${timelineId}`);
     } catch (error) {
       console.error("Failed to save instruction:", error);
     }
