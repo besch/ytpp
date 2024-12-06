@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import Button from "@/components/ui/Button";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMediaUrl } from "@/lib/api";

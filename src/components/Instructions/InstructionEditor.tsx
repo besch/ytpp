@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm, FormProvider } from "react-hook-form";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, X, Edit2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
   selectCurrentTime,
@@ -29,6 +29,8 @@ import SkipInstructionForm from "./SkipInstructionForm";
 import TextOverlayInstructionForm from "./TextOverlayInstructionForm";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import Input from "@/components/ui/Input";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -37,9 +39,13 @@ const InstructionEditor: React.FC = () => {
   const editingInstruction = useSelector(selectEditingInstruction);
   const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
+  const navigate = useNavigate();
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
+
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
 
   const parseTimeInput = (data: TimeInputInterface) => {
     return (
@@ -68,9 +74,6 @@ const InstructionEditor: React.FC = () => {
       skipToMilliseconds: 0,
     },
   });
-
-  const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (isEditing && editingInstruction) {
@@ -266,6 +269,12 @@ const InstructionEditor: React.FC = () => {
   }, [methods.watch, isEditing, editingInstruction, instructions, dispatch]);
 
   const handleBack = () => {
+    // Prefetch timelines before navigating
+    queryClient.prefetchQuery({
+      queryKey: ["timelines", window.location.href.split("&")[0]],
+      queryFn: () => api.timelines.getAll(window.location.href.split("&")[0]),
+    });
+
     methods.reset({
       hours: 0,
       minutes: 0,
@@ -282,6 +291,7 @@ const InstructionEditor: React.FC = () => {
       overlayMediaType: "video",
     });
     dispatch(setEditingInstruction(null));
+    navigate("/");
   };
 
   // Mutation for saving instructions
@@ -328,6 +338,34 @@ const InstructionEditor: React.FC = () => {
       console.error("Failed to delete media:", error);
     },
   });
+
+  // Update the title mutation
+  const updateTitleMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      return api.timelines.update(id, { title });
+    },
+    onSuccess: (savedTimeline) => {
+      dispatch(setCurrentTimeline(savedTimeline));
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+      setEditingTitle(false);
+    },
+    onError: (error) => {
+      console.error("Failed to update timeline title:", error);
+    },
+  });
+
+  const handleStartEditingTitle = () => {
+    setEditingTitle(true);
+    setNewTitle(currentTimeline?.title || "");
+  };
+
+  const handleSaveTitle = async () => {
+    if (!currentTimeline) return;
+    updateTitleMutation.mutate({
+      id: currentTimeline.id,
+      title: newTitle,
+    });
+  };
 
   const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
     await saveInstructionsMutation.mutateAsync(updatedInstructions);
@@ -563,6 +601,54 @@ const InstructionEditor: React.FC = () => {
     if (!selectedType && !isEditing) {
       return (
         <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            {editingTitle ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSaveTitle();
+                    }
+                  }}
+                  className="h-8 text-lg"
+                  disabled={updateTitleMutation.isPending}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSaveTitle}
+                  disabled={updateTitleMutation.isPending}
+                >
+                  <Check size={16} className="text-green-500" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingTitle(false)}
+                  disabled={updateTitleMutation.isPending}
+                >
+                  <X size={16} className="text-destructive" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-medium">
+                  {currentTimeline?.title}
+                </h1>
+                {isTimelineOwner() && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditingTitle}
+                  >
+                    <Edit2 size={16} />
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
           <InstructionsList />
         </div>
       );
@@ -653,7 +739,8 @@ const InstructionEditor: React.FC = () => {
       {renderForm()}
       {(saveInstructionsMutation.isPending ||
         uploadMediaMutation.isPending ||
-        deleteMediaMutation.isPending) && (
+        deleteMediaMutation.isPending ||
+        updateTitleMutation.isPending) && (
         <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
           <LoadingSpinner size="lg" />
         </div>
