@@ -581,10 +581,30 @@ const InstructionEditor: React.FC = () => {
   useEffect(() => {
     if (isEditing && editingInstruction) {
       const values = methods.getValues();
-      setInitialValues(values);
+      
+      // For text overlay instructions, we need to store the complete structure
+      if (editingInstruction.type === "text-overlay") {
+        const textOverlayInstruction = editingInstruction as TextOverlayInstruction;
+        setInitialValues({
+          ...values,
+          triggerTime: editingInstruction.triggerTime,
+          textOverlay: {
+            text: textOverlayInstruction.textOverlay.text,
+            style: {
+              ...textOverlayInstruction.textOverlay.style
+            },
+            position: textOverlayInstruction.textOverlay.position
+          },
+          duration: textOverlayInstruction.duration,
+          pauseMainVideo: textOverlayInstruction.pauseMainVideo,
+          pauseDuration: textOverlayInstruction.pauseDuration
+        });
+      } else {
+        setInitialValues(values);
+      }
       setFormChanged(false);
     }
-  }, [isEditing, editingInstruction]);
+  }, [isEditing, editingInstruction, methods]);
 
   // Update the form change detection
   useEffect(() => {
@@ -617,13 +637,55 @@ const InstructionEditor: React.FC = () => {
   // Update the handleCancel function
   const handleCancel = () => {
     if (initialValues) {
-      // Reset the form including the hidden _formChanged field
-      methods.reset(initialValues);
-      methods.setValue("_formChanged", undefined, { shouldDirty: false });
+      // Reset the form with the initial values
+      methods.reset(initialValues, {
+        keepDefaultValues: true,
+      });
 
-      // Get the current values after reset and set them as new initial values
-      const currentValues = methods.getValues();
-      setInitialValues(currentValues);
+      // For text overlay instructions, we need to explicitly reset nested fields
+      if (selectedType === "text-overlay") {
+        const textOverlay = initialValues.textOverlay;
+        if (textOverlay) {
+          methods.setValue("textOverlay", {
+            text: textOverlay.text,
+            style: {
+              fontFamily: textOverlay.style.fontFamily,
+              fontSize: textOverlay.style.fontSize,
+              color: textOverlay.style.color,
+              backgroundColor: textOverlay.style.backgroundColor,
+              fontWeight: textOverlay.style.fontWeight,
+              fontStyle: textOverlay.style.fontStyle,
+              transparentBackground: textOverlay.style.transparentBackground,
+              textAlign: textOverlay.style.textAlign,
+              opacity: textOverlay.style.opacity,
+              animation: textOverlay.style.animation,
+              textShadow: textOverlay.style.textShadow,
+              borderRadius: textOverlay.style.borderRadius,
+              padding: textOverlay.style.padding,
+            },
+            position: textOverlay.position,
+          });
+        }
+
+        // Reset trigger time fields
+        const totalSeconds = Math.floor(initialValues.triggerTime / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        const milliseconds = initialValues.triggerTime % 1000;
+
+        methods.setValue("hours", hours);
+        methods.setValue("minutes", minutes);
+        methods.setValue("seconds", seconds);
+        methods.setValue("milliseconds", milliseconds);
+
+        // Reset other fields
+        methods.setValue("duration", initialValues.duration);
+        methods.setValue("pauseMainVideo", initialValues.pauseMainVideo);
+        methods.setValue("pauseDuration", initialValues.pauseDuration);
+      }
+
+      methods.setValue("_formChanged", undefined, { shouldDirty: false });
       setFormChanged(false);
     }
   };
