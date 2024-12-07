@@ -238,21 +238,8 @@ const InstructionEditor: React.FC = () => {
             milliseconds: value.milliseconds || 0,
           });
 
-          // Update time through Redux
+          // Only update Redux state, don't save to database
           dispatch(seekToTime(triggerTime));
-
-          if (isEditing && editingInstruction) {
-            const updatedInstruction = {
-              ...editingInstruction,
-              triggerTime,
-            };
-
-            const updatedInstructions = instructions.map((i) =>
-              i.id === editingInstruction.id ? updatedInstruction : i
-            );
-
-            handleSaveInstructions(updatedInstructions);
-          }
         }, 300); // Wait 300ms before sending update
       }
     });
@@ -263,7 +250,7 @@ const InstructionEditor: React.FC = () => {
         clearTimeout(timeoutId);
       }
     };
-  }, [methods.watch, isEditing, editingInstruction, instructions, dispatch]);
+  }, [methods.watch, dispatch]);
 
   const handleBack = () => {
     // Prefetch timelines before navigating
@@ -469,6 +456,7 @@ const InstructionEditor: React.FC = () => {
         updatedInstructions = [...instructions, newInstruction];
       }
 
+      // Save to database only when form is submitted
       await handleSaveInstructions(updatedInstructions);
 
       dispatch(setCurrentTime(triggerTime));
