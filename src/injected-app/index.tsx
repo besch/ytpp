@@ -12,33 +12,16 @@ import { setVideoElement } from "@/store/timelineSlice";
 import { setUser } from "@/store/authSlice";
 
 function init() {
-  // Check initial auth state
-  const checkAuthState = async () => {
-    const messageId = Date.now().toString();
-    
-    window.postMessage(
-      {
-        source: "injected-app",
-        messageId,
-        type: "CHECK_AUTH_STATE"
-      },
-      "*"
-    );
-  };
-
   // Listen for messages from content script
-  window.addEventListener('message', (event) => {
-    if (event.data.source === 'content-script') {
+  window.addEventListener("message", (event) => {
+    if (event.data.source === "content-script") {
       switch (event.data.type) {
-        case 'AUTH_STATE_CHANGED':
+        case "AUTH_STATE_CHANGED":
           store.dispatch(setUser(event.data.payload.user));
           break;
       }
     }
   });
-
-  // Check auth state on init
-  checkAuthState();
 
   // Initialize VideoManager first
   const videoManager = new VideoManager();

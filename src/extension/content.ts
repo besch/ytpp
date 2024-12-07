@@ -67,16 +67,15 @@ class ContentScript {
       return new Promise((resolve) => {
         chrome.runtime.sendMessage({ action }, (response) => {
           console.log("Content: Received response from background", response);
-          if (response.user.id) {
-            // Call the async function without await
-            api.users.createOrUpdate(response.user).then(() => {
-              resolve(
-                response || {
-                  success: false,
-                  error: "No response from background",
-                }
-              );
-            });
+          if (response?.success && response.user?.id) {
+            // Only make API call for HANDLE_LOGIN action
+            if (action === "HANDLE_LOGIN") {
+              api.users.createOrUpdate(response.user).then(() => {
+                resolve(response);
+              });
+            } else {
+              resolve(response);
+            }
           } else {
             resolve(
               response || {

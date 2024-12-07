@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
 import { Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import {
   selectEditingInstruction,
   selectCurrentTimeline,
 } from "@/store/timelineSlice";
+import { setUser } from "@/store/authSlice";
 import Navigation from "@/pages/Navigation";
 import TimelineList from "@/components/Timeline/TimelineList";
 import InstructionEditor from "@/components/Instructions/InstructionEditor";
@@ -22,8 +23,27 @@ const queryClient = new QueryClient({
 
 const App: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const editingInstruction = useSelector(selectEditingInstruction);
   const currentTimeline = useSelector(selectCurrentTimeline);
+
+  // Single auth check on app load
+  useEffect(() => {
+    const checkAuthState = async () => {
+      const messageId = Date.now().toString();
+
+      window.postMessage(
+        {
+          source: "injected-app",
+          messageId,
+          type: "CHECK_AUTH_STATE",
+        },
+        "*"
+      );
+    };
+
+    checkAuthState();
+  }, [dispatch]);
 
   // Listen for editingInstruction changes and navigate accordingly
   useEffect(() => {
