@@ -112,27 +112,6 @@ const Navigation: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      const response = await sendMessageToContentScript({
-        type: "HANDLE_LOGOUT",
-      });
-
-      if (!response?.success) {
-        throw new Error(response?.error || "Logout failed");
-      }
-
-      dispatch(logout());
-      toast.success("Successfully logged out!");
-    } catch (error) {
-      console.error("Logout error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Logout failed";
-      dispatch(setError(errorMessage));
-      toast.error(errorMessage);
-    }
-  };
-
   const handleHomeClick = async () => {
     try {
       const videoUrl = window.location.href.split("&")[0];
