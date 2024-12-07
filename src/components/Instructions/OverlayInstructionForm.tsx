@@ -83,7 +83,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
             id="pauseMainVideo"
           />
           <label htmlFor="pauseMainVideo" className="text-base">
-            Pause Main Video
+            Pause main video
           </label>
         </div>
 
@@ -119,7 +119,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
             id="useOverlayDuration"
           />
           <label htmlFor="useOverlayDuration" className="text-base">
-            Use media duration for pause
+            Pause main video for media file duration
           </label>
         </div>
       )}
@@ -127,7 +127,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
       {/* Duration Input */}
       <div className="form-group">
         <label className="block text-base font-medium text-muted-foreground mb-2">
-          Overlay Duration (seconds)
+          Overlay media duration
         </label>
         <Input
           type="number"
