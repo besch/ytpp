@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm, FormProvider } from "react-hook-form";
 import { ArrowLeft } from "lucide-react";
@@ -71,6 +71,9 @@ const InstructionEditor: React.FC = () => {
       skipToMilliseconds: 0,
     },
   });
+
+  const [formChanged, setFormChanged] = useState(false);
+  const [initialValues, setInitialValues] = useState<any>(null);
 
   useEffect(() => {
     if (isEditing && editingInstruction) {
@@ -487,13 +490,19 @@ const InstructionEditor: React.FC = () => {
         updatedInstructions = [...instructions, newInstruction];
       }
 
-      // Save to database only when form is submitted
+      // Save to database
       await handleSaveInstructions(updatedInstructions);
 
       dispatch(setCurrentTime(triggerTime));
-      methods.reset();
-      dispatch(setEditingInstruction(null));
-      navigate(`/timeline/${timelineId}`);
+      
+      // Reset form state but don't navigate away
+      setFormChanged(false);
+      setInitialValues(data);
+      
+      // If this was a new instruction, update the editing state to reflect we're now editing it
+      if (!isEditing) {
+        dispatch(setEditingInstruction(newInstruction));
+      }
     } catch (error) {
       console.error("Failed to save instruction:", error);
     }
@@ -548,6 +557,7 @@ const InstructionEditor: React.FC = () => {
         ...overlayMedia,
         position,
       });
+      setFormChanged(true);
     }
   };
 
@@ -564,6 +574,36 @@ const InstructionEditor: React.FC = () => {
     methods.setValue("milliseconds", milliseconds);
 
     dispatch(seekToTime(time));
+  };
+
+  // Add this effect to store initial values when editing starts
+  useEffect(() => {
+    if (isEditing && editingInstruction) {
+      const values = methods.getValues();
+      setInitialValues(values);
+      setFormChanged(false);
+    }
+  }, [isEditing, editingInstruction]);
+
+  // Add form change detection
+  useEffect(() => {
+    if (!initialValues) return;
+
+    const subscription = methods.watch((value) => {
+      const currentValues = methods.getValues();
+      const hasChanges =
+        JSON.stringify(currentValues) !== JSON.stringify(initialValues);
+      setFormChanged(hasChanges);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [methods, initialValues]);
+
+  const handleCancel = () => {
+    if (initialValues) {
+      methods.reset(initialValues);
+    }
+    setFormChanged(false);
   };
 
   const renderForm = () => {
@@ -629,6 +669,7 @@ const InstructionEditor: React.FC = () => {
                     "overlayMediaType",
                     mediaData.type.startsWith("video/") ? "video" : "image"
                   );
+                  setFormChanged(true);
                 }}
                 onPositionChange={handleMediaPositionChange}
               />
@@ -646,9 +687,22 @@ const InstructionEditor: React.FC = () => {
               />
             )}
 
-            <Button type="submit" className="w-full">
-              {isEditing ? "Update Instruction" : "Add Instruction"}
-            </Button>
+            <div className="flex gap-4">
+              <Button type="submit" className="flex-1" disabled={!formChanged}>
+                {isEditing ? "Update Instruction" : "Add Instruction"}
+              </Button>
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleCancel}
+                  disabled={!formChanged}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
           </form>
         </FormProvider>
       </div>
