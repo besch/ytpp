@@ -90,6 +90,8 @@ const Timeline: React.FC = () => {
     const clickedTime = (percentage / 100) * duration;
 
     seekToTime(clickedTime);
+    
+    // Dispatch actions to trigger navigation
     dispatch(setSelectedInstructionId(null));
     dispatch(setEditingInstruction(null));
   };
