@@ -16,7 +16,8 @@ const SkipInstructionForm: React.FC<SkipInstructionFormProps> = ({
       (Number(data.hours) * 3600 +
         Number(data.minutes) * 60 +
         Number(data.seconds)) *
-      1000
+        1000 +
+      Number(data.milliseconds || 0)
     );
   };
 
@@ -28,6 +29,7 @@ const SkipInstructionForm: React.FC<SkipInstructionFormProps> = ({
           hours: watch("skipToHours") || 0,
           minutes: watch("skipToMinutes") || 0,
           seconds: watch("skipToSeconds") || 0,
+          milliseconds: watch("skipToMilliseconds") || 0,
         })}
         onChange={onTimeChange}
       />
