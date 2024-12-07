@@ -21,6 +21,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
   const {
     register,
     watch,
+    setValue,
     formState: { errors },
   } = useFormContext();
 
@@ -29,6 +30,20 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
   const useOverlayDuration = watch("useOverlayDuration");
 
   const handleMediaDelete = () => {
+    // Only store mediaToDelete if it's an actual uploaded file URL (not a blob)
+    if (overlayMedia?.url && !overlayMedia.url.startsWith("blob:")) {
+      setValue("mediaToDelete", overlayMedia.url);
+    }
+
+    // Clear the overlayMedia and mark form as changed
+    setValue("overlayMedia", null, {
+      shouldDirty: true,
+    });
+
+    // Reset related fields
+    setValue("useOverlayDuration", false);
+    setValue("overlayDuration", 5);
+
     // Call the parent's onMediaDelete handler
     onMediaDelete();
   };

@@ -420,38 +420,43 @@ const InstructionEditor: React.FC = () => {
         } as TextOverlayInstruction;
       } else if (selectedType === "overlay") {
         let overlayMedia = data.overlayMedia;
+        let mediaURL;
 
-        // If there's a new file to upload
-        if (data.overlayMedia?.file) {
-          const file = new File(
-            [data.overlayMedia.file],
-            data.overlayMedia.name,
-            {
-              type: data.overlayMedia.type,
-            }
-          );
-
-          const mediaURL = await uploadMediaMutation.mutateAsync({
-            file,
-            timelineId: currentTimeline!.id,
-          });
-
-          overlayMedia = {
-            url: mediaURL.url,
-            duration: Number(data.overlayDuration),
-            name: data.overlayMedia.name,
-            type: data.overlayMedia.type,
-            position: data.overlayMedia.position,
-          };
-        }
-
-        // Handle media deletion
-        if (data.mediaToDelete) {
+        // Handle media deletion first if there's a file to delete
+        // Only delete if it's an actual uploaded file (not a blob URL)
+        if (data.mediaToDelete && !data.mediaToDelete.startsWith("blob:")) {
           try {
             await deleteMediaMutation.mutateAsync(data.mediaToDelete);
           } catch (error) {
-            console.error("Failed to delete media:", error);
+            console.error("Failed to delete old media:", error);
           }
+        }
+
+        // If there's a new file to upload
+        if (data.overlayMedia?.file) {
+          try {
+            const uploadResult = await uploadMediaMutation.mutateAsync({
+              file: data.overlayMedia.file,
+              timelineId: currentTimeline!.id,
+            });
+            mediaURL = uploadResult.url;
+
+            overlayMedia = {
+              url: mediaURL,
+              duration: Number(data.overlayDuration),
+              name: data.overlayMedia.name,
+              type: data.overlayMedia.type,
+              position: data.overlayMedia.position,
+            };
+          } catch (error) {
+            console.error("Failed to upload new media:", error);
+            return;
+          }
+        }
+
+        // If media was deleted and no new file was uploaded
+        if (data.mediaToDelete && !data.overlayMedia?.file) {
+          overlayMedia = null;
         }
 
         newInstruction = {
@@ -581,23 +586,24 @@ const InstructionEditor: React.FC = () => {
   useEffect(() => {
     if (isEditing && editingInstruction) {
       const values = methods.getValues();
-      
+
       // For text overlay instructions, we need to store the complete structure
       if (editingInstruction.type === "text-overlay") {
-        const textOverlayInstruction = editingInstruction as TextOverlayInstruction;
+        const textOverlayInstruction =
+          editingInstruction as TextOverlayInstruction;
         setInitialValues({
           ...values,
           triggerTime: editingInstruction.triggerTime,
           textOverlay: {
             text: textOverlayInstruction.textOverlay.text,
             style: {
-              ...textOverlayInstruction.textOverlay.style
+              ...textOverlayInstruction.textOverlay.style,
             },
-            position: textOverlayInstruction.textOverlay.position
+            position: textOverlayInstruction.textOverlay.position,
           },
           duration: textOverlayInstruction.duration,
           pauseMainVideo: textOverlayInstruction.pauseMainVideo,
-          pauseDuration: textOverlayInstruction.pauseDuration
+          pauseDuration: textOverlayInstruction.pauseDuration,
         });
       } else {
         setInitialValues(values);
@@ -624,6 +630,12 @@ const InstructionEditor: React.FC = () => {
           methods.formState.dirtyFields.pauseDuration;
 
         setFormChanged(hasTextOverlayChanges);
+      } else if (selectedType === "overlay") {
+        // For overlay instructions, also check mediaToDelete
+        const hasChanges =
+          !isEqual(currentValues, initialValues) ||
+          currentValues.mediaToDelete !== undefined;
+        setFormChanged(hasChanges);
       } else {
         // For other instruction types, use the existing comparison
         const hasChanges = !isEqual(currentValues, initialValues);
