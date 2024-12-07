@@ -30,6 +30,7 @@ import TextOverlayInstructionForm from "./TextOverlayInstructionForm";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
+import { isEqual } from "lodash";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -39,7 +40,7 @@ const InstructionEditor: React.FC = () => {
   const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
   const navigate = useNavigate();
-  const { id: timelineId, instructionId } = useParams();
+  const { id: timelineId } = useParams();
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
@@ -494,11 +495,11 @@ const InstructionEditor: React.FC = () => {
       await handleSaveInstructions(updatedInstructions);
 
       dispatch(setCurrentTime(triggerTime));
-      
+
       // Reset form state but don't navigate away
       setFormChanged(false);
       setInitialValues(data);
-      
+
       // If this was a new instruction, update the editing state to reflect we're now editing it
       if (!isEditing) {
         dispatch(setEditingInstruction(newInstruction));
@@ -591,8 +592,7 @@ const InstructionEditor: React.FC = () => {
 
     const subscription = methods.watch((value) => {
       const currentValues = methods.getValues();
-      const hasChanges =
-        JSON.stringify(currentValues) !== JSON.stringify(initialValues);
+      const hasChanges = !isEqual(currentValues, initialValues);
       setFormChanged(hasChanges);
     });
 

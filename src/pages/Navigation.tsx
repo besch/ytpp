@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   selectIsAuthenticated,
   setUser,
-  logout,
   setError,
   setLoading,
 } from "@/store/authSlice";
