@@ -86,21 +86,32 @@ const TextOverlayInstructionForm: React.FC<{
     preview: (
       <div
         style={{
-          ...textOverlay?.style,
           width: "100%",
           height: "100%",
           display: "flex",
           alignItems: "center",
-          justifyContent: textOverlay?.style?.textAlign || "center",
+          justifyContent:
+            textOverlay?.style?.textAlign === "left"
+              ? "flex-start"
+              : textOverlay?.style?.textAlign === "right"
+              ? "flex-end"
+              : "center",
+          fontFamily: textOverlay?.style?.fontFamily,
+          fontSize: `${textOverlay?.style?.fontSize}px`,
+          color: textOverlay?.style?.color,
           backgroundColor: transparentBackground
             ? "transparent"
-            : textOverlay?.style?.backgroundColor || "#000000",
+            : textOverlay?.style?.backgroundColor || "transparent",
+          fontWeight: textOverlay?.style?.fontWeight || "normal",
+          fontStyle: textOverlay?.style?.fontStyle || "normal",
           padding: `${textOverlay?.style?.padding || 8}px`,
           opacity: textOverlay?.style?.opacity || 1,
           borderRadius: `${textOverlay?.style?.borderRadius || 0}px`,
           textShadow: textOverlay?.style?.textShadow
             ? "2px 2px 4px rgba(0,0,0,0.5)"
             : "none",
+          boxSizing: "border-box",
+          overflow: "hidden",
         }}
       >
         {textOverlay?.text || "Preview Text"}

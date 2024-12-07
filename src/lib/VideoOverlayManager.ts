@@ -293,25 +293,28 @@ export class VideoOverlayManager {
       width: `${position.width}px`,
       height: `${position.height}px`,
       fontFamily: style.fontFamily,
-      // Scale the font size
       fontSize: `${Math.round(style.fontSize * scale)}px`,
       color: style.color,
       backgroundColor: style.transparentBackground
         ? "transparent"
         : style.backgroundColor || "transparent",
-      fontWeight: style.fontWeight,
-      fontStyle: style.fontStyle,
+      fontWeight: style.fontWeight || "normal",
+      fontStyle: style.fontStyle || "normal",
       display: "flex",
       alignItems: "center",
-      justifyContent: style.textAlign || "center",
-      // Scale the padding
+      justifyContent:
+        style.textAlign === "left"
+          ? "flex-start"
+          : style.textAlign === "right"
+          ? "flex-end"
+          : "center",
       padding: `${Math.round((style.padding || 8) * scale)}px`,
       opacity: style.opacity || 1,
-      // Scale the border radius
       borderRadius: `${Math.round((style.borderRadius || 0) * scale)}px`,
       textShadow: style.textShadow ? "2px 2px 4px rgba(0,0,0,0.5)" : "none",
       transition: "opacity 0.3s ease-in-out",
       overflow: "hidden",
+      boxSizing: "border-box",
     });
 
     textElement.textContent = text;
@@ -320,14 +323,13 @@ export class VideoOverlayManager {
 
     if (duration) {
       this.overlayTimeout = window.setTimeout(() => {
-        // Add fade-out animation before removing
         textElement.style.opacity = "0";
         setTimeout(() => {
           this.hideOverlay(id);
           if (this.overlayEndedCallback) {
             this.overlayEndedCallback();
           }
-        }, 300); // Wait for fade-out animation
+        }, 300);
       }, duration * 1000);
     }
   }

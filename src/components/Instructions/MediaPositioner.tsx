@@ -278,7 +278,17 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
 
   const renderMedia = () => {
     if (media.type === "text") {
-      return media.preview;
+      return (
+        <div
+          className="w-full h-full"
+          style={{
+            boxSizing: "border-box",
+            pointerEvents: "none",
+          }}
+        >
+          {media.preview}
+        </div>
+      );
     }
 
     if (media.type.startsWith("video/")) {
