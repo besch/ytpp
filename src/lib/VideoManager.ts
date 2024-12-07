@@ -24,6 +24,7 @@ export class VideoManager {
       endTime: number | null;
     }
   > = new Map();
+  private overlayEndedCallback: (() => void) | null = null;
 
   constructor() {
     this.cleanupListeners = [];
@@ -362,7 +363,7 @@ export class VideoManager {
       endTime,
     });
 
-    const { textOverlay, pauseMainVideo } = instruction;
+    const { textOverlay, pauseMainVideo, duration } = instruction;
 
     // Calculate position based on video size
     const videoRect = this.videoElement.getBoundingClientRect();
@@ -375,28 +376,52 @@ export class VideoManager {
       height: textOverlay.position!.height * scale,
     };
 
+    // Create a promise that resolves when the text overlay should end
+    const textOverlayPromise = new Promise<void>((resolve) => {
+      setTimeout(resolve, duration * 1000);
+    });
+
+    // Create a promise that resolves when the video should resume
+    const videoResumePromise = pauseMainVideo
+      ? new Promise<void>((resolve) => {
+          setTimeout(resolve, (instruction.pauseDuration || duration) * 1000);
+        })
+      : Promise.resolve();
+
     // Pause main video if specified
     if (pauseMainVideo) {
       this.videoElement.pause();
     }
 
+    // Display the text overlay
     await this.videoOverlayManager?.displayTextOverlay(
       textOverlay.text,
       textOverlay.style,
       scaledPosition,
-      instruction.duration,
-      instruction.id // Pass instruction ID
+      duration,
+      instruction.id
     );
 
-    // If pauseMainVideo is true, resume after duration
-    if (pauseMainVideo) {
-      setTimeout(() => {
-        if (this.videoElement && this.videoElement.paused) {
-          this.videoElement.play().catch((error) => {
-            console.error("Error resuming video:", error);
-          });
-        }
-      }, instruction.duration * 1000);
-    }
+    // Handle both the text overlay duration and video resume timing independently
+    Promise.all([textOverlayPromise, videoResumePromise]).then(() => {
+      // Resume video if it's still paused
+      if (pauseMainVideo && this.videoElement && this.videoElement.paused) {
+        this.videoElement.play().catch((error) => {
+          console.error("Error resuming video:", error);
+        });
+      }
+    });
+
+    // Handle text overlay cleanup after its duration
+    textOverlayPromise.then(() => {
+      this.videoOverlayManager?.hideOverlay(instruction.id);
+      if (this.overlayEndedCallback) {
+        this.overlayEndedCallback();
+      }
+    });
+  }
+
+  public setOverlayEndedCallback(callback: () => void): void {
+    this.overlayEndedCallback = callback;
   }
 }
