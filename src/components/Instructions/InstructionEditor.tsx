@@ -602,8 +602,11 @@ const InstructionEditor: React.FC = () => {
   const handleCancel = () => {
     if (initialValues) {
       methods.reset(initialValues);
+      // Get the current values after reset and set them as new initial values
+      const currentValues = methods.getValues();
+      setInitialValues(currentValues);
+      setFormChanged(false);
     }
-    setFormChanged(false);
   };
 
   const renderForm = () => {
