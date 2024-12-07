@@ -26,6 +26,7 @@
     "fabric": "^6.4.3",
     "framer-motion": "^11.3.19",
     "i18next": "^23.12.3",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.397.0",
     "postcss": "^8.4.38",
     "react": "^18.3.1",
@@ -78,6 +79,7 @@
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",
+    "@types/lodash": "^4.17.13",
     "@types/react-color": "^3.0.12",
     "cross-env": "^7.0.3",
     "css-loader": "^7.1.2",
