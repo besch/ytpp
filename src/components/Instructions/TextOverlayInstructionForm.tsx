@@ -1,5 +1,5 @@
-import React from "react";
-import { useFormContext } from "react-hook-form";
+import React, { useEffect } from "react";
+import { useFormContext, FieldErrors } from "react-hook-form";
 import Input from "@/components/ui/Input";
 import { MediaPosition } from "./MediaPositioner";
 import MediaPositioner from "./MediaPositioner";
@@ -49,6 +49,7 @@ interface TextOverlayFormData {
   duration: number;
   pauseMainVideo: boolean;
   pauseDuration: number;
+  _formChanged?: number;
 }
 
 const TextOverlayInstructionForm: React.FC<{
@@ -58,7 +59,8 @@ const TextOverlayInstructionForm: React.FC<{
     register,
     watch,
     setValue,
-    formState: { errors },
+    getValues,
+    formState: { errors, isDirty, dirtyFields },
   } = useFormContext<TextOverlayFormData>();
 
   const textOverlay = watch("textOverlay");
@@ -66,6 +68,16 @@ const TextOverlayInstructionForm: React.FC<{
     "textOverlay.style.transparentBackground"
   );
   const pauseMainVideo = watch("pauseMainVideo");
+
+  useEffect(() => {
+    const subscription = watch((value, { name, type }) => {
+      if (name?.startsWith("textOverlay")) {
+        setValue("_formChanged", Date.now(), { shouldDirty: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
 
   const previewMedia = {
     type: "text",
@@ -98,6 +110,8 @@ const TextOverlayInstructionForm: React.FC<{
 
   return (
     <div className="space-y-6">
+      <input type="hidden" {...register("_formChanged")} />
+
       {/* Text Content */}
       <div className="form-group">
         <label className="block text-sm font-medium text-muted-foreground mb-2">

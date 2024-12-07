@@ -586,22 +586,41 @@ const InstructionEditor: React.FC = () => {
     }
   }, [isEditing, editingInstruction]);
 
-  // Add form change detection
+  // Update the form change detection
   useEffect(() => {
     if (!initialValues) return;
 
     const subscription = methods.watch((value) => {
       const currentValues = methods.getValues();
-      const hasChanges = !isEqual(currentValues, initialValues);
-      setFormChanged(hasChanges);
+
+      // Special handling for text overlay instructions
+      if (selectedType === "text-overlay") {
+        // Check if any text overlay related fields have changed
+        const hasTextOverlayChanges =
+          methods.formState.dirtyFields._formChanged ||
+          methods.formState.dirtyFields.textOverlay ||
+          methods.formState.dirtyFields.duration ||
+          methods.formState.dirtyFields.pauseMainVideo ||
+          methods.formState.dirtyFields.pauseDuration;
+
+        setFormChanged(hasTextOverlayChanges);
+      } else {
+        // For other instruction types, use the existing comparison
+        const hasChanges = !isEqual(currentValues, initialValues);
+        setFormChanged(hasChanges);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [methods, initialValues]);
+  }, [methods, initialValues, selectedType]);
 
+  // Update the handleCancel function
   const handleCancel = () => {
     if (initialValues) {
+      // Reset the form including the hidden _formChanged field
       methods.reset(initialValues);
+      methods.setValue("_formChanged", undefined, { shouldDirty: false });
+
       // Get the current values after reset and set them as new initial values
       const currentValues = methods.getValues();
       setInitialValues(currentValues);
