@@ -28,6 +28,11 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
   const pauseMainVideo = watch("pauseMainVideo");
   const useOverlayDuration = watch("useOverlayDuration");
 
+  const handleMediaDelete = () => {
+    // Call the parent's onMediaDelete handler
+    onMediaDelete();
+  };
+
   return (
     <div className="space-y-4">
       {/* Overlay Media Section */}
@@ -45,7 +50,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
                 variant="ghost"
                 type="button"
                 size="sm"
-                onClick={onMediaDelete}
+                onClick={handleMediaDelete}
               >
                 <Trash2 size={16} />
               </Button>

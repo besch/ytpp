@@ -341,6 +341,36 @@ const InstructionEditor: React.FC = () => {
     await saveInstructionsMutation.mutateAsync(updatedInstructions);
   };
 
+  const handleDeleteOverlayMedia = () => {
+    const mediaURL = methods.watch("overlayMedia")?.url;
+    if (
+      !mediaURL ||
+      !editingInstruction ||
+      editingInstruction.type !== "overlay"
+    )
+      return;
+
+    // Store the URL to be deleted when saving
+    const mediaToDelete = mediaURL;
+
+    // Update form state
+    methods.setValue("overlayMedia", null);
+    methods.setValue("useOverlayDuration", false);
+    methods.setValue("overlayDuration", 5);
+
+    // Update Redux state
+    dispatch(
+      setEditingInstruction({
+        ...editingInstruction,
+        overlayMedia: null,
+        useOverlayDuration: false,
+      } as OverlayInstruction)
+    );
+
+    // Store the URL to be deleted in the form data
+    methods.setValue("mediaToDelete", mediaToDelete);
+  };
+
   const onSubmit = async (data: any) => {
     try {
       const triggerTime = parseTimeInput({
@@ -385,11 +415,9 @@ const InstructionEditor: React.FC = () => {
             : undefined,
         } as TextOverlayInstruction;
       } else if (selectedType === "overlay") {
-        let overlayMedia =
-          editingInstruction?.type === "overlay"
-            ? (editingInstruction as OverlayInstruction).overlayMedia
-            : null;
+        let overlayMedia = data.overlayMedia;
 
+        // If there's a new file to upload
         if (data.overlayMedia?.file) {
           const file = new File(
             [data.overlayMedia.file],
@@ -411,12 +439,15 @@ const InstructionEditor: React.FC = () => {
             type: data.overlayMedia.type,
             position: data.overlayMedia.position,
           };
-        } else if (data.overlayMedia) {
-          overlayMedia = {
-            ...data.overlayMedia,
-            duration: Number(data.overlayDuration),
-            position: data.overlayMedia.position,
-          };
+        }
+
+        // Handle media deletion
+        if (data.mediaToDelete) {
+          try {
+            await deleteMediaMutation.mutateAsync(data.mediaToDelete);
+          } catch (error) {
+            console.error("Failed to delete media:", error);
+          }
         }
 
         newInstruction = {
@@ -466,55 +497,6 @@ const InstructionEditor: React.FC = () => {
     } catch (error) {
       console.error("Failed to save instruction:", error);
     }
-  };
-
-  const handleDeleteOverlayMedia = async () => {
-    const mediaURL = methods.watch("overlayMedia")?.url;
-    if (!mediaURL) return;
-
-    try {
-      await deleteMediaMutation.mutateAsync(mediaURL);
-      methods.setValue("overlayMedia", null);
-
-      if (editingInstruction?.id) {
-        const updatedInstructions = instructions.map((instruction) =>
-          instruction.id === editingInstruction.id
-            ? { ...instruction, overlayMedia: null }
-            : instruction
-        );
-        await handleSaveInstructions(updatedInstructions);
-      }
-    } catch (error) {
-      console.error("Failed to delete media:", error);
-    }
-  };
-
-  // Update handleTimeChange to ensure video time updates
-  const handleTimeChange = (time: number) => {
-    const totalSeconds = Math.floor(time / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = Math.floor(totalSeconds % 60);
-    const milliseconds = time % 1000;
-
-    methods.setValue("hours", hours);
-    methods.setValue("minutes", minutes);
-    methods.setValue("seconds", seconds);
-    methods.setValue("milliseconds", milliseconds);
-
-    // Get videoManager instance
-    const videoManager = (window as any).videoManager;
-    if (videoManager) {
-      // Ensure the time is within valid bounds
-      const maxTime = videoManager.getDuration();
-      const boundedTime = Math.max(0, Math.min(time, maxTime));
-
-      // Update video time
-      videoManager.seekTo(boundedTime);
-    }
-
-    // Update Redux state
-    dispatch(seekToTime(time));
   };
 
   const handleSkipToTimeChange = (time: number) => {
@@ -567,6 +549,21 @@ const InstructionEditor: React.FC = () => {
         position,
       });
     }
+  };
+
+  const handleTimeChange = (time: number) => {
+    const totalSeconds = Math.floor(time / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const milliseconds = time % 1000;
+
+    methods.setValue("hours", hours);
+    methods.setValue("minutes", minutes);
+    methods.setValue("seconds", seconds);
+    methods.setValue("milliseconds", milliseconds);
+
+    dispatch(seekToTime(time));
   };
 
   const renderForm = () => {
