@@ -3,7 +3,7 @@ type Config = {
 }
 
 const config: Config = {
-    mediaPositionerWidth: 290
+    mediaPositionerWidth: 320
 };
 
 export default config;

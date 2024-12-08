@@ -355,7 +355,7 @@ const InstructionEditor: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["timelines"] });
-    }
+    },
   });
 
   const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
@@ -820,17 +820,15 @@ const InstructionEditor: React.FC = () => {
                 {isEditing ? "Update Instruction" : "Add Instruction"}
               </Button>
               {isEditing && (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={handleCancel}
-                    disabled={!formChanged}
-                  >
-                    Cancel
-                  </Button>
-                </>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleCancel}
+                  disabled={!formChanged}
+                >
+                  Cancel
+                </Button>
               )}
             </div>
           </form>

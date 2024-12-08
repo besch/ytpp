@@ -318,7 +318,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative bg-black/50 rounded-lg overflow-hidden mx-auto"
+      className="relative bg-black/50 rounded-lg overflow-hidden"
       style={{ maxWidth: config.mediaPositionerWidth }}
     >
       <div
