@@ -207,21 +207,6 @@ const InstructionEditor: React.FC = () => {
     }
   }, [currentTime, isEditing, selectedType, methods]);
 
-  // Disable pauseDuration input based on useOverlayDuration
-  useEffect(() => {
-    if (methods.watch("useOverlayDuration")) {
-      // If useOverlayDuration is checked, disable pauseDuration input
-      methods.setValue(
-        "pauseDuration",
-        methods.watch("overlayMedia")?.duration || 0
-      );
-    }
-  }, [
-    methods.watch("useOverlayDuration"),
-    methods.watch("overlayMedia"),
-    methods,
-  ]);
-
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
 
@@ -463,8 +448,7 @@ const InstructionEditor: React.FC = () => {
           type: "overlay",
           triggerTime,
           overlayMedia,
-          overlayDuration:
-            overlayMedia?.duration || Number(data.overlayDuration),
+          overlayDuration: data.overlayDuration,
           useOverlayDuration: data.useOverlayDuration,
           pauseMainVideo: data.pauseMainVideo,
           pauseDuration: data.pauseMainVideo

@@ -29,12 +29,6 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
   const pauseMainVideo = watch("pauseMainVideo");
   const useOverlayDuration = watch("useOverlayDuration");
 
-  useEffect(() => {
-    if (useOverlayDuration && overlayMedia?.duration) {
-      setValue("pauseDuration", overlayMedia.duration);
-    }
-  }, [useOverlayDuration, overlayMedia?.duration, setValue]);
-
   const handleMediaDelete = () => {
     // Only store mediaToDelete if it's an actual uploaded file URL (not a blob)
     if (overlayMedia?.url && !overlayMedia.url.startsWith("blob:")) {
@@ -104,7 +98,6 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
           </label>
           <Input
             type="number"
-            step="0.1"
             {...register("overlayDuration", {
               required: true,
               min: 0.1,
