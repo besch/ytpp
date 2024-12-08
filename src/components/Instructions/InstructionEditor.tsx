@@ -423,7 +423,6 @@ const InstructionEditor: React.FC = () => {
         let mediaURL;
 
         // Handle media deletion first if there's a file to delete
-        // Only delete if it's an actual uploaded file (not a blob URL)
         if (data.mediaToDelete && !data.mediaToDelete.startsWith("blob:")) {
           try {
             await deleteMediaMutation.mutateAsync(data.mediaToDelete);
@@ -443,7 +442,7 @@ const InstructionEditor: React.FC = () => {
 
             overlayMedia = {
               url: mediaURL,
-              duration: Number(data.overlayDuration),
+              duration: data.overlayMedia.duration,
               name: data.overlayMedia.name,
               type: data.overlayMedia.type,
               position: data.overlayMedia.position,
@@ -464,7 +463,8 @@ const InstructionEditor: React.FC = () => {
           type: "overlay",
           triggerTime,
           overlayMedia,
-          overlayDuration: Number(data.overlayDuration),
+          overlayDuration:
+            overlayMedia?.duration || Number(data.overlayDuration),
           useOverlayDuration: data.useOverlayDuration,
           pauseMainVideo: data.pauseMainVideo,
           pauseDuration: data.pauseMainVideo
