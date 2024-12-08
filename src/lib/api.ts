@@ -127,5 +127,24 @@ export const api = {
       const response = await axios.get(`${API_BASE_URL}/media/${timelineId}`);
       return response.data;
     },
+
+    cloneMedia: async (
+      url: string,
+      timelineId: string
+    ): Promise<{ url: string }> => {
+      const response = await axios.post(
+        `${API_BASE_URL}/media/clone`,
+        {
+          sourceUrl: url.split("/").pop(),
+          timelineId,
+        },
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+      return {
+        url: getMediaUrl(response.data.url),
+      };
+    },
   },
 };

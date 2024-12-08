@@ -9,7 +9,7 @@ import {
   selectCurrentTimeline,
   selectEditingInstruction,
   seekToTime,
-  cloneInstruction,
+  setInstructions,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
@@ -85,10 +85,38 @@ const InstructionsList: React.FC = () => {
   };
 
   const handleClone = async (instruction: Instruction) => {
-    dispatch(cloneInstruction(instruction.id));
+    const clonedInstruction = {
+      ...instruction,
+      id: Date.now().toString(),
+      triggerTime: instruction.triggerTime + 3000,
+    };
+
+    if (instruction.type === "skip") {
+      (clonedInstruction as SkipInstruction).skipToTime += 3000;
+    } else if (instruction.type === "overlay") {
+      const overlayInst = instruction as OverlayInstruction;
+      if (overlayInst.overlayMedia?.url) {
+        try {
+          const clonedMedia = await api.timelines.cloneMedia(
+            overlayInst.overlayMedia.url,
+            currentTimeline!.id
+          );
+
+          (clonedInstruction as OverlayInstruction).overlayMedia = {
+            ...(clonedInstruction as OverlayInstruction).overlayMedia!,
+            url: clonedMedia.url,
+          };
+        } catch (error) {
+          console.error("Failed to clone media file:", error);
+        }
+      }
+    }
+
+    const updatedInstructions = [...instructions, clonedInstruction];
+    dispatch(setInstructions(updatedInstructions));
 
     await api.timelines.update(currentTimeline!.id, {
-      instructions,
+      instructions: updatedInstructions,
     });
   };
 

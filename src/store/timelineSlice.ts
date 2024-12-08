@@ -5,10 +5,8 @@ import {
   Instruction,
   TextOverlayMedia,
   TextOverlayInstruction,
-  SkipInstruction,
 } from "@/types";
 import { createSelector } from "@reduxjs/toolkit";
-import type { Draft } from "@reduxjs/toolkit";
 
 interface TimelineState {
   currentTime: number;
@@ -127,29 +125,6 @@ export const timelineSlice = createSlice({
         }
       }
     },
-    cloneInstruction: (state, action: PayloadAction<string>) => {
-      if (state.currentTimeline) {
-        const sourceInstruction = state.currentTimeline.instructions.find(
-          (instruction) => instruction.id === action.payload
-        );
-
-        if (sourceInstruction) {
-          const newInstruction: Draft<Instruction> = {
-            ...sourceInstruction,
-            id: Date.now().toString(),
-            triggerTime: sourceInstruction.triggerTime + 3000,
-          };
-
-          // Handle skip instruction specifically
-          if (newInstruction.type === "skip") {
-            newInstruction.skipToTime =
-              (newInstruction as Draft<SkipInstruction>).skipToTime + 3000;
-          }
-
-          state.currentTimeline.instructions.push(newInstruction);
-        }
-      }
-    },
   },
 });
 
@@ -170,7 +145,6 @@ export const {
   setVideoElement,
   seekToTime,
   updateTextOverlay,
-  cloneInstruction,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>
