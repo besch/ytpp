@@ -29,6 +29,10 @@
   line-height: 1.5;
 }
 
+#timeline-container {
+  user-select: none;
+}
+
 #timeline-container *,
 #visibility-toggler *,
 #react-overlay-root * {
