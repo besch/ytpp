@@ -248,7 +248,7 @@ const TextOverlayInstructionForm: React.FC<{
         {/* Overlay Duration */}
         <div className="form-group">
           <label className="block text-sm font-medium text-muted-foreground mb-2">
-            Overlay Duration (seconds)
+            Text Duration (seconds)
           </label>
           <Input
             type="number"

@@ -153,7 +153,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
                 id="useOverlayDuration"
               />
               <label htmlFor="useOverlayDuration" className="text-sm">
-                Use video duration for pause
+                Main video paused for video duration
               </label>
             </div>
           )}
