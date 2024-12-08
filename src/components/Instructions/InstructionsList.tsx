@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus, Edit2, Trash2, Play, Check, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Play, Check, X, Copy } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
   selectInstructions,
@@ -9,6 +9,7 @@ import {
   selectCurrentTimeline,
   selectEditingInstruction,
   seekToTime,
+  cloneInstruction,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
@@ -66,6 +67,14 @@ const InstructionsList: React.FC = () => {
 
     await api.timelines.update(currentTimeline!.id, {
       instructions: updatedInstructions,
+    });
+  };
+
+  const handleClone = async (instruction: Instruction) => {
+    dispatch(cloneInstruction(instruction.id));
+
+    await api.timelines.update(currentTimeline!.id, {
+      instructions,
     });
   };
 
@@ -145,6 +154,13 @@ const InstructionsList: React.FC = () => {
                   </Button>
                   {isOwner && (
                     <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleClone(instruction)}
+                      >
+                        <Copy size={16} />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
