@@ -745,9 +745,14 @@ const InstructionEditor: React.FC = () => {
             <ArrowLeft size={16} className="mr-2" />
             Back
           </Button>
-          <h1 className="text-lg font-medium">
-            {isEditing ? "Edit Instruction" : "Add Instruction"}
-          </h1>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            label="Delete Instruction"
+          >
+            <Trash2 size={16} />
+          </Button>
         </div>
 
         <FormProvider {...methods}>
@@ -824,14 +829,6 @@ const InstructionEditor: React.FC = () => {
                     disabled={!formChanged}
                   >
                     Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="px-3"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 size={16} />
                   </Button>
                 </>
               )}

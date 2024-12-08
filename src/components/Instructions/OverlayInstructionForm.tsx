@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useFormContext } from "react-hook-form";
 import { Music, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -59,9 +59,9 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
                 {overlayMedia.name}
               </span>
               <Button
-                variant="ghost"
                 type="button"
-                size="sm"
+                variant="destructive"
+                label="Delete Media File"
                 onClick={handleMediaDelete}
               >
                 <Trash2 size={16} />
