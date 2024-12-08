@@ -12,6 +12,7 @@ import {
   selectCurrentTimeline,
   setCurrentTimeline,
   seekToTime,
+  removeInstruction,
 } from "@/store/timelineSlice";
 import { TimeInput } from "../ui/TimeInput";
 import { api } from "@/lib/api";
@@ -31,6 +32,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { isEqual } from "lodash";
+import { Trash2 } from "lucide-react";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -369,10 +371,10 @@ const InstructionEditor: React.FC = () => {
   const onSubmit = async (data: any) => {
     try {
       const triggerTime = parseTimeInput({
-            hours: data.hours || 0,
-            minutes: data.minutes || 0,
-            seconds: data.seconds || 0,
-            milliseconds: data.milliseconds || 0,
+        hours: data.hours || 0,
+        minutes: data.minutes || 0,
+        seconds: data.seconds || 0,
+        milliseconds: data.milliseconds || 0,
       });
 
       let newInstruction: Instruction;
@@ -690,6 +692,34 @@ const InstructionEditor: React.FC = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!editingInstruction || !currentTimeline) return;
+
+    try {
+      // If it's an overlay instruction with media, delete the media first
+      if (editingInstruction.type === "overlay") {
+        const overlayInstruction = editingInstruction as OverlayInstruction;
+        if (overlayInstruction.overlayMedia?.url) {
+          await api.timelines.deleteMedia(overlayInstruction.overlayMedia.url);
+        }
+      }
+
+      const updatedInstructions = instructions.filter(
+        (instruction) => instruction.id !== editingInstruction.id
+      );
+
+      await api.timelines.update(currentTimeline.id, {
+        ...currentTimeline,
+        instructions: updatedInstructions,
+      });
+
+      dispatch(removeInstruction(editingInstruction.id));
+      navigate(`/timeline/${timelineId}`);
+    } catch (error) {
+      console.error("Failed to delete instruction:", error);
+    }
+  };
+
   const renderForm = () => {
     if (!selectedType && !isEditing) {
       return (
@@ -776,15 +806,25 @@ const InstructionEditor: React.FC = () => {
                 {isEditing ? "Update Instruction" : "Add Instruction"}
               </Button>
               {isEditing && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handleCancel}
-                  disabled={!formChanged}
-                >
-                  Cancel
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleCancel}
+                    disabled={!formChanged}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="px-3"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </>
               )}
             </div>
           </form>
