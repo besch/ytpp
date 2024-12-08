@@ -76,10 +76,11 @@ export interface BaseInstruction {
 export interface OverlayInstruction extends BaseInstruction {
   type: "overlay";
   overlayMedia: OverlayMedia | null;
-  useOverlayDuration?: boolean;
-  muteOverlayMedia?: boolean;
-  pauseMainVideo?: boolean;
+  overlayDuration: number;
+  useOverlayDuration: boolean;
+  pauseMainVideo: boolean;
   pauseDuration?: number;
+  muteOverlayMedia?: boolean;
 }
 
 export interface SkipInstruction extends BaseInstruction {
@@ -117,9 +118,9 @@ export interface TextStyle {
 export interface TextOverlayInstruction extends BaseInstruction {
   type: "text-overlay";
   textOverlay: TextOverlayMedia;
-  duration: number;
+  overlayDuration: number;
+  pauseMainVideo: boolean;
   pauseDuration?: number;
-  pauseMainVideo?: boolean;
 }
 
 export type Instruction =

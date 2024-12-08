@@ -357,13 +357,14 @@ export class VideoManager {
       return;
     }
 
-    const endTime = instruction.triggerTime / 1000 + instruction.duration;
+    const endTime =
+      instruction.triggerTime / 1000 + instruction.overlayDuration;
     this.activeInstructions.set(instruction.id, {
       instruction,
       endTime,
     });
 
-    const { textOverlay, pauseMainVideo, duration } = instruction;
+    const { textOverlay, pauseMainVideo, overlayDuration } = instruction;
 
     // Calculate position based on video size
     const videoRect = this.videoElement.getBoundingClientRect();
@@ -378,13 +379,16 @@ export class VideoManager {
 
     // Create a promise that resolves when the text overlay should end
     const textOverlayPromise = new Promise<void>((resolve) => {
-      setTimeout(resolve, duration * 1000);
+      setTimeout(resolve, overlayDuration * 1000);
     });
 
     // Create a promise that resolves when the video should resume
     const videoResumePromise = pauseMainVideo
       ? new Promise<void>((resolve) => {
-          setTimeout(resolve, (instruction.pauseDuration || duration) * 1000);
+          setTimeout(
+            resolve,
+            (instruction.pauseDuration || overlayDuration) * 1000
+          );
         })
       : Promise.resolve();
 
@@ -398,7 +402,7 @@ export class VideoManager {
       textOverlay.text,
       textOverlay.style,
       scaledPosition,
-      duration,
+      overlayDuration,
       instruction.id
     );
 

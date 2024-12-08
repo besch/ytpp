@@ -4,6 +4,7 @@ import Input from "@/components/ui/Input";
 import { MediaPosition } from "./MediaPositioner";
 import MediaPositioner from "./MediaPositioner";
 import Select from "@/components/ui/Select";
+import { TextStyle } from "@/types";
 
 const fontFamilies = [
   "Arial",
@@ -24,21 +25,7 @@ const animations = [
 interface TextOverlayFormData {
   textOverlay: {
     text: string;
-    style: {
-      fontFamily: string;
-      fontSize: number;
-      color: string;
-      backgroundColor: string;
-      fontWeight: "normal" | "bold";
-      fontStyle: "normal" | "italic";
-      transparentBackground: boolean;
-      opacity: number;
-      textAlign: "left" | "center" | "right";
-      animation: string;
-      textShadow: boolean;
-      borderRadius: number;
-      padding: number;
-    };
+    style: TextStyle;
     position?: {
       x: number;
       y: number;
@@ -46,10 +33,9 @@ interface TextOverlayFormData {
       height: number;
     };
   };
-  duration: number;
+  overlayDuration: number;
   pauseMainVideo: boolean;
-  pauseDuration: number;
-  _formChanged?: number;
+  pauseDuration?: number;
 }
 
 const TextOverlayInstructionForm: React.FC<{
@@ -59,70 +45,13 @@ const TextOverlayInstructionForm: React.FC<{
     register,
     watch,
     setValue,
-    getValues,
-    formState: { errors, isDirty, dirtyFields },
+    formState: { errors },
   } = useFormContext<TextOverlayFormData>();
 
-  const textOverlay = watch("textOverlay");
-  const transparentBackground = watch(
-    "textOverlay.style.transparentBackground"
-  );
   const pauseMainVideo = watch("pauseMainVideo");
-
-  useEffect(() => {
-    const subscription = watch((value, { name, type }) => {
-      if (name?.startsWith("textOverlay")) {
-        setValue("_formChanged", Date.now(), { shouldDirty: true });
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch, setValue]);
-
-  const previewMedia = {
-    type: "text",
-    url: "",
-    duration: 0,
-    preview: (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent:
-            textOverlay?.style?.textAlign === "left"
-              ? "flex-start"
-              : textOverlay?.style?.textAlign === "right"
-              ? "flex-end"
-              : "center",
-          fontFamily: textOverlay?.style?.fontFamily,
-          fontSize: `${textOverlay?.style?.fontSize}px`,
-          color: textOverlay?.style?.color,
-          backgroundColor: transparentBackground
-            ? "transparent"
-            : textOverlay?.style?.backgroundColor || "transparent",
-          fontWeight: textOverlay?.style?.fontWeight || "normal",
-          fontStyle: textOverlay?.style?.fontStyle || "normal",
-          padding: `${textOverlay?.style?.padding || 8}px`,
-          opacity: textOverlay?.style?.opacity || 1,
-          borderRadius: `${textOverlay?.style?.borderRadius || 0}px`,
-          textShadow: textOverlay?.style?.textShadow
-            ? "2px 2px 4px rgba(0,0,0,0.5)"
-            : "none",
-          boxSizing: "border-box",
-          overflow: "hidden",
-        }}
-      >
-        {textOverlay?.text || "Preview Text"}
-      </div>
-    ),
-  };
 
   return (
     <div className="space-y-6">
-      <input type="hidden" {...register("_formChanged")} />
-
       {/* Text Content */}
       <div className="form-group">
         <label className="block text-sm font-medium text-muted-foreground mb-2">
@@ -223,7 +152,7 @@ const TextOverlayInstructionForm: React.FC<{
               type="color"
               {...register("textOverlay.style.backgroundColor")}
               defaultValue="#000000"
-              disabled={transparentBackground}
+              disabled={watch("textOverlay.style.transparentBackground")}
             />
           </div>
 
@@ -314,59 +243,64 @@ const TextOverlayInstructionForm: React.FC<{
         </div>
       </div>
 
-      {/* Pause Controls */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            {...register("pauseMainVideo")}
-            id="pauseMainVideo"
-          />
-          <label htmlFor="pauseMainVideo" className="text-sm">
-            Pause Main Video
+      {/* Duration Controls */}
+      <div className="space-y-4">
+        {/* Overlay Duration */}
+        <div className="form-group">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
+            Overlay Duration (seconds)
           </label>
+          <Input
+            type="number"
+            step="0.1"
+            {...register("overlayDuration", {
+              required: true,
+              min: 0.1,
+              valueAsNumber: true,
+            })}
+          />
+          {errors.overlayDuration && (
+            <span className="text-xs text-destructive">
+              Please enter a valid duration
+            </span>
+          )}
         </div>
 
-        {pauseMainVideo && (
-          <div className="form-group m-0">
-            <Input
-              type="number"
-              step="0.1"
-              placeholder="Pause duration (seconds)"
-              {...register("pauseDuration", {
-                required: pauseMainVideo,
-                min: 0,
-                valueAsNumber: true,
-              })}
+        {/* Pause Controls */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              {...register("pauseMainVideo")}
+              id="pauseMainVideo"
             />
-            {errors.pauseDuration && (
-              <span className="text-xs text-destructive">
-                Please enter a valid duration
-              </span>
-            )}
+            <label htmlFor="pauseMainVideo" className="text-sm">
+              Pause Main Video
+            </label>
           </div>
-        )}
-      </div>
 
-      {/* Duration */}
-      <div className="form-group">
-        <label className="block text-sm font-medium text-muted-foreground mb-2">
-          Overlay media duration
-        </label>
-        <Input
-          type="number"
-          {...register("duration", {
-            required: true,
-            min: 1,
-            valueAsNumber: true,
-          })}
-          defaultValue={5}
-        />
-        {errors.duration && (
-          <span className="text-xs text-destructive">
-            Duration is required and must be at least 1 second
-          </span>
-        )}
+          {pauseMainVideo && (
+            <div className="form-group">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Pause Duration (seconds)
+              </label>
+              <Input
+                type="number"
+                step="0.1"
+                {...register("pauseDuration", {
+                  required: pauseMainVideo,
+                  min: 0.1,
+                  valueAsNumber: true,
+                })}
+              />
+              {errors.pauseDuration && (
+                <span className="text-xs text-destructive">
+                  Please enter a valid duration
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Position and Size */}
@@ -375,9 +309,52 @@ const TextOverlayInstructionForm: React.FC<{
           Position and Size
         </label>
         <MediaPositioner
-          media={previewMedia}
+          media={{
+            type: "text",
+            url: "",
+            duration: 0,
+            preview: (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent:
+                    watch("textOverlay.style.textAlign") === "left"
+                      ? "flex-start"
+                      : watch("textOverlay.style.textAlign") === "right"
+                      ? "flex-end"
+                      : "center",
+                  fontFamily: watch("textOverlay.style.fontFamily"),
+                  fontSize: `${watch("textOverlay.style.fontSize")}px`,
+                  color: watch("textOverlay.style.color"),
+                  backgroundColor: watch(
+                    "textOverlay.style.transparentBackground"
+                  )
+                    ? "transparent"
+                    : watch("textOverlay.style.backgroundColor") ||
+                      "transparent",
+                  fontWeight: watch("textOverlay.style.fontWeight") || "normal",
+                  fontStyle: watch("textOverlay.style.fontStyle") || "normal",
+                  padding: `${watch("textOverlay.style.padding") || 8}px`,
+                  opacity: watch("textOverlay.style.opacity") || 1,
+                  borderRadius: `${
+                    watch("textOverlay.style.borderRadius") || 0
+                  }px`,
+                  textShadow: watch("textOverlay.style.textShadow")
+                    ? "2px 2px 4px rgba(0,0,0,0.5)"
+                    : "none",
+                  boxSizing: "border-box",
+                  overflow: "hidden",
+                }}
+              >
+                {watch("textOverlay.text") || "Preview Text"}
+              </div>
+            ),
+          }}
           onPositionChange={onPositionChange}
-          initialPosition={textOverlay?.position}
+          initialPosition={watch("textOverlay.position")}
         />
       </div>
     </div>

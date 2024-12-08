@@ -101,12 +101,12 @@ const InstructionEditor: React.FC = () => {
           overlayInstruction.useOverlayDuration || false
         );
         methods.setValue(
-          "muteOverlayMedia",
-          overlayInstruction.muteOverlayMedia || false
+          "overlayDuration",
+          overlayInstruction.overlayDuration || 5
         );
         methods.setValue(
-          "overlayDuration",
-          overlayInstruction.overlayMedia?.duration || 5
+          "muteOverlayMedia",
+          overlayInstruction.muteOverlayMedia || false
         );
 
         const overlayMedia = overlayInstruction.overlayMedia;
@@ -178,15 +178,15 @@ const InstructionEditor: React.FC = () => {
           },
         });
 
-        methods.setValue("duration", textOverlayInstruction.pauseDuration);
+        methods.setValue(
+          "overlayDuration",
+          textOverlayInstruction.overlayDuration
+        );
         methods.setValue(
           "pauseMainVideo",
-          textOverlayInstruction.pauseMainVideo || false
+          textOverlayInstruction.pauseMainVideo
         );
-        methods.setValue(
-          "pauseDuration",
-          textOverlayInstruction.pauseDuration || 5
-        );
+        methods.setValue("pauseDuration", textOverlayInstruction.pauseDuration);
       }
     }
   }, [isEditing, editingInstruction, methods]);
@@ -412,7 +412,7 @@ const InstructionEditor: React.FC = () => {
             },
             position: data.textOverlay.position,
           },
-          duration: Number(data.duration),
+          overlayDuration: Number(data.overlayDuration),
           pauseMainVideo: data.pauseMainVideo,
           pauseDuration: data.pauseMainVideo
             ? Number(data.pauseDuration)
@@ -464,10 +464,13 @@ const InstructionEditor: React.FC = () => {
           type: "overlay",
           triggerTime,
           overlayMedia,
+          overlayDuration: Number(data.overlayDuration),
           useOverlayDuration: data.useOverlayDuration,
-          muteOverlayMedia: data.muteOverlayMedia,
           pauseMainVideo: data.pauseMainVideo,
-          pauseDuration: Number(data.pauseDuration),
+          pauseDuration: data.pauseMainVideo
+            ? Number(data.pauseDuration)
+            : undefined,
+          muteOverlayMedia: data.muteOverlayMedia || false,
         } as OverlayInstruction;
       } else if (selectedType === "skip") {
         const skipToTime = parseTimeInput({
@@ -601,7 +604,7 @@ const InstructionEditor: React.FC = () => {
             },
             position: textOverlayInstruction.textOverlay.position,
           },
-          duration: textOverlayInstruction.duration,
+          overlayDuration: textOverlayInstruction.overlayDuration,
           pauseMainVideo: textOverlayInstruction.pauseMainVideo,
           pauseDuration: textOverlayInstruction.pauseDuration,
         });
