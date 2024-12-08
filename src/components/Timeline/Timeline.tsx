@@ -11,11 +11,7 @@ import {
   selectSelectedInstructionId,
   setCurrentTimeline,
 } from "@/store/timelineSlice";
-import {
-  Instruction,
-  SkipInstruction,
-  OverlayInstruction,
-} from "@/types";
+import { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
 import { api } from "@/lib/api";
 import Button from "@/components/ui/Button";
 import { Move } from "lucide-react";
@@ -41,6 +37,42 @@ const getInstructionLabel = (instruction: Instruction): string => {
     return `Overlay ${overlayInstruction.overlayMedia?.name || "media"}`;
   }
   return "Unknown instruction";
+};
+
+const MARKER_SPACING = 2; // Minimum spacing in percentage points
+
+const calculateMarkerLevels = (
+  markers: Array<{
+    id: string;
+    position: number;
+    instruction: Instruction;
+    isEndMarker: boolean;
+  }>
+): Array<{ marker: (typeof markers)[0]; level: number }> => {
+  // Sort markers by position
+  const sortedMarkers = [...markers].sort((a, b) => a.position - b.position);
+  const markersWithLevels: Array<{
+    marker: (typeof markers)[0];
+    level: number;
+  }> = [];
+
+  for (const marker of sortedMarkers) {
+    let level = 0;
+    let positionTaken = true;
+
+    while (positionTaken) {
+      positionTaken = markersWithLevels.some(
+        ({ marker: existingMarker, level: existingLevel }) =>
+          level === existingLevel &&
+          Math.abs(existingMarker.position - marker.position) < MARKER_SPACING
+      );
+      if (positionTaken) level++;
+    }
+
+    markersWithLevels.push({ marker, level });
+  }
+
+  return markersWithLevels;
 };
 
 const Timeline: React.FC = () => {
@@ -271,7 +303,6 @@ const Timeline: React.FC = () => {
       const markers = [];
       const position = getTimelinePosition(instruction.triggerTime);
 
-      // Add start marker
       markers.push({
         id: instruction.id,
         position,
@@ -279,7 +310,6 @@ const Timeline: React.FC = () => {
         isEndMarker: false,
       });
 
-      // Add end marker for skip instructions
       if (instruction.type === "skip") {
         const skipInstruction = instruction as SkipInstruction;
         markers.push({
@@ -293,103 +323,90 @@ const Timeline: React.FC = () => {
       return markers;
     });
 
-    // Group markers by position
-    const groupedMarkers = markers.reduce((acc, marker) => {
-      const key = marker.position;
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-      acc[key].push(marker);
-      return acc;
-    }, {} as { [key: number]: typeof markers });
+    const markersWithLevels = calculateMarkerLevels(markers);
 
     return (
       <>
         {skipRanges}
-        {Object.entries(groupedMarkers).map(([position, markerGroup]) => (
-          <div
-            key={position}
-            className="absolute top-0 h-full"
-            style={{
-              left: `${position}%`,
-            }}
-          >
-            {markerGroup.map((marker, index) => {
-              const instruction = marker.instruction;
-              const isEndMarker = marker.isEndMarker;
-              const isSelected = instruction.id === selectedInstructionId;
+        {markersWithLevels.map(({ marker, level }) => {
+          const instruction = marker.instruction;
+          const isEndMarker = marker.isEndMarker;
+          const isSelected = instruction.id === selectedInstructionId;
 
-              return (
+          return (
+            <div
+              key={marker.id}
+              className="absolute top-0 h-full"
+              style={{
+                left: `${marker.position}%`,
+              }}
+            >
+              <div
+                className="absolute"
+                style={{
+                  top: `${20 + level * 15}%`, // Adjust vertical spacing based on level
+                  transform: "translateX(-50%)",
+                  zIndex: 20,
+                }}
+              >
                 <div
-                  key={marker.id}
-                  className="absolute"
-                  style={{
-                    top: `${25 + index * 20}%`,
-                    transform: "translateX(-50%)",
-                    zIndex: 20,
-                  }}
-                >
-                  <div
-                    className={`instruction-marker border-2 border-background shadow-md
-                      ${isEndMarker ? "opacity-50" : ""}
-                      ${
-                        isSelected
-                          ? "ring-2 ring-white ring-offset-2 ring-offset-background scale-125"
-                          : ""
-                      }
-                      transition-all duration-200 ease-out
-                    `}
-                    data-type={instruction.type}
-                    data-selected={isSelected}
-                    onMouseDown={(e) =>
-                      isEndMarker
-                        ? handleSkipEndDrag(e, instruction as SkipInstruction)
-                        : handleInstructionDrag(e, instruction)
+                  className={`instruction-marker border-2 border-background shadow-md
+                    ${isEndMarker ? "opacity-50" : ""}
+                    ${
+                      isSelected
+                        ? "ring-2 ring-white ring-offset-2 ring-offset-background scale-125"
+                        : ""
                     }
-                    onClick={(e) => handleInstructionClick(e, instruction)}
-                  >
-                    {currentTime ===
-                      (isEndMarker
-                        ? (instruction as SkipInstruction).skipToTime
-                        : instruction.triggerTime) && (
-                      <span className="absolute inset-0 rounded-full bg-primary/30 animate-ripple" />
-                    )}
-                  </div>
-
-                  {!isEndMarker && (
-                    <div
-                      className={`instruction-popover ${
-                        draggingInstructionId === instruction.id
-                          ? "visible"
-                          : ""
-                      }
-                        bg-background/95 backdrop-blur-sm
-                        border border-border px-3 py-2
-                        rounded-lg shadow-xl
-                        text-xs`}
-                    >
-                      <div className="font-medium mb-1">
-                        {instruction.type.charAt(0).toUpperCase() +
-                          instruction.type.slice(1)}
-                      </div>
-                      <div className="text-muted-foreground">
-                        {draggingInstructionId === instruction.id &&
-                        draggingTime !== null
-                          ? formatTime(draggingTime)
-                          : getInstructionLabel(instruction)}
-                      </div>
-                      <div
-                        className="absolute -bottom-1 left-1/2 -translate-x-1/2
-                        w-2 h-2 bg-background border-b border-r border-border
-                        rotate-45"
-                      />
-                    </div>
+                    transition-all duration-200 ease-out
+                  `}
+                  data-type={instruction.type}
+                  data-selected={isSelected}
+                  onMouseDown={(e) =>
+                    isEndMarker
+                      ? handleSkipEndDrag(e, instruction as SkipInstruction)
+                      : handleInstructionDrag(e, instruction)
+                  }
+                  onClick={(e) => handleInstructionClick(e, instruction)}
+                >
+                  {currentTime ===
+                    (isEndMarker
+                      ? (instruction as SkipInstruction).skipToTime
+                      : instruction.triggerTime) && (
+                    <span className="absolute inset-0 rounded-full bg-primary/30 animate-ripple" />
                   )}
                 </div>
-              );
-            })}
-          </div>
-        ))}
+
+                {!isEndMarker && (
+                  <div
+                    className={`instruction-popover ${
+                      draggingInstructionId === instruction.id ? "visible" : ""
+                    }
+                      bg-background/95 backdrop-blur-sm
+                      border border-border px-3 py-2
+                      rounded-lg shadow-xl
+                      text-xs`}
+                  >
+                    <div className="font-medium mb-1">
+                      {instruction.type.charAt(0).toUpperCase() +
+                        instruction.type.slice(1)}
+                    </div>
+                    <div className="text-muted-foreground">
+                      {draggingInstructionId === instruction.id &&
+                      draggingTime !== null
+                        ? formatTime(draggingTime)
+                        : getInstructionLabel(instruction)}
+                    </div>
+                    <div
+                      className="absolute -bottom-1 left-1/2 -translate-x-1/2
+                      w-2 h-2 bg-background border-b border-r border-border
+                      rotate-45"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </>
     );
   };
