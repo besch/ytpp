@@ -10,6 +10,7 @@ import {
   selectEditingInstruction,
   seekToTime,
   setInstructions,
+  setCurrentTimeline,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
@@ -19,6 +20,8 @@ import { api } from "@/lib/api";
 import { RootState } from "@/store";
 import TimelineTitle from "./TimelineTitle";
 import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
@@ -31,6 +34,7 @@ const InstructionsList: React.FC = () => {
   const isOwner = useSelector((state: RootState) =>
     selectIsTimelineOwner(state, currentTimeline)
   );
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (editingInstruction) {
@@ -54,48 +58,41 @@ const InstructionsList: React.FC = () => {
     navigate(`/timeline/${timelineId}/instruction/${instruction.id}`);
   };
 
-  const handleDelete = async (id: string) => {
-    const instruction = instructions.find((inst) => inst.id === id);
-
-    // First delete the instruction from Redux store
-    const updatedInstructions = instructions.filter(
-      (instruction) => instruction.id !== id
-    );
-    dispatch(removeInstruction(id));
-
-    try {
-      // Try to delete media file if it exists
+  const deleteInstructionMutation = useMutation({
+    mutationFn: async ({
+      id,
+      instruction,
+    }: {
+      id: string;
+      instruction: Instruction;
+    }) => {
       if (instruction?.type === "overlay" && instruction.overlayMedia?.url) {
         await api.timelines.deleteMedia(instruction.overlayMedia.url);
       }
-    } catch (error) {
-      console.error("Failed to delete media file:", error);
-      // Continue with instruction deletion even if media deletion fails
-    }
 
-    // Update the timeline with the new instructions
-    try {
-      await api.timelines.update(currentTimeline!.id, {
+      const updatedInstructions = instructions.filter((inst) => inst.id !== id);
+      return api.timelines.update(currentTimeline!.id, {
         instructions: updatedInstructions,
       });
-    } catch (error) {
-      console.error("Failed to update timeline:", error);
-    }
-  };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+    },
+  });
 
-  const handleClone = async (instruction: Instruction) => {
-    const clonedInstruction = {
-      ...instruction,
-      id: Date.now().toString(),
-      triggerTime: instruction.triggerTime + 3000,
-    };
+  const cloneInstructionMutation = useMutation({
+    mutationFn: async (instruction: Instruction) => {
+      const clonedInstruction = {
+        ...instruction,
+        id: Date.now().toString(),
+        triggerTime: instruction.triggerTime + 3000,
+      };
 
-    if (instruction.type === "skip") {
-      (clonedInstruction as SkipInstruction).skipToTime += 3000;
-    } else if (instruction.type === "overlay") {
-      const overlayInst = instruction as OverlayInstruction;
-      if (overlayInst.overlayMedia?.url) {
-        try {
+      if (instruction.type === "skip") {
+        (clonedInstruction as SkipInstruction).skipToTime += 3000;
+      } else if (instruction.type === "overlay") {
+        const overlayInst = instruction as OverlayInstruction;
+        if (overlayInst.overlayMedia?.url) {
           const clonedMedia = await api.timelines.cloneMedia(
             overlayInst.overlayMedia.url,
             currentTimeline!.id
@@ -105,18 +102,34 @@ const InstructionsList: React.FC = () => {
             ...(clonedInstruction as OverlayInstruction).overlayMedia!,
             url: clonedMedia.url,
           };
-        } catch (error) {
-          console.error("Failed to clone media file:", error);
         }
       }
-    }
 
-    const updatedInstructions = [...instructions, clonedInstruction];
-    dispatch(setInstructions(updatedInstructions));
+      const updatedInstructions = [...instructions, clonedInstruction];
+      return api.timelines.update(currentTimeline!.id, {
+        instructions: updatedInstructions,
+      });
+    },
+    onSuccess: (savedTimeline) => {
+      dispatch(setCurrentTimeline(savedTimeline));
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+    },
+    onError: (error) => {
+      console.error("Failed to clone instruction:", error);
+      dispatch(setInstructions(instructions));
+    },
+  });
 
-    await api.timelines.update(currentTimeline!.id, {
-      instructions: updatedInstructions,
-    });
+  const handleDelete = async (id: string) => {
+    const instruction = instructions.find((inst) => inst.id === id);
+    if (!instruction) return;
+
+    dispatch(removeInstruction(id));
+    await deleteInstructionMutation.mutateAsync({ id, instruction });
+  };
+
+  const handleClone = async (instruction: Instruction) => {
+    await cloneInstructionMutation.mutateAsync(instruction);
   };
 
   const getInstructionDescription = (instruction: Instruction): string => {
@@ -225,6 +238,13 @@ const InstructionsList: React.FC = () => {
       ) : (
         <div className="text-center py-8 text-muted-foreground">
           No instructions yet. {isOwner && "Click the button above to add one."}
+        </div>
+      )}
+
+      {(deleteInstructionMutation.isPending ||
+        cloneInstructionMutation.isPending) && (
+        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+          <LoadingSpinner size="lg" />
         </div>
       )}
     </div>
