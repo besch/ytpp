@@ -838,7 +838,7 @@ const InstructionEditor: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 overflow-x-hidden">
       {renderForm()}
       {(saveInstructionsMutation.isPending ||
         uploadMediaMutation.isPending ||
