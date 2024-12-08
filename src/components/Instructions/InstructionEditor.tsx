@@ -95,11 +95,6 @@ const InstructionEditor: React.FC = () => {
           "pauseMainVideo",
           overlayInstruction.pauseMainVideo || false
         );
-        methods.setValue("pauseDuration", overlayInstruction.pauseDuration);
-        methods.setValue(
-          "useOverlayDuration",
-          overlayInstruction.useOverlayDuration || false
-        );
         methods.setValue(
           "overlayDuration",
           overlayInstruction.overlayDuration || 5
@@ -186,7 +181,6 @@ const InstructionEditor: React.FC = () => {
           "pauseMainVideo",
           textOverlayInstruction.pauseMainVideo
         );
-        methods.setValue("pauseDuration", textOverlayInstruction.pauseDuration);
       }
     }
   }, [isEditing, editingInstruction, methods]);
@@ -449,11 +443,7 @@ const InstructionEditor: React.FC = () => {
           triggerTime,
           overlayMedia,
           overlayDuration: data.overlayDuration,
-          useOverlayDuration: data.useOverlayDuration,
           pauseMainVideo: data.pauseMainVideo,
-          pauseDuration: data.pauseMainVideo
-            ? Number(data.pauseDuration)
-            : undefined,
           muteOverlayMedia: data.muteOverlayMedia || false,
         } as OverlayInstruction;
       } else if (selectedType === "skip") {
@@ -590,7 +580,6 @@ const InstructionEditor: React.FC = () => {
           },
           overlayDuration: textOverlayInstruction.overlayDuration,
           pauseMainVideo: textOverlayInstruction.pauseMainVideo,
-          pauseDuration: textOverlayInstruction.pauseDuration,
         });
       } else {
         setInitialValues(values);

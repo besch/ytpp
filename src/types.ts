@@ -77,9 +77,7 @@ export interface OverlayInstruction extends BaseInstruction {
   type: "overlay";
   overlayMedia: OverlayMedia | null;
   overlayDuration: number;
-  useOverlayDuration: boolean;
   pauseMainVideo: boolean;
-  pauseDuration?: number;
   muteOverlayMedia?: boolean;
 }
 

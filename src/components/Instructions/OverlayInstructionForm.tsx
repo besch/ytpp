@@ -26,8 +26,6 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
   } = useFormContext();
 
   const overlayMedia = watch("overlayMedia");
-  const pauseMainVideo = watch("pauseMainVideo");
-  const useOverlayDuration = watch("useOverlayDuration");
 
   const handleMediaDelete = () => {
     // Only store mediaToDelete if it's an actual uploaded file URL (not a blob)
@@ -41,7 +39,6 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
     });
 
     // Reset related fields
-    setValue("useOverlayDuration", false);
     setValue("overlayDuration", 5);
 
     // Call the parent's onMediaDelete handler
@@ -126,52 +123,15 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
         )}
 
         {/* Pause Controls */}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              {...register("pauseMainVideo")}
-              id="pauseMainVideo"
-            />
-            <label htmlFor="pauseMainVideo" className="text-sm">
-              Pause Main Video
-            </label>
-          </div>
-
-          {pauseMainVideo && overlayMedia?.type.startsWith("video/") && (
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                {...register("useOverlayDuration")}
-                id="useOverlayDuration"
-              />
-              <label htmlFor="useOverlayDuration" className="text-sm">
-                Main video paused for video duration
-              </label>
-            </div>
-          )}
-
-          {pauseMainVideo && !useOverlayDuration && (
-            <div className="form-group">
-              <label className="block text-sm font-medium text-muted-foreground mb-2">
-                Pause Duration (seconds)
-              </label>
-              <Input
-                type="number"
-                step="0.1"
-                {...register("pauseDuration", {
-                  required: pauseMainVideo && !useOverlayDuration,
-                  min: 0.1,
-                  valueAsNumber: true,
-                })}
-              />
-              {errors.pauseDuration && (
-                <span className="text-xs text-destructive">
-                  Please enter a valid duration
-                </span>
-              )}
-            </div>
-          )}
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            {...register("pauseMainVideo")}
+            id="pauseMainVideo"
+          />
+          <label htmlFor="pauseMainVideo" className="text-sm">
+            Pause Main Video
+          </label>
         </div>
       </div>
     </div>

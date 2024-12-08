@@ -79,13 +79,6 @@ const InstructionsList: React.FC = () => {
       let description = `Displays ${
         overlayInstruction.overlayMedia?.name || "overlay media"
       }`;
-      if (overlayInstruction.pauseMainVideo) {
-        if (overlayInstruction.useOverlayDuration) {
-          description += " (Pauses for overlay duration)";
-        } else {
-          description += ` (Pauses for ${overlayInstruction.pauseDuration}s)`;
-        }
-      }
       return description;
     }
     return "";

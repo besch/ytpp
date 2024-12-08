@@ -181,17 +181,8 @@ export class VideoManager {
       ? "audio"
       : "image";
 
-    let endTime = null;
-    if (instruction.useOverlayDuration) {
-      const duration =
-        mediaType === "video" || mediaType === "audio"
-          ? instruction.overlayMedia!.duration
-          : instruction.overlayMedia!.duration || 5;
-      endTime = instruction.triggerTime / 1000 + duration;
-    } else {
-      const duration = instruction.overlayMedia!.duration || 5;
-      endTime = instruction.triggerTime / 1000 + duration;
-    }
+    const duration = instruction.overlayDuration;
+    const endTime = instruction.triggerTime / 1000 + duration;
 
     this.activeInstructions.set(instruction.id, {
       instruction,
@@ -208,26 +199,12 @@ export class VideoManager {
       instruction.muteOverlayMedia || false,
       mediaType,
       instruction.id,
-      instruction.useOverlayDuration
-        ? instruction.overlayMedia!.duration
-        : instruction.overlayMedia!.duration,
+      duration,
       instruction.overlayMedia!.position
     );
 
-    // If pauseMainVideo is true and useOverlayDuration is false, resume after pauseDuration
-    if (instruction.pauseMainVideo && !instruction.useOverlayDuration) {
-      const pauseDuration = instruction.pauseDuration || 0;
-      setTimeout(() => {
-        if (this.videoElement && this.videoElement.paused) {
-          this.videoElement.play().catch((error) => {
-            console.error("Error resuming video:", error);
-          });
-        }
-      }, pauseDuration * 1000);
-    }
-
-    // If using overlay duration, resume video when overlay ends
-    if (instruction.pauseMainVideo && instruction.useOverlayDuration) {
+    // If video is paused, resume when overlay ends
+    if (instruction.pauseMainVideo) {
       this.videoOverlayManager?.onOverlayEnded(() => {
         if (this.videoElement && this.videoElement.paused) {
           this.videoElement.play().catch((error) => {

@@ -40,11 +40,7 @@ const getInstructionLabel = (instruction: Instruction): string => {
     return `Skip to ${formatTime((instruction as SkipInstruction).skipToTime)}`;
   } else if (instruction.type === "overlay") {
     const overlayInstruction = instruction as OverlayInstruction;
-    let label = `Overlay ${overlayInstruction.overlayMedia?.name || "media"}`;
-    if (overlayInstruction.pauseMainVideo) {
-      label += ` (Pause ${overlayInstruction.pauseDuration || "for overlay"}s)`;
-    }
-    return label;
+    return `Overlay ${overlayInstruction.overlayMedia?.name || "media"}`;
   }
   return "Unknown instruction";
 };
@@ -90,7 +86,7 @@ const Timeline: React.FC = () => {
     const clickedTime = (percentage / 100) * duration;
 
     seekToTime(clickedTime);
-    
+
     // Dispatch actions to trigger navigation
     dispatch(setSelectedInstructionId(null));
     dispatch(setEditingInstruction(null));
