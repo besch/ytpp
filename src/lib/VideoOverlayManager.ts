@@ -19,7 +19,7 @@ export class VideoOverlayManager {
 
   private initialize(): void {
     this.container =
-      this.videoElement.closest(".html5-video-container") || document.body;
+      this.videoElement.parentElement || document.body;
     this.setupOverlayElement();
     this.setupResizeObserver();
   }
