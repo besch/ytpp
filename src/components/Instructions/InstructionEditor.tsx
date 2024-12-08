@@ -713,6 +713,7 @@ const InstructionEditor: React.FC = () => {
         instructions: updatedInstructions,
       });
 
+      dispatch(setEditingInstruction(null));
       dispatch(removeInstruction(editingInstruction.id));
       navigate(`/timeline/${timelineId}`);
     } catch (error) {

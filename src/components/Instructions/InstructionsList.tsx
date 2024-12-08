@@ -80,7 +80,6 @@ const InstructionsList: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to update timeline:", error);
-      // You might want to show an error message to the user here
     }
   };
 
