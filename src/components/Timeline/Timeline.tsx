@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   selectCurrentTime,
-  setActiveTab,
   setCurrentTime,
   selectInstructions,
   setSelectedInstructionId,
@@ -16,7 +15,6 @@ import {
   Instruction,
   SkipInstruction,
   OverlayInstruction,
-  Timeline as ITimeline,
 } from "@/types";
 import { api } from "@/lib/api";
 import Button from "@/components/ui/Button";
@@ -99,7 +97,6 @@ const Timeline: React.FC = () => {
     e.stopPropagation();
     seekToTime(instruction.triggerTime);
     dispatch(setSelectedInstructionId(instruction.id));
-    dispatch(setActiveTab("instructions"));
     dispatch(setEditingInstruction(instruction));
   };
 

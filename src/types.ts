@@ -134,7 +134,6 @@ export interface Timeline {
   id: string;
   title: string;
   video_url: string;
-  elements: any[];
   instructions: Instruction[];
   user_id: string;
   users?: {
@@ -156,35 +155,6 @@ export interface MediaFile {
   created_at: string;
 }
 
-// Add this interface if it doesn't exist
-export interface ElementStyle {
-  fill: string;
-  stroke: string;
-  text?: string;
-}
-
-// Update the Element interface
-export interface Element {
-  id: string;
-  type: string;
-  style: ElementStyle;
-  timeRange: {
-    from: number;
-    to: number;
-  };
-  properties?: {
-    left: number;
-    top: number;
-    scaleX: number;
-    scaleY: number;
-    width: number;
-    height: number;
-    scaleMode: "responsive" | "fixed";
-  };
-  data?: CustomFabricData;
-}
-
-// Update the existing OverlayMedia interface
 export interface OverlayMedia {
   url: string;
   duration: number;

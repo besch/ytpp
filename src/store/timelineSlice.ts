@@ -3,8 +3,6 @@ import { RootState } from "@/store/index";
 import {
   Timeline,
   Instruction,
-  ElementStyle,
-  TextStyle,
   TextOverlayMedia,
   TextOverlayInstruction,
 } from "@/types";
@@ -39,65 +37,12 @@ const initialState: TimelineState = {
   videoElementId: null,
 };
 
-interface ElementUpdate {
-  id: string;
-  timeRange?: {
-    from: number;
-    to: number;
-  };
-  style?: ElementStyle;
-  properties?: {
-    left: number;
-    top: number;
-    scaleX: number;
-    scaleY: number;
-    width: number;
-    height: number;
-    scaleMode: "responsive" | "fixed";
-  };
-  muteOverlayVideo?: boolean;
-  textOverlay?: {
-    text: string;
-    style: TextStyle;
-  };
-}
-
 export const timelineSlice = createSlice({
   name: "timeline",
   initialState,
   reducers: {
     setCurrentTime: (state, action: PayloadAction<number>) => {
       state.currentTime = action.payload;
-    },
-    addElement: (state, action: PayloadAction<Element>) => {
-      if (state.currentTimeline) {
-        state.currentTimeline.elements.push(action.payload);
-      }
-    },
-    updateElement: (state, action: PayloadAction<ElementUpdate>) => {
-      if (state.currentTimeline) {
-        const index = state.currentTimeline.elements.findIndex(
-          (el) => el.id === action.payload.id
-        );
-        if (index !== -1) {
-          state.currentTimeline.elements[index] = {
-            ...state.currentTimeline.elements[index],
-            ...action.payload,
-          };
-        }
-      }
-    },
-    setSelectedElementId: (state, action: PayloadAction<string | null>) => {
-      state.selectedInstructionId = null;
-      state.selectedElementId = action.payload;
-    },
-    setElements: (state, action: PayloadAction<Element[]>) => {
-      if (state.currentTimeline) {
-        state.currentTimeline.elements = action.payload;
-      }
-    },
-    setActiveTab: (state, action: PayloadAction<string>) => {
-      state.activeTab = action.payload;
     },
     addInstruction: (state, action: PayloadAction<Instruction>) => {
       if (state.currentTimeline) {
@@ -186,11 +131,6 @@ export const timelineSlice = createSlice({
 
 export const {
   setCurrentTime,
-  addElement,
-  updateElement,
-  setSelectedElementId,
-  setElements,
-  setActiveTab,
   addInstruction,
   updateInstruction,
   removeInstruction,
@@ -210,18 +150,6 @@ export const {
 
 export const selectCurrentTime = (state: RootState) =>
   state.timeline.currentTime;
-export const selectElements = (state: RootState) =>
-  state.timeline.currentTimeline?.elements ?? [];
-export const selectSelectedElementId = (state: RootState) =>
-  state.timeline.selectedElementId;
-export const selectSelectedElement = (state: RootState) => {
-  const selectedId = state.timeline.selectedElementId;
-  return selectedId
-    ? state.timeline.currentTimeline?.elements.find(
-        (el) => el.id === selectedId
-      )
-    : null;
-};
 export const selectActiveTab = (state: RootState) => state.timeline.activeTab;
 export const selectInstructions = createSelector(
   [(state: RootState) => state.timeline.currentTimeline],

@@ -59,7 +59,7 @@ const TimelineList: React.FC = () => {
 
   // Fetch ownership status for each timeline
   const timelineOwnerships = useMemo(() => {
-    return timelines.map((timeline) => 
+    return timelines.map((timeline) =>
       selectIsTimelineOwner(store.getState() as RootState, timeline)
     );
   }, [timelines]);
@@ -69,7 +69,6 @@ const TimelineList: React.FC = () => {
       id: Date.now().toString(),
       title: "New Timeline",
       video_url: videoUrl,
-      elements: [],
       instructions: [],
     });
   };

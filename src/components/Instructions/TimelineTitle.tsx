@@ -3,7 +3,10 @@ import { Edit2, Check, X, Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { setCurrentTimeline, selectCurrentTimeline } from "@/store/timelineSlice";
+import {
+  setCurrentTimeline,
+  selectCurrentTimeline,
+} from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import { api } from "@/lib/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,9 +17,9 @@ const TimelineTitle: React.FC = () => {
   const queryClient = useQueryClient();
   const [editingTitle, setEditingTitle] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  
+
   const timeline = useSelector(selectCurrentTimeline);
-  const isOwner = useSelector((state: RootState) => 
+  const isOwner = useSelector((state: RootState) =>
     selectIsTimelineOwner(state, timeline)
   );
 
@@ -33,7 +36,6 @@ const TimelineTitle: React.FC = () => {
             title: newTitle,
             id: timeline.id,
             video_url: timeline.video_url,
-            elements: timeline.elements,
             instructions: timeline.instructions,
             user_id: timeline.user_id,
           })
@@ -70,9 +72,9 @@ const TimelineTitle: React.FC = () => {
             }}
             className="h-8 text-lg"
           />
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleSaveTitle}
             disabled={updateMutation.isPending}
           >
