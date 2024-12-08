@@ -56,18 +56,32 @@ const InstructionsList: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     const instruction = instructions.find((inst) => inst.id === id);
-    if (instruction?.type === "overlay" && instruction.overlayMedia?.url) {
-      await api.timelines.deleteMedia(instruction.overlayMedia.url);
-    }
 
+    // First delete the instruction from Redux store
     const updatedInstructions = instructions.filter(
       (instruction) => instruction.id !== id
     );
     dispatch(removeInstruction(id));
 
-    await api.timelines.update(currentTimeline!.id, {
-      instructions: updatedInstructions,
-    });
+    try {
+      // Try to delete media file if it exists
+      if (instruction?.type === "overlay" && instruction.overlayMedia?.url) {
+        await api.timelines.deleteMedia(instruction.overlayMedia.url);
+      }
+    } catch (error) {
+      console.error("Failed to delete media file:", error);
+      // Continue with instruction deletion even if media deletion fails
+    }
+
+    // Update the timeline with the new instructions
+    try {
+      await api.timelines.update(currentTimeline!.id, {
+        instructions: updatedInstructions,
+      });
+    } catch (error) {
+      console.error("Failed to update timeline:", error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const handleClone = async (instruction: Instruction) => {

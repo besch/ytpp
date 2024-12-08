@@ -113,9 +113,14 @@ export const api = {
     },
 
     deleteMedia: async (url: string): Promise<void> => {
-      await axios.delete(`${API_BASE_URL}/media`, {
-        data: { url: url.split("/").pop() },
-      });
+      try {
+        await axios.delete(`${API_BASE_URL}/media`, {
+          data: { url: url.split("/").pop() },
+        });
+      } catch (error) {
+        console.error("Error deleting media:", error);
+        throw error;
+      }
     },
 
     getMedia: async (timelineId: string): Promise<MediaFile[]> => {
