@@ -136,14 +136,31 @@ export class VideoOverlayManager {
         }
 
         if (mediaElement instanceof HTMLVideoElement) {
-          mediaElement.addEventListener("ended", () => {
-            this.hideOverlay(id);
-            if (this.overlayEndedCallback) {
-              this.overlayEndedCallback();
-            }
+          // Add event listener for video loaded metadata
+          await new Promise<void>((resolve) => {
+            mediaElement.addEventListener("loadedmetadata", () => resolve());
           });
+
+          // If duration is specified and less than video duration, set timeout
+          if (duration && duration < mediaElement.duration) {
+            this.overlayTimeout = window.setTimeout(() => {
+              this.hideOverlay(id);
+              if (this.overlayEndedCallback) {
+                this.overlayEndedCallback();
+              }
+            }, duration * 1000);
+          } else {
+            // If no duration specified or duration longer than video, use video's ended event
+            mediaElement.addEventListener("ended", () => {
+              this.hideOverlay(id);
+              if (this.overlayEndedCallback) {
+                this.overlayEndedCallback();
+              }
+            });
+          }
           await mediaElement.play();
         } else if (duration) {
+          // For images, use the specified duration
           this.overlayTimeout = window.setTimeout(() => {
             this.hideOverlay(id);
             if (this.overlayEndedCallback) {
