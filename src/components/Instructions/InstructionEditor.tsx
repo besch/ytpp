@@ -182,8 +182,20 @@ const InstructionEditor: React.FC = () => {
           textOverlayInstruction.pauseMainVideo
         );
       }
+    } else if (selectedType) {
+      // Initialize new instruction with current time
+      const totalSeconds = Math.floor(currentTime / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      const milliseconds = currentTime % 1000;
+
+      methods.setValue("hours", hours, { shouldValidate: false });
+      methods.setValue("minutes", minutes, { shouldValidate: false });
+      methods.setValue("seconds", seconds, { shouldValidate: false });
+      methods.setValue("milliseconds", milliseconds, { shouldValidate: false });
     }
-  }, [isEditing, editingInstruction, methods]);
+  }, [isEditing, editingInstruction, selectedType, currentTime, methods]);
 
   // Sync form inputs with currentTime when not editing
   useEffect(() => {
@@ -357,10 +369,10 @@ const InstructionEditor: React.FC = () => {
   const onSubmit = async (data: any) => {
     try {
       const triggerTime = parseTimeInput({
-        hours: data.hours || 0,
-        minutes: data.minutes || 0,
-        seconds: data.seconds || 0,
-        milliseconds: data.milliseconds || 0,
+            hours: data.hours || 0,
+            minutes: data.minutes || 0,
+            seconds: data.seconds || 0,
+            milliseconds: data.milliseconds || 0,
       });
 
       let newInstruction: Instruction;
