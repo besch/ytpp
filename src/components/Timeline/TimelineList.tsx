@@ -5,17 +5,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/ui/Button";
 import { setCurrentTimeline, timelineDeleted } from "@/store/timelineSlice";
 import { Timeline } from "@/types";
-import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "react-toastify";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import { RootState, store } from "@/store";
+import { useAPI } from "@/hooks/useAPI";
 
 const TimelineList: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const api = useAPI();
   const videoUrl = window.location.href.split("&")[0];
 
   // Query for fetching timelines
@@ -25,7 +26,14 @@ const TimelineList: React.FC = () => {
     error,
   } = useQuery({
     queryKey: ["timelines", videoUrl],
-    queryFn: () => api.timelines.getAll(videoUrl),
+    queryFn: async () => {
+      console.log("TimelineList queryFn called");
+      const response = await api.timelines.getAll(videoUrl);
+      console.log("TimelineList received response:", response, 
+        "Type:", typeof response, 
+        "Is Array:", Array.isArray(response));
+      return response;
+    },
   });
 
   // Mutation for creating timeline
@@ -107,11 +115,11 @@ const TimelineList: React.FC = () => {
         <div className="flex justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
-      ) : timelines.length > 0 ? (
+      ) : Array.isArray(timelines) && timelines.length > 0 ? (
         <div className="space-y-4">
           {timelines.map((timeline, index) => (
             <div
-              key={timeline.id}
+              key={`${timeline.id}-${index}`}
               className="flex items-center justify-between p-6 bg-card rounded-lg hover:bg-muted/10"
             >
               <div className="flex-1">
@@ -137,7 +145,7 @@ const TimelineList: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {timelineOwnerships[index] && (
+                {timelineOwnerships[timelines.indexOf(timeline)] && (
                   <Button
                     variant="ghost"
                     size="sm"

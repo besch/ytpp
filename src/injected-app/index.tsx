@@ -10,6 +10,7 @@ import { MemoryRouter as Router } from "react-router-dom";
 import { VideoManager } from "@/lib/VideoManager";
 import { setVideoElement } from "@/store/timelineSlice";
 import { setUser } from "@/store/authSlice";
+import { eventSystem } from "@/lib/eventSystem";
 
 function init() {
   // Listen for messages from content script
@@ -21,6 +22,33 @@ function init() {
           break;
       }
     }
+  });
+
+  // Add event listener for API requests
+  window.addEventListener("message", (event) => {
+    if (
+      event.data.source === "content-script" &&
+      event.data.type === "RESPONSE"
+    ) {
+      console.log("Injected app received response:", event.data); // Add logging
+      // Handle the response
+      eventSystem.emit("api:response", event.data.payload);
+    }
+  });
+
+  // Listen for API requests from the React app
+  eventSystem.on("api:request", (request) => {
+    console.log("Injected app sending API request:", request); // Add logging
+    // Forward the request to the content script
+    window.postMessage(
+      {
+        source: "injected-app",
+        type: "api:request",
+        messageId: Date.now().toString(),
+        payload: request,
+      },
+      "*"
+    );
   });
 
   // Initialize VideoManager first

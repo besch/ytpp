@@ -1,5 +1,8 @@
 import { api } from "@/lib/api";
-import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
+import {
+  addCustomEventListener,
+  eventSystem,
+} from "@/lib/eventSystem";
 import { VideoManager } from "@/lib/VideoManager";
 import { TextOverlayInstruction, OverlayInstruction } from "@/types";
 
@@ -12,6 +15,13 @@ interface AuthResponse {
     name: string;
     picture: string;
   };
+}
+
+interface APIResponse {
+  success: boolean;
+  error?: string;
+  status: number;
+  data?: any;
 }
 
 class ContentScript {
@@ -109,54 +119,169 @@ class ContentScript {
       if (event.data.source !== "injected-app") return;
 
       const { messageId, type, payload } = event.data;
+      console.log("Content script received message:", { type, payload });
 
-      let response = { success: false };
+      let response: APIResponse = {
+        success: false,
+        status: 500,
+      };
 
-      switch (type) {
-        case "HANDLE_LOGIN":
-          response = await this.handleAuthMessage("HANDLE_LOGIN");
-          break;
-        case "HANDLE_LOGOUT":
-          response = await this.handleAuthMessage("HANDLE_LOGOUT");
-          break;
-        case "CHECK_AUTH_STATE":
-          response = await this.handleAuthMessage("CHECK_AUTH_STATE");
-          break;
-        case "API_REQUEST":
-          response = await this.handleApiRequest(payload);
-          break;
+      try {
+        switch (type) {
+          case "HANDLE_LOGIN":
+            response = {
+              success: true,
+              status: 200,
+              data: await this.handleAuthMessage("HANDLE_LOGIN"),
+            };
+            break;
+          case "HANDLE_LOGOUT":
+            response = {
+              success: true,
+              status: 200,
+              data: await this.handleAuthMessage("HANDLE_LOGOUT"),
+            };
+            break;
+          case "CHECK_AUTH_STATE":
+            response = {
+              success: true,
+              status: 200,
+              data: await this.handleAuthMessage("CHECK_AUTH_STATE"),
+            };
+            break;
+          case "api:request":
+            response = await this.handleApiRequest(payload);
+            break;
+        }
+
+        console.log("Content script sending response:", response);
+
+        // Send response back to injected app
+        window.postMessage(
+          {
+            source: "content-script",
+            type: "RESPONSE",
+            messageId,
+            payload: response,
+          },
+          "*"
+        );
+
+        // Also emit the response through the event system for API requests
+        if (type === "api:request") {
+          eventSystem.emit("api:response", response);
+        }
+      } catch (error) {
+        console.error("Error handling message:", error);
+        // Send error response
+        const errorResponse: APIResponse = {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+          status: 500,
+        };
+
+        window.postMessage(
+          {
+            source: "content-script",
+            type: "RESPONSE",
+            messageId,
+            payload: errorResponse,
+          },
+          "*"
+        );
+
+        if (type === "api:request") {
+          eventSystem.emit("api:response", errorResponse);
+        }
       }
-
-      // Send response back to injected app
-      window.postMessage(
-        {
-          source: "content-script",
-          type: "RESPONSE",
-          messageId,
-          payload: response,
-        },
-        "*"
-      );
     });
   }
 
-  private async handleApiRequest(payload: any): Promise<any> {
+  private async handleApiRequest(payload: any): Promise<APIResponse> {
     try {
-      const { endpoint, method, data } = payload;
+      const { endpoint, method, body, params } = payload;
+      console.log("Handling API request:", { endpoint, method, params });
 
-      // Handle API requests directly from the content script
-      switch (endpoint) {
-        case "users/createOrUpdate":
-          return await api.users.createOrUpdate(data);
-        // Add other API endpoints as needed
-        default:
-          throw new Error(`Unknown API endpoint: ${endpoint}`);
+      const url = new URL(`http://localhost:3000/api${endpoint}`);
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          url.searchParams.append(key, value as string);
+        });
       }
+
+      // Initialize headers as Record<string, string>
+      let headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth headers if needed
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user?.id) {
+            headers["user-id"] = user.id;
+          }
+        } catch (error) {
+          console.error("Error parsing user from localStorage:", error);
+        }
+      }
+
+      const options: RequestInit = {
+        method,
+        headers,
+      };
+
+      if (body) {
+        if (body instanceof FormData) {
+          const { "Content-Type": _, ...headersWithoutContentType } = headers;
+          options.headers = headersWithoutContentType;
+          options.body = body;
+        } else {
+          options.body = JSON.stringify(body);
+        }
+      }
+
+      console.log("Fetching:", url.toString(), options);
+      const response = await fetch(url.toString(), options);
+      const data = await response.json();
+      console.log(
+        "Raw API response data:",
+        data,
+        "Type:",
+        typeof data,
+        "Is Array:",
+        Array.isArray(data)
+      );
+
+      // Ensure the response has the correct structure
+      const apiResponse: APIResponse = {
+        success: response.ok,
+        data: data, // Keep the original array
+        status: response.status,
+      };
+
+      console.log(
+        "Structured API response:",
+        apiResponse,
+        "Data type:",
+        typeof apiResponse.data,
+        "Is Array:",
+        Array.isArray(apiResponse.data)
+      );
+
+      if (!response.ok) {
+        apiResponse.error = data.message || "Request failed";
+      }
+
+      return apiResponse;
     } catch (error) {
       console.error("API request error:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
+        status: 500,
+        data: null,
       };
     }
   }

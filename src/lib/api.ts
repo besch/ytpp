@@ -1,26 +1,7 @@
-import axios from "axios";
+import { makeAPIRequest } from "@/lib/eventSystem";
 import { Timeline, Instruction, MediaFile } from "@/types";
 
 const API_BASE_URL = "http://localhost:3000/api";
-
-// Add auth header helper
-const getAuthHeaders = () => {
-  const userStr = localStorage.getItem("user");
-  if (!userStr) return {};
-
-  try {
-    const user = JSON.parse(userStr);
-    return user?.id
-      ? {
-          "user-id": user.id,
-          "Content-Type": "application/json",
-        }
-      : {};
-  } catch (error) {
-    console.error("Error parsing user from localStorage:", error);
-    return {};
-  }
-};
 
 export const getMediaUrl = (path: string): string => {
   if (!path) return "";
@@ -36,35 +17,38 @@ export const api = {
       name: string;
       picture: string;
     }) => {
-      const response = await axios.post(`${API_BASE_URL}/users`, user, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await makeAPIRequest({
+        endpoint: "/users",
+        method: "POST",
+        body: user,
       });
       return response.data;
     },
   },
   timelines: {
     getAll: async (videoUrl?: string): Promise<Timeline[]> => {
-      const params = videoUrl
-        ? `?video_url=${encodeURIComponent(videoUrl)}`
-        : "";
-      const response = await axios.get(`${API_BASE_URL}/timelines${params}`, {
-        headers: getAuthHeaders(),
+      const params = videoUrl ? { video_url: videoUrl } : undefined;
+      const response = await makeAPIRequest({
+        endpoint: "/timelines",
+        method: "GET",
+        params,
       });
       return response.data;
     },
 
     get: async (id: string): Promise<Timeline> => {
-      const response = await axios.get(`${API_BASE_URL}/timelines/${id}`, {
-        headers: getAuthHeaders(),
+      const response = await makeAPIRequest({
+        endpoint: `/timelines/${id}`,
+        method: "GET",
       });
       return response.data;
     },
 
     create: async (timeline: Partial<Timeline>): Promise<Timeline> => {
-      const response = await axios.post(`${API_BASE_URL}/timelines`, timeline, {
-        headers: getAuthHeaders(),
+      const response = await makeAPIRequest({
+        endpoint: "/timelines",
+        method: "POST",
+        body: timeline,
       });
       return response.data;
     },
@@ -77,19 +61,18 @@ export const api = {
         instructions?: Instruction[];
       }
     ): Promise<Timeline> => {
-      const response = await axios.put(
-        `${API_BASE_URL}/timelines/${id}`,
-        data,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      const response = await makeAPIRequest({
+        endpoint: `/timelines/${id}`,
+        method: "PUT",
+        body: data,
+      });
       return response.data;
     },
 
     delete: async (id: string): Promise<void> => {
-      await axios.delete(`${API_BASE_URL}/timelines/${id}`, {
-        headers: getAuthHeaders(),
+      await makeAPIRequest({
+        endpoint: `/timelines/${id}`,
+        method: "DELETE",
       });
     },
 
@@ -101,11 +84,10 @@ export const api = {
       formData.append("file", file);
       formData.append("timelineId", timelineId);
 
-      const response = await axios.post(`${API_BASE_URL}/media`, formData, {
-        headers: {
-          ...getAuthHeaders(),
-          "Content-Type": "multipart/form-data",
-        },
+      const response = await makeAPIRequest({
+        endpoint: "/media",
+        method: "POST",
+        body: formData,
       });
       return {
         url: getMediaUrl(response.data.url),
@@ -113,18 +95,18 @@ export const api = {
     },
 
     deleteMedia: async (url: string): Promise<void> => {
-      try {
-        await axios.delete(`${API_BASE_URL}/media`, {
-          data: { url: url.split("/").pop() },
-        });
-      } catch (error) {
-        console.error("Error deleting media:", error);
-        throw error;
-      }
+      await makeAPIRequest({
+        endpoint: "/media",
+        method: "DELETE",
+        body: { url: url.split("/").pop() },
+      });
     },
 
     getMedia: async (timelineId: string): Promise<MediaFile[]> => {
-      const response = await axios.get(`${API_BASE_URL}/media/${timelineId}`);
+      const response = await makeAPIRequest({
+        endpoint: `/media/${timelineId}`,
+        method: "GET",
+      });
       return response.data;
     },
 
@@ -132,16 +114,14 @@ export const api = {
       url: string,
       timelineId: string
     ): Promise<{ url: string }> => {
-      const response = await axios.post(
-        `${API_BASE_URL}/media/clone`,
-        {
+      const response = await makeAPIRequest({
+        endpoint: "/media/clone",
+        method: "POST",
+        body: {
           sourceUrl: url.split("/").pop(),
           timelineId,
         },
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      });
       return {
         url: getMediaUrl(response.data.url),
       };
