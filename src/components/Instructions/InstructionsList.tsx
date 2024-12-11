@@ -16,7 +16,7 @@ import { selectIsTimelineOwner } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
 import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
-import { api } from "@/lib/api";
+import { useAPI } from "@/hooks/useAPI";
 import { RootState } from "@/store";
 import TimelineTitle from "./TimelineTitle";
 import { useNavigate, useParams } from "react-router-dom";
@@ -35,6 +35,7 @@ const InstructionsList: React.FC = () => {
     selectIsTimelineOwner(state, currentTimeline)
   );
   const queryClient = useQueryClient();
+  const api = useAPI();
 
   useEffect(() => {
     if (editingInstruction) {

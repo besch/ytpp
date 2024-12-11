@@ -8,7 +8,7 @@ import {
   selectCurrentTimeline,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
-import { api } from "@/lib/api";
+import { useAPI } from "@/hooks/useAPI";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { RootState } from "@/store";
 
@@ -23,10 +23,14 @@ const TimelineTitle: React.FC = () => {
     selectIsTimelineOwner(state, timeline)
   );
 
+  const api = useAPI();
+
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!timeline) return;
-      return api.timelines.update(timeline.id, { title: newTitle });
+      return api.timelines.update(timeline.id, {
+        title: newTitle,
+      });
     },
     onSuccess: (updatedTimeline) => {
       if (timeline && updatedTimeline) {

@@ -15,7 +15,7 @@ import {
   removeInstruction,
 } from "@/store/timelineSlice";
 import { TimeInput } from "../ui/TimeInput";
-import { api } from "@/lib/api";
+import { useAPI } from "@/hooks/useAPI";
 import {
   Instruction,
   SkipInstruction,
@@ -43,6 +43,7 @@ const InstructionEditor: React.FC = () => {
   const currentTimeline = useSelector(selectCurrentTimeline);
   const navigate = useNavigate();
   const { id: timelineId } = useParams();
+  const api = useAPI();
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;

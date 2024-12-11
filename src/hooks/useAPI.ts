@@ -1,5 +1,13 @@
 import { makeAPIRequest, APIRequest } from "@/lib/eventSystem";
-import { Timeline } from "@/types";
+import { Timeline, MediaFile } from "@/types";
+
+export interface MediaUploadResponse {
+  url: string;
+}
+
+export interface MediaCloneResponse {
+  url: string;
+}
 
 export function useAPI() {
   const request = async <T = any>(config: {
@@ -129,10 +137,58 @@ export function useAPI() {
         });
       },
 
+      update: async (
+        id: string,
+        data: Partial<Timeline>
+      ): Promise<Timeline> => {
+        return request({
+          endpoint: `/timelines/${id}`,
+          method: "PUT",
+          body: data,
+        });
+      },
+
       delete: async (id: string): Promise<void> => {
         return request({
           endpoint: `/timelines/${id}`,
           method: "DELETE",
+        });
+      },
+
+      uploadMedia: async (
+        file: File,
+        timelineId: string
+      ): Promise<MediaUploadResponse> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("timelineId", timelineId);
+
+        return request({
+          endpoint: "/media",
+          method: "POST",
+          body: formData,
+        });
+      },
+
+      deleteMedia: async (url: string): Promise<void> => {
+        return request({
+          endpoint: "/media",
+          method: "DELETE",
+          body: { url: url.split("/").pop() },
+        });
+      },
+
+      cloneMedia: async (
+        url: string,
+        timelineId: string
+      ): Promise<MediaCloneResponse> => {
+        return request({
+          endpoint: "/media/clone",
+          method: "POST",
+          body: {
+            sourceUrl: url.split("/").pop(),
+            timelineId,
+          },
         });
       },
     },

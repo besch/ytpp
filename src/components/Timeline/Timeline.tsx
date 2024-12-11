@@ -12,7 +12,7 @@ import {
   setCurrentTimeline,
 } from "@/store/timelineSlice";
 import { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
-import { api } from "@/lib/api";
+import { useAPI } from "@/hooks/useAPI";
 import Button from "@/components/ui/Button";
 import { Move } from "lucide-react";
 import { useVideoManager } from "@/hooks/useVideoManager";
@@ -88,6 +88,7 @@ const Timeline: React.FC = () => {
     string | null
   >(null);
   const [draggingTime, setDraggingTime] = useState<number | null>(null);
+  const api = useAPI();
 
   useEffect(() => {
     if (videoManager) {
