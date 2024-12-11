@@ -17,13 +17,36 @@ class BackgroundService {
             .catch(() => null);
 
           if (!response) {
+            // First inject content script in all frames
             await chrome.scripting.executeScript({
               target: { tabId: tab.id, allFrames: true },
               files: ["content.js"],
             });
-            await chrome.tabs.sendMessage(tab.id, {
-              action: "TOGGLE_APP_VISIBILITY",
+
+            // Then find which frame has the video
+            const results = await chrome.scripting.executeScript({
+              target: { tabId: tab.id, allFrames: true },
+              func: () => {
+                const video = document.querySelector("video");
+                return {
+                  hasVideo: !!video,
+                  frameId: window.frameElement?.id,
+                };
+              },
             });
+
+            // Find the first frame that contains a video
+            const frameWithVideo = results.find(
+              (result) => result?.result?.hasVideo
+            );
+
+            if (frameWithVideo) {
+              // Only send TOGGLE_APP_VISIBILITY to the frame that has video
+              await chrome.tabs.sendMessage(tab.id, {
+                action: "TOGGLE_APP_VISIBILITY",
+                frameId: frameWithVideo.frameId,
+              });
+            }
           }
         } catch (error) {
           console.error("Failed to execute content script:", error);

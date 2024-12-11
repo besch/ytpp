@@ -32,7 +32,14 @@ class ContentScript {
     this.setupMessageListener();
     this.setupWindowMessageListener();
     this.checkAuthState();
-    this.initializeVideoManager();
+
+    // Initialize video manager and only proceed if video is found
+    this.initializeVideoManager().then(() => {
+      if (this.videoManager?.hasVideoElement()) {
+        // Only setup event listeners if we have a video
+        this.setupVideoEventListeners();
+      }
+    });
   }
 
   private async initializeVideoManager(): Promise<void> {
@@ -263,8 +270,14 @@ class ContentScript {
   ): Promise<boolean> {
     switch (message.action) {
       case "TOGGLE_APP_VISIBILITY":
-        await this.toggleAppVisiblity();
-        sendResponse({ success: true });
+        // Only proceed if this content script has found a video element
+        if (this.videoManager?.hasVideoElement()) {
+          await this.toggleAppVisiblity();
+          sendResponse({ success: true });
+        } else {
+          // If no video found, don't do anything
+          sendResponse({ success: false });
+        }
         break;
       case "AUTH_STATE_CHANGED":
         this.dispatchToInjectedApp("AUTH_STATE_CHANGED", message.payload);
