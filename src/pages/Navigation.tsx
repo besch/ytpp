@@ -124,25 +124,6 @@ const Navigation: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const checkAuthState = async () => {
-      try {
-        const response = await sendMessageToContentScript({
-          type: "CHECK_AUTH_STATE",
-        });
-
-        if (response?.success && response.user) {
-          dispatch(setUser(response.user));
-        }
-      } catch (error) {
-        console.error("Failed to check auth state:", error);
-        dispatch(setError("Failed to check auth state"));
-      }
-    };
-
-    checkAuthState();
-  }, [dispatch]);
-
   return (
     <nav className="flex justify-between items-center px-8 py-6 bg-background border-b border-border">
       <div

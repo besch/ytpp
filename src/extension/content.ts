@@ -97,9 +97,31 @@ class ContentScript {
     }
   }
 
+  private authCheckTimeout: NodeJS.Timeout | null = null;
+  private lastAuthCheck: number = 0;
+  private readonly AUTH_CHECK_DEBOUNCE = 1000; // 1 second debounce
+
   private async checkAuthState(): Promise<void> {
+    const now = Date.now();
+    if (now - this.lastAuthCheck < this.AUTH_CHECK_DEBOUNCE) {
+      // Clear any existing timeout
+      if (this.authCheckTimeout) {
+        clearTimeout(this.authCheckTimeout);
+      }
+
+      // Set a new timeout
+      this.authCheckTimeout = setTimeout(() => {
+        this.performAuthCheck();
+      }, this.AUTH_CHECK_DEBOUNCE);
+      return;
+    }
+
+    await this.performAuthCheck();
+  }
+
+  private async performAuthCheck(): Promise<void> {
     try {
-      // Check auth state with background script
+      this.lastAuthCheck = Date.now();
       const response = await new Promise<AuthResponse>((resolve) => {
         chrome.runtime.sendMessage(
           { action: "CHECK_AUTH_STATE" },
