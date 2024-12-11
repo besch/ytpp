@@ -12,7 +12,7 @@ interface AccountProps {
 
 const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
   const accountRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
