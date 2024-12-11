@@ -1,12 +1,7 @@
 import { api } from "@/lib/api";
 import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 import { VideoManager } from "@/lib/VideoManager";
-import { VideoOverlayManager } from "@/lib/VideoOverlayManager";
-import {
-  Instruction,
-  TextOverlayInstruction,
-  OverlayInstruction,
-} from "@/types";
+import { TextOverlayInstruction, OverlayInstruction } from "@/types";
 
 interface AuthResponse {
   success: boolean;
