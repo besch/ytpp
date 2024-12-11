@@ -36,6 +36,20 @@ export function useAPI() {
   };
 
   return {
+    users: {
+      createOrUpdate: async (user: {
+        id: string;
+        email: string;
+        name: string;
+        picture: string;
+      }) => {
+        return request({
+          endpoint: "/users",
+          method: "POST",
+          body: user,
+        });
+      },
+    },
     timelines: {
       getAll: async (videoUrl?: string): Promise<Timeline[]> => {
         const params = videoUrl ? { video_url: videoUrl } : undefined;
@@ -60,12 +74,12 @@ export function useAPI() {
 
               // If we got undefined (from skipped auth response), try again
               attempts++;
-              await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between attempts
+              await new Promise((resolve) => setTimeout(resolve, 100)); // Small delay between attempts
             } catch (error) {
               console.error(`Attempt ${attempts + 1} failed:`, error);
               attempts++;
               if (attempts === maxAttempts) throw error;
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise((resolve) => setTimeout(resolve, 100));
             }
           }
 

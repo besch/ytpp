@@ -10,7 +10,7 @@ import {
   setLoading,
 } from "@/store/authSlice";
 import { toast } from "react-toastify";
-import { api } from "@/lib/api";
+import { useAPI } from "@/hooks/useAPI";
 import { setCurrentTimeline, setTimelines } from "@/store/timelineSlice";
 import Account from "@/components/Account/Account";
 
@@ -18,6 +18,7 @@ const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const api = useAPI();
 
   const handleDragStart = (e: React.MouseEvent) => {
     const container = document.getElementById("react-overlay-root");
