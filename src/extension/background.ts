@@ -18,7 +18,7 @@ class BackgroundService {
 
           if (!response) {
             await chrome.scripting.executeScript({
-              target: { tabId: tab.id },
+              target: { tabId: tab.id, allFrames: true },
               files: ["content.js"],
             });
             await chrome.tabs.sendMessage(tab.id, {

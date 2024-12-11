@@ -1,5 +1,12 @@
 import { api } from "@/lib/api";
 import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
+import { VideoManager } from "@/lib/VideoManager";
+import { VideoOverlayManager } from "@/lib/VideoOverlayManager";
+import {
+  Instruction,
+  TextOverlayInstruction,
+  OverlayInstruction,
+} from "@/types";
 
 interface AuthResponse {
   success: boolean;
@@ -15,6 +22,7 @@ interface AuthResponse {
 class ContentScript {
   private isAppVisible: boolean = false;
   private eventListeners: Array<() => void> = [];
+  private videoManager: VideoManager | null = null;
 
   constructor() {
     this.initialize();
@@ -24,7 +32,73 @@ class ContentScript {
     this.setupMessageListener();
     this.setupWindowMessageListener();
     this.checkAuthState();
-    this.findVideoInFrames();
+    this.initializeVideoManager();
+  }
+
+  private async initializeVideoManager(): Promise<void> {
+    this.videoManager = new VideoManager();
+    await this.videoManager.findAndStoreVideoElement();
+
+    // Listen for video-related messages from the injected app
+    this.setupVideoEventListeners();
+  }
+
+  private setupVideoEventListeners(): void {
+    const cleanup = addCustomEventListener(
+      "VIDEO_INSTRUCTION",
+      async (data) => {
+        const instruction = data;
+        if (!this.videoManager) return;
+
+        try {
+          switch (instruction.type) {
+            case "overlay":
+              await this.handleOverlayInstruction(
+                instruction as OverlayInstruction
+              );
+              break;
+            case "text-overlay":
+              await this.handleTextOverlayInstruction(
+                instruction as TextOverlayInstruction
+              );
+              break;
+            // Add other instruction types as needed
+          }
+        } catch (error) {
+          console.error("Error handling video instruction:", error);
+        }
+      }
+    );
+
+    this.eventListeners.push(cleanup);
+  }
+
+  private async handleOverlayInstruction(
+    instruction: OverlayInstruction
+  ): Promise<void> {
+    if (!this.videoManager) return;
+
+    try {
+      // Make API call to get media URL if needed
+      if (instruction.overlayMedia && instruction.overlayMedia.url) {
+        // Handle the overlay instruction
+        await this.videoManager.handleInstruction(instruction);
+      }
+    } catch (error) {
+      console.error("Error handling overlay instruction:", error);
+    }
+  }
+
+  private async handleTextOverlayInstruction(
+    instruction: TextOverlayInstruction
+  ): Promise<void> {
+    if (!this.videoManager) return;
+
+    try {
+      await this.videoManager.handleInstruction(instruction);
+    } catch (error) {
+      console.error("Error handling text overlay instruction:", error);
+    }
   }
 
   private setupWindowMessageListener(): void {
@@ -32,7 +106,7 @@ class ContentScript {
       // Only accept messages from our injected app
       if (event.data.source !== "injected-app") return;
 
-      const { messageId, type } = event.data;
+      const { messageId, type, payload } = event.data;
 
       let response = { success: false };
 
@@ -45,6 +119,9 @@ class ContentScript {
           break;
         case "CHECK_AUTH_STATE":
           response = await this.handleAuthMessage("CHECK_AUTH_STATE");
+          break;
+        case "API_REQUEST":
+          response = await this.handleApiRequest(payload);
           break;
       }
 
@@ -61,35 +138,20 @@ class ContentScript {
     });
   }
 
-  private async handleAuthMessage(
-    action: string
-  ): Promise<{ success: boolean; error?: string; user?: any }> {
+  private async handleApiRequest(payload: any): Promise<any> {
     try {
-      console.log("Content: Sending auth message to background", action);
-      return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ action }, (response) => {
-          console.log("Content: Received response from background", response);
-          if (response?.success && response.user?.id) {
-            // Only make API call for HANDLE_LOGIN action
-            if (action === "HANDLE_LOGIN") {
-              api.users.createOrUpdate(response.user).then(() => {
-                resolve(response);
-              });
-            } else {
-              resolve(response);
-            }
-          } else {
-            resolve(
-              response || {
-                success: false,
-                error: "No response from background",
-              }
-            );
-          }
-        });
-      });
+      const { endpoint, method, data } = payload;
+
+      // Handle API requests directly from the content script
+      switch (endpoint) {
+        case "users/createOrUpdate":
+          return await api.users.createOrUpdate(data);
+        // Add other API endpoints as needed
+        default:
+          throw new Error(`Unknown API endpoint: ${endpoint}`);
+      }
     } catch (error) {
-      console.error(`Content: ${action} error:`, error);
+      console.error("API request error:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -212,28 +274,41 @@ class ContentScript {
     return true;
   }
 
-  private async findVideoInFrames(): Promise<void> {
-    // Listen for the find video event
-    const cleanup = addCustomEventListener("FIND_VIDEO_ELEMENT", async () => {
-      try {
-        // Request background script to search in all frames
-        const response = await chrome.runtime.sendMessage({
-          action: "FIND_VIDEO_IN_FRAMES",
+  private async handleAuthMessage(
+    action: string
+  ): Promise<{ success: boolean; error?: string; user?: any }> {
+    try {
+      console.log("Content: Sending auth message to background", action);
+      return new Promise((resolve) => {
+        chrome.runtime.sendMessage({ action }, async (response) => {
+          console.log("Content: Received response from background", response);
+          if (response?.success && response.user?.id) {
+            // Only make API call for HANDLE_LOGIN action
+            if (action === "HANDLE_LOGIN") {
+              try {
+                await api.users.createOrUpdate(response.user);
+              } catch (error) {
+                console.error("Error creating/updating user:", error);
+              }
+            }
+            resolve(response);
+          } else {
+            resolve(
+              response || {
+                success: false,
+                error: "No response from background",
+              }
+            );
+          }
         });
-
-        if (response?.videoFound) {
-          // Video was found in a frame, dispatch event with details
-          dispatchCustomEvent("VIDEO_ELEMENT_FOUND", {
-            frameId: response.frameId,
-            videoId: response.videoId,
-          });
-        }
-      } catch (error) {
-        console.error("Failed to find video in frames:", error);
-      }
-    });
-
-    this.eventListeners.push(cleanup);
+      });
+    } catch (error) {
+      console.error(`Content: ${action} error:`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
   }
 }
 

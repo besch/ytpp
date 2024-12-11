@@ -1,9 +1,12 @@
+import { Instruction } from "@/types";
+
 interface EventPayloads {
   VIDEO_ELEMENT_FOUND: {
     frameId?: number;
     videoId: string;
   };
   FIND_VIDEO_ELEMENT: void;
+  VIDEO_INSTRUCTION: Instruction;
 }
 
 type EventName = keyof EventPayloads;

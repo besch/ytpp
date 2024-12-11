@@ -8,7 +8,7 @@ import { VideoOverlayManager } from "./VideoOverlayManager";
 import { store } from "@/store";
 import { seekToTime } from "@/store/timelineSlice";
 import config from "./config";
-import { dispatchCustomEvent, addCustomEventListener } from "@/lib/eventSystem";
+import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
@@ -34,6 +34,7 @@ export class VideoManager {
   public async findAndStoreVideoElement(): Promise<void> {
     // First try to find video in main document
     this.videoElement = document.querySelector("video");
+    console.log("!!!!!!!!!!!!videoElement", this.videoElement);
 
     if (this.videoElement) {
       if (!this.videoElement.id) {
@@ -42,32 +43,8 @@ export class VideoManager {
       this.handleVideo(this.videoElement);
       (window as any).videoManager = this;
       this.videoOverlayManager = new VideoOverlayManager(this.videoElement);
-      return Promise.resolve();
+      return;
     }
-
-    // If no video found in main document, dispatch event to content script
-    dispatchCustomEvent("FIND_VIDEO_ELEMENT");
-
-    // Wait for response about found video
-    return new Promise((resolve) => {
-      const cleanup = addCustomEventListener(
-        "VIDEO_ELEMENT_FOUND",
-        ({ frameId, videoId }) => {
-          const video = document.getElementById(videoId) as HTMLVideoElement;
-          if (video) {
-            this.setVideoElement(video);
-            cleanup();
-            resolve();
-          }
-        }
-      );
-
-      // Add timeout to resolve if no video is found
-      setTimeout(() => {
-        cleanup();
-        resolve();
-      }, 5000);
-    });
   }
 
   private handleVideo(video: HTMLVideoElement): void {
@@ -83,6 +60,22 @@ export class VideoManager {
     video.addEventListener("seeking", this.handleVideoSeeking);
     video.addEventListener("volumechange", this.handleVolumeChange);
     video.addEventListener("timeupdate", this.handleTimeUpdate);
+  }
+
+  public async handleInstruction(instruction: Instruction): Promise<void> {
+    switch (instruction.type) {
+      case "overlay":
+        await this.handleOverlayInstruction(instruction as OverlayInstruction);
+        break;
+      case "text-overlay":
+        await this.handleTextOverlayInstruction(
+          instruction as TextOverlayInstruction
+        );
+        break;
+      case "skip":
+        await this.handleSkipInstruction(instruction as SkipInstruction);
+        break;
+    }
   }
 
   public removeVideoEventListeners(): void {
@@ -212,7 +205,6 @@ export class VideoManager {
       endTime,
     });
 
-    // Pause main video if specified
     if (instruction.pauseMainVideo) {
       this.videoElement.pause();
     }
@@ -226,7 +218,6 @@ export class VideoManager {
       instruction.overlayMedia!.position
     );
 
-    // If video is paused, resume when overlay ends
     if (instruction.pauseMainVideo) {
       this.videoOverlayManager?.onOverlayEnded(() => {
         if (this.videoElement && this.videoElement.paused) {
@@ -427,5 +418,17 @@ export class VideoManager {
 
   public setOverlayEndedCallback(callback: () => void): void {
     this.overlayEndedCallback = callback;
+  }
+
+  private async handleSkipInstruction(
+    instruction: SkipInstruction
+  ): Promise<void> {
+    if (!this.videoElement) return;
+
+    // Skip to the specified time
+    this.videoElement.currentTime = instruction.skipToTime / 1000;
+
+    // Update the store with the new time
+    store.dispatch(seekToTime(instruction.skipToTime));
   }
 }
