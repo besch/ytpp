@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { addCustomEventListener, dispatchCustomEvent } from "@/lib/eventSystem";
 
 interface AuthResponse {
   success: boolean;
@@ -23,6 +24,7 @@ class ContentScript {
     this.setupMessageListener();
     this.setupWindowMessageListener();
     this.checkAuthState();
+    this.findVideoInFrames();
   }
 
   private setupWindowMessageListener(): void {
@@ -186,6 +188,30 @@ class ContentScript {
         break;
     }
     return true;
+  }
+
+  private async findVideoInFrames(): Promise<void> {
+    // Listen for the find video event
+    const cleanup = addCustomEventListener("FIND_VIDEO_ELEMENT", async () => {
+      try {
+        // Request background script to search in all frames
+        const response = await chrome.runtime.sendMessage({
+          action: "FIND_VIDEO_IN_FRAMES",
+        });
+
+        if (response?.videoFound) {
+          // Video was found in a frame, dispatch event with details
+          dispatchCustomEvent("VIDEO_ELEMENT_FOUND", {
+            frameId: response.frameId,
+            videoId: response.videoId,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to find video in frames:", error);
+      }
+    });
+
+    this.eventListeners.push(cleanup);
   }
 }
 

@@ -1,4 +1,9 @@
 interface EventPayloads {
+  VIDEO_ELEMENT_FOUND: {
+    frameId?: number;
+    videoId: string;
+  };
+  FIND_VIDEO_ELEMENT: void;
 }
 
 type EventName = keyof EventPayloads;

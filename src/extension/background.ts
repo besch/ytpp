@@ -132,6 +132,44 @@ class BackgroundService {
     sendResponse: (response?: any) => void
   ): Promise<void> {
     switch (message.action) {
+      case "FIND_VIDEO_IN_FRAMES":
+        try {
+          if (!sender.tab?.id) throw new Error("No tab ID");
+
+          // Inject script into all frames to find video
+          const results = await chrome.scripting.executeScript({
+            target: { tabId: sender.tab.id, allFrames: true },
+            func: () => {
+              const video = document.querySelector("video");
+              if (video) {
+                const id = video.id || "video-player-" + Date.now();
+                video.id = id;
+                return {
+                  videoFound: true,
+                  videoId: id,
+                  frameId: window.frameElement?.id,
+                };
+              }
+              return { videoFound: false };
+            },
+          });
+
+          // Find the first frame that contains a video
+          const frameWithVideo = results.find(
+            (result) => result?.result?.videoFound
+          );
+
+          if (frameWithVideo) {
+            sendResponse(frameWithVideo.result);
+          } else {
+            sendResponse({ videoFound: false });
+          }
+        } catch (error) {
+          console.error("Failed to search frames for video:", error);
+          sendResponse({ videoFound: false, error: String(error) });
+        }
+        break;
+
       case "CHECK_AUTH_STATE":
         await this.checkAndRefreshAuthState(sender, sendResponse);
         break;

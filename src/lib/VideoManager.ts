@@ -8,6 +8,7 @@ import { VideoOverlayManager } from "./VideoOverlayManager";
 import { store } from "@/store";
 import { seekToTime } from "@/store/timelineSlice";
 import config from "./config";
+import { dispatchCustomEvent, addCustomEventListener } from "@/lib/eventSystem";
 
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
@@ -31,6 +32,7 @@ export class VideoManager {
   }
 
   public async findAndStoreVideoElement(): Promise<void> {
+    // First try to find video in main document
     this.videoElement = document.querySelector("video");
 
     if (this.videoElement) {
@@ -39,12 +41,33 @@ export class VideoManager {
       }
       this.handleVideo(this.videoElement);
       (window as any).videoManager = this;
-
       this.videoOverlayManager = new VideoOverlayManager(this.videoElement);
-
       return Promise.resolve();
     }
-    return Promise.resolve();
+
+    // If no video found in main document, dispatch event to content script
+    dispatchCustomEvent("FIND_VIDEO_ELEMENT");
+
+    // Wait for response about found video
+    return new Promise((resolve) => {
+      const cleanup = addCustomEventListener(
+        "VIDEO_ELEMENT_FOUND",
+        ({ frameId, videoId }) => {
+          const video = document.getElementById(videoId) as HTMLVideoElement;
+          if (video) {
+            this.setVideoElement(video);
+            cleanup();
+            resolve();
+          }
+        }
+      );
+
+      // Add timeout to resolve if no video is found
+      setTimeout(() => {
+        cleanup();
+        resolve();
+      }, 5000);
+    });
   }
 
   private handleVideo(video: HTMLVideoElement): void {
