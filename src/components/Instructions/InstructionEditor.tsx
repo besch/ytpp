@@ -629,7 +629,14 @@ const InstructionEditor: React.FC = () => {
 
   // Update the form change detection
   useEffect(() => {
-    if (!initialValues) return;
+    if (!initialValues) {
+      // For new instructions, we should enable the button
+      if (selectedType && !isEditing) {
+        setFormChanged(true);
+        return;
+      }
+      return;
+    }
 
     const subscription = methods.watch((value) => {
       const currentValues = methods.getValues();
@@ -659,7 +666,7 @@ const InstructionEditor: React.FC = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [methods, initialValues, selectedType]);
+  }, [methods, initialValues, selectedType, isEditing]);
 
   // Update the handleCancel function
   const handleCancel = () => {
