@@ -59,7 +59,7 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
   }, [videoElementId]);
 
   useEffect(() => {
-    if (!mediaRef.current || !containerRef.current) return;
+    if (!mediaRef.current || !containerRef.current || initialPosition) return;
 
     const mediaElement = mediaRef.current;
     const container = containerRef.current;
@@ -82,37 +82,31 @@ const MediaPositioner: React.FC<MediaPositionerProps> = ({
       const ratio = naturalWidth / naturalHeight;
       setAspectRatio(ratio);
 
-      if (!initialPosition) {
-        // Calculate the aspect ratio
-        const aspectRatio = naturalWidth / naturalHeight;
+      // Calculate the aspect ratio
+      const aspectRatio = naturalWidth / naturalHeight;
 
-        // Get container dimensions
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight;
+      // Get container dimensions
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
 
-        // Calculate dimensions that fit within container while preserving aspect ratio
-        let width = containerWidth * 0.5; // Start with 50% of container width
-        let height = width / aspectRatio;
+      // Calculate dimensions that fit within container while preserving aspect ratio
+      let width = containerWidth * 0.5; // Start with 50% of container width
+      let height = width / aspectRatio;
 
-        // If height is too tall, scale based on height instead
-        if (height > containerHeight * 0.8) {
-          height = containerHeight * 0.8;
-          width = height * aspectRatio;
-        }
-
-        // Calculate centered position
-        const x = (containerWidth - width) / 2;
-        const y = (containerHeight - height) / 2;
-
-        // Update position state
-        setPosition({
-          x,
-          y,
-          width,
-          height,
-        });
-        onPositionChange({ x, y, width, height });
+      // If height is too tall, scale based on height instead
+      if (height > containerHeight * 0.8) {
+        height = containerHeight * 0.8;
+        width = height * aspectRatio;
       }
+
+      // Calculate centered position
+      const x = (containerWidth - width) / 2;
+      const y = (containerHeight - height) / 2;
+
+      // Update position state and notify parent
+      const newPosition = { x, y, width, height };
+      setPosition(newPosition);
+      onPositionChange(newPosition);
     };
 
     // For videos, wait for loadedmetadata event

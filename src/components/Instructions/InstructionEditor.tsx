@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
@@ -33,6 +33,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { isEqual } from "lodash";
 import { Trash2 } from "lucide-react";
+import { useSkipInstructionForm } from "@/hooks/forms/useSkipInstructionForm";
+import { useOverlayInstructionForm } from "@/hooks/forms/useOverlayInstructionForm";
+import { useTextOverlayInstructionForm } from "@/hooks/forms/useTextOverlayInstructionForm";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -47,16 +50,6 @@ const InstructionEditor: React.FC = () => {
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
-
-  const parseTimeInput = (data: TimeInputInterface) => {
-    return (
-      (Number(data.hours) * 3600 +
-        Number(data.minutes) * 60 +
-        Number(data.seconds)) *
-        1000 +
-      Number(data.milliseconds || 0)
-    );
-  };
 
   const methods = useForm<any>({
     defaultValues: {
@@ -79,201 +72,43 @@ const InstructionEditor: React.FC = () => {
   const [formChanged, setFormChanged] = useState(false);
   const [initialValues, setInitialValues] = useState<any>(null);
 
-  useEffect(() => {
-    if (isEditing && editingInstruction) {
-      const totalSeconds = Math.floor(editingInstruction.triggerTime / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = Math.floor(totalSeconds % 60);
-      const milliseconds = editingInstruction.triggerTime % 1000;
+  const handleTimeChange = (time: number) => {
+    const totalSeconds = Math.floor(time / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const milliseconds = time % 1000;
 
-      methods.setValue("hours", hours, { shouldValidate: false });
-      methods.setValue("minutes", minutes, { shouldValidate: false });
-      methods.setValue("seconds", seconds, { shouldValidate: false });
-      methods.setValue("milliseconds", milliseconds, { shouldValidate: false });
+    methods.setValue("hours", hours);
+    methods.setValue("minutes", minutes);
+    methods.setValue("seconds", seconds);
+    methods.setValue("milliseconds", milliseconds);
 
-      if (editingInstruction.type === "overlay") {
-        const overlayInstruction = editingInstruction as OverlayInstruction;
-        methods.setValue(
-          "pauseMainVideo",
-          overlayInstruction.pauseMainVideo || false
-        );
-        methods.setValue(
-          "overlayDuration",
-          overlayInstruction.overlayDuration || 5
-        );
-        methods.setValue(
-          "muteOverlayMedia",
-          overlayInstruction.muteOverlayMedia || false
-        );
+    dispatch(seekToTime(time));
+  };
 
-        const overlayMedia = overlayInstruction.overlayMedia;
-        if (overlayMedia) {
-          methods.setValue("overlayMedia", {
-            url: overlayMedia.url,
-            duration: overlayMedia.duration,
-            name: overlayMedia.name,
-            type: overlayMedia.type || "video/mp4",
-            position: overlayMedia.position,
-          });
-          methods.setValue(
-            "overlayMediaType",
-            (overlayMedia.type || "video/mp4").startsWith("video/")
-              ? "video"
-              : "image"
-          );
-        } else {
-          methods.setValue("overlayMedia", null);
-        }
-      } else if (editingInstruction.type === "skip") {
-        const skipToTime =
-          (editingInstruction as SkipInstruction).skipToTime / 1000;
-        const skipHours = Math.floor(skipToTime / 3600);
-        const skipMinutes = Math.floor((skipToTime % 3600) / 60);
-        const skipSeconds = Math.floor(skipToTime % 60);
+  const handleSkipToTimeChange = (time: number) => {
+    const totalSeconds = Math.floor(time / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const milliseconds = time % 1000;
 
-        methods.setValue("skipToHours", skipHours);
-        methods.setValue("skipToMinutes", skipMinutes);
-        methods.setValue("skipToSeconds", skipSeconds);
-        methods.setValue("skipToMilliseconds", skipToTime % 1000);
-      } else if (editingInstruction.type === "text-overlay") {
-        const textOverlayInstruction =
-          editingInstruction as TextOverlayInstruction;
+    methods.setValue("skipToHours", hours);
+    methods.setValue("skipToMinutes", minutes);
+    methods.setValue("skipToSeconds", seconds);
+    methods.setValue("skipToMilliseconds", milliseconds);
+  };
 
-        // Set text overlay values with all properties
-        methods.setValue("textOverlay", {
-          text: textOverlayInstruction.textOverlay.text,
-          style: {
-            fontFamily: textOverlayInstruction.textOverlay.style.fontFamily,
-            fontSize: textOverlayInstruction.textOverlay.style.fontSize,
-            color: textOverlayInstruction.textOverlay.style.color,
-            backgroundColor:
-              textOverlayInstruction.textOverlay.style.backgroundColor ||
-              "#000000",
-            fontWeight: textOverlayInstruction.textOverlay.style.fontWeight,
-            fontStyle:
-              textOverlayInstruction.textOverlay.style.fontStyle || "normal",
-            transparentBackground:
-              textOverlayInstruction.textOverlay.style.transparentBackground ||
-              false,
-            // Add new properties
-            textAlign:
-              textOverlayInstruction.textOverlay.style.textAlign || "center",
-            opacity: textOverlayInstruction.textOverlay.style.opacity || 1,
-            animation:
-              textOverlayInstruction.textOverlay.style.animation || "none",
-            textShadow:
-              textOverlayInstruction.textOverlay.style.textShadow || false,
-            borderRadius:
-              textOverlayInstruction.textOverlay.style.borderRadius || 0,
-            padding: textOverlayInstruction.textOverlay.style.padding || 8,
-          },
-          position: textOverlayInstruction.textOverlay.position || {
-            x: 32,
-            y: 18,
-            width: 160,
-            height: 90,
-          },
-        });
-
-        methods.setValue(
-          "overlayDuration",
-          textOverlayInstruction.overlayDuration
-        );
-        methods.setValue(
-          "pauseMainVideo",
-          textOverlayInstruction.pauseMainVideo
-        );
-      }
-    } else if (selectedType) {
-      // Initialize new instruction with current time
-      const totalSeconds = Math.floor(currentTime / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = Math.floor(totalSeconds % 60);
-      const milliseconds = currentTime % 1000;
-
-      methods.setValue("hours", hours, { shouldValidate: false });
-      methods.setValue("minutes", minutes, { shouldValidate: false });
-      methods.setValue("seconds", seconds, { shouldValidate: false });
-      methods.setValue("milliseconds", milliseconds, { shouldValidate: false });
+  const handleMediaPositionChange = (position: MediaPosition) => {
+    const overlayMedia = methods.watch("overlayMedia");
+    if (overlayMedia) {
+      methods.setValue("overlayMedia", {
+        ...overlayMedia,
+        position,
+      });
+      setFormChanged(true);
     }
-  }, [isEditing, editingInstruction, selectedType, currentTime, methods]);
-
-  // Sync form inputs with currentTime when not editing
-  useEffect(() => {
-    if (!isEditing && selectedType === null) {
-      const totalSeconds = Math.floor(currentTime / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = Math.floor(totalSeconds % 60);
-      const milliseconds = currentTime % 1000;
-
-      methods.setValue("hours", hours);
-      methods.setValue("minutes", minutes);
-      methods.setValue("seconds", seconds);
-      methods.setValue("milliseconds", milliseconds);
-    }
-  }, [currentTime, isEditing, selectedType, methods]);
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    const subscription = methods.watch((value, { name, type }) => {
-      // Only update if it's a time-related field
-      if (name?.match(/^(hours|minutes|seconds|milliseconds)$/)) {
-        // Clear any existing timeout
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-
-        // Set a new timeout to batch updates
-        timeoutId = setTimeout(() => {
-          const triggerTime = parseTimeInput({
-            hours: value.hours || 0,
-            minutes: value.minutes || 0,
-            seconds: value.seconds || 0,
-            milliseconds: value.milliseconds || 0,
-          });
-
-          // Only update Redux state, don't save to database
-          dispatch(seekToTime(triggerTime));
-        }, 300); // Wait 300ms before sending update
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [methods.watch, dispatch]);
-
-  const handleBack = () => {
-    // Prefetch timelines before navigating
-    queryClient.prefetchQuery({
-      queryKey: ["timelines", window.location.href.split("&")[0]],
-      queryFn: () => api.timelines.getAll(window.location.href.split("&")[0]),
-    });
-
-    methods.reset({
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-      milliseconds: 0,
-      pauseDuration: 0,
-      useOverlayDuration: false,
-      muteOverlayMedia: false,
-      overlayMedia: null,
-      skipToHours: 0,
-      skipToMinutes: 0,
-      skipToSeconds: 0,
-      skipToMilliseconds: 0,
-      overlayMediaType: "video",
-    });
-    dispatch(setEditingInstruction(null));
-    navigate(`/timeline/${timelineId}`);
   };
 
   // Mutation for saving instructions
@@ -363,6 +198,35 @@ const InstructionEditor: React.FC = () => {
     await saveInstructionsMutation.mutateAsync(updatedInstructions);
   };
 
+  const handleInstructionSubmit = async (newInstruction: Instruction) => {
+    try {
+      let updatedInstructions: Instruction[];
+      if (isEditing) {
+        updatedInstructions = instructions.map((i) =>
+          i.id === newInstruction.id ? newInstruction : i
+        );
+      } else {
+        updatedInstructions = [...instructions, newInstruction];
+      }
+
+      // Save to database
+      await handleSaveInstructions(updatedInstructions);
+
+      dispatch(setCurrentTime(newInstruction.triggerTime));
+
+      // Reset form state but don't navigate away
+      setFormChanged(false);
+      setInitialValues(methods.getValues());
+
+      // If this was a new instruction, update the editing state to reflect we're now editing it
+      if (!isEditing) {
+        dispatch(setEditingInstruction(newInstruction));
+      }
+    } catch (error) {
+      console.error("Failed to save instruction:", error);
+    }
+  };
+
   const handleDeleteOverlayMedia = () => {
     const mediaURL = methods.watch("overlayMedia")?.url;
     if (
@@ -391,211 +255,6 @@ const InstructionEditor: React.FC = () => {
 
     // Store the URL to be deleted in the form data
     methods.setValue("mediaToDelete", mediaToDelete);
-  };
-
-  const onSubmit = async (data: any) => {
-    try {
-      const triggerTime = parseTimeInput({
-        hours: data.hours || 0,
-        minutes: data.minutes || 0,
-        seconds: data.seconds || 0,
-        milliseconds: data.milliseconds || 0,
-      });
-
-      let newInstruction: Instruction;
-
-      if (selectedType === "text-overlay") {
-        newInstruction = {
-          id: editingInstruction?.id || Date.now().toString(),
-          type: "text-overlay",
-          triggerTime,
-          textOverlay: {
-            text: data.textOverlay.text,
-            style: {
-              fontFamily: data.textOverlay.style.fontFamily,
-              fontSize: Number(data.textOverlay.style.fontSize),
-              color: data.textOverlay.style.color,
-              backgroundColor: data.textOverlay.style.backgroundColor,
-              fontWeight: data.textOverlay.style.fontWeight,
-              fontStyle: data.textOverlay.style.fontStyle,
-              transparentBackground:
-                data.textOverlay.style.transparentBackground,
-              // Add new properties
-              textAlign: data.textOverlay.style.textAlign,
-              opacity: Number(data.textOverlay.style.opacity),
-              animation: data.textOverlay.style.animation,
-              textShadow: data.textOverlay.style.textShadow,
-              borderRadius: Number(data.textOverlay.style.borderRadius),
-              padding: Number(data.textOverlay.style.padding),
-            },
-            position: data.textOverlay.position,
-          },
-          overlayDuration: Number(data.overlayDuration),
-          pauseMainVideo: data.pauseMainVideo,
-          pauseDuration: data.pauseMainVideo
-            ? Number(data.pauseDuration)
-            : undefined,
-        } as TextOverlayInstruction;
-      } else if (selectedType === "overlay") {
-        let overlayMedia = data.overlayMedia;
-        let mediaURL;
-
-        // Handle media deletion first if there's a file to delete
-        if (data.mediaToDelete && !data.mediaToDelete.startsWith("blob:")) {
-          try {
-            await deleteMediaMutation.mutateAsync(data.mediaToDelete);
-          } catch (error) {
-            console.error("Failed to delete old media:", error);
-          }
-        }
-
-        // If there's a new file to upload
-        if (data.overlayMedia?.file) {
-          try {
-            const uploadResult = await uploadMediaMutation.mutateAsync({
-              file: data.overlayMedia.file,
-              timelineId: currentTimeline!.id,
-            });
-            mediaURL = uploadResult.url;
-
-            overlayMedia = {
-              url: mediaURL,
-              duration: data.overlayMedia.duration,
-              name: data.overlayMedia.name,
-              type: data.overlayMedia.type,
-              position: data.overlayMedia.position,
-            };
-          } catch (error) {
-            console.error("Failed to upload new media:", error);
-            return;
-          }
-        }
-
-        // If media was deleted and no new file was uploaded
-        if (data.mediaToDelete && !data.overlayMedia?.file) {
-          overlayMedia = null;
-        }
-
-        newInstruction = {
-          id: editingInstruction?.id || Date.now().toString(),
-          type: "overlay",
-          triggerTime,
-          overlayMedia,
-          overlayDuration: data.overlayDuration,
-          pauseMainVideo: data.pauseMainVideo,
-          muteOverlayMedia: data.muteOverlayMedia || false,
-        } as OverlayInstruction;
-      } else if (selectedType === "skip") {
-        const skipToTime = parseTimeInput({
-          hours: data.skipToHours || 0,
-          minutes: data.skipToMinutes || 0,
-          seconds: data.skipToSeconds || 0,
-          milliseconds: data.skipToMilliseconds || 0,
-        });
-
-        newInstruction = {
-          id: editingInstruction?.id || Date.now().toString(),
-          type: "skip",
-          triggerTime,
-          skipToTime,
-        } as SkipInstruction;
-      } else {
-        return;
-      }
-
-      let updatedInstructions: Instruction[];
-      if (isEditing) {
-        updatedInstructions = instructions.map((i) =>
-          i.id === newInstruction.id ? newInstruction : i
-        );
-      } else {
-        updatedInstructions = [...instructions, newInstruction];
-      }
-
-      // Save to database
-      await handleSaveInstructions(updatedInstructions);
-
-      dispatch(setCurrentTime(triggerTime));
-
-      // Reset form state but don't navigate away
-      setFormChanged(false);
-      setInitialValues(data);
-
-      // If this was a new instruction, update the editing state to reflect we're now editing it
-      if (!isEditing) {
-        dispatch(setEditingInstruction(newInstruction));
-      }
-    } catch (error) {
-      console.error("Failed to save instruction:", error);
-    }
-  };
-
-  const handleSkipToTimeChange = (time: number) => {
-    const totalSeconds = Math.floor(time / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = Math.floor(totalSeconds % 60);
-    const milliseconds = time % 1000;
-
-    methods.setValue("skipToHours", hours);
-    methods.setValue("skipToMinutes", minutes);
-    methods.setValue("skipToSeconds", seconds);
-    methods.setValue("skipToMilliseconds", milliseconds);
-  };
-
-  // Add this effect to reset form when editingInstruction changes
-  useEffect(() => {
-    if (!editingInstruction) {
-      // Reset form values when not editing
-      methods.reset({
-        hours: Math.floor(currentTime / 1000 / 3600),
-        minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
-        seconds: Math.floor((currentTime / 1000) % 60),
-        milliseconds: 0,
-        pauseDuration: 0,
-        useOverlayDuration: false,
-        muteOverlayMedia: false,
-        overlayMedia: null,
-        skipToHours: 0,
-        skipToMinutes: 0,
-        skipToSeconds: 0,
-        skipToMilliseconds: 0,
-        overlayMediaType: "video",
-      });
-    }
-  }, [editingInstruction, currentTime, methods]);
-
-  useEffect(() => {
-    const overlayMedia = methods.watch("overlayMedia");
-    if (overlayMedia?.type?.startsWith("video/")) {
-      methods.setValue("useOverlayDuration", true);
-    }
-  }, [methods.watch("overlayMedia"), methods]);
-
-  const handleMediaPositionChange = (position: MediaPosition) => {
-    const overlayMedia = methods.watch("overlayMedia");
-    if (overlayMedia) {
-      methods.setValue("overlayMedia", {
-        ...overlayMedia,
-        position,
-      });
-      setFormChanged(true);
-    }
-  };
-
-  const handleTimeChange = (time: number) => {
-    const totalSeconds = Math.floor(time / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = Math.floor(totalSeconds % 60);
-    const milliseconds = time % 1000;
-
-    methods.setValue("hours", hours);
-    methods.setValue("minutes", minutes);
-    methods.setValue("seconds", seconds);
-    methods.setValue("milliseconds", milliseconds);
-
-    dispatch(seekToTime(time));
   };
 
   // Add this effect to store initial values when editing starts
@@ -737,117 +396,58 @@ const InstructionEditor: React.FC = () => {
     }
   };
 
-  const renderForm = () => {
-    if (!selectedType && !isEditing) {
-      return (
-        <div className="space-y-4">
-          <InstructionsList />
-        </div>
-      );
-    }
+  const handleBack = () => {
+    // Prefetch timelines before navigating
+    queryClient.prefetchQuery({
+      queryKey: ["timelines", window.location.href.split("&")[0]],
+      queryFn: () => api.timelines.getAll(window.location.href.split("&")[0]),
+    });
 
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={handleBack}>
-            <ArrowLeft size={16} className="mr-2" />
-            Back
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={handleDelete}
-            label="Delete Instruction"
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
-
-        <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-lg text-muted-foreground">
-                Trigger Time
-              </label>
-              <TimeInput
-                value={parseTimeInput({
-                  hours: methods.watch("hours") || 0,
-                  minutes: methods.watch("minutes") || 0,
-                  seconds: methods.watch("seconds") || 0,
-                  milliseconds: methods.watch("milliseconds") || 0,
-                })}
-                onChange={handleTimeChange}
-              />
-            </div>
-
-            {selectedType === "overlay" && (
-              <OverlayInstructionForm
-                onMediaDelete={handleDeleteOverlayMedia}
-                onMediaSelected={(mediaData) => {
-                  methods.setValue(
-                    "overlayDuration",
-                    Math.ceil(mediaData.duration ?? 5)
-                  );
-                  methods.setValue("overlayMedia", {
-                    file: mediaData.file,
-                    url: mediaData.url,
-                    duration: mediaData.duration ?? 5,
-                    name: mediaData.name,
-                    type: mediaData.type,
-                    position: {
-                      x: 32,
-                      y: 18,
-                      width: 160,
-                      height: 90,
-                    },
-                  });
-                  methods.setValue(
-                    "overlayMediaType",
-                    mediaData.type.startsWith("video/") ? "video" : "image"
-                  );
-                  setFormChanged(true);
-                }}
-                onPositionChange={handleMediaPositionChange}
-              />
-            )}
-
-            {selectedType === "skip" && (
-              <SkipInstructionForm onTimeChange={handleSkipToTimeChange} />
-            )}
-
-            {selectedType === "text-overlay" && (
-              <TextOverlayInstructionForm
-                onPositionChange={(position) => {
-                  methods.setValue("textOverlay.position", position);
-                }}
-              />
-            )}
-
-            <div className="flex gap-4">
-              <Button type="submit" className="flex-1" disabled={!formChanged}>
-                {isEditing ? "Update Instruction" : "Add Instruction"}
-              </Button>
-              {isEditing && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handleCancel}
-                  disabled={!formChanged}
-                >
-                  Cancel
-                </Button>
-              )}
-            </div>
-          </form>
-        </FormProvider>
-      </div>
-    );
+    methods.reset({
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      milliseconds: 0,
+      pauseDuration: 0,
+      useOverlayDuration: false,
+      muteOverlayMedia: false,
+      overlayMedia: null,
+      skipToHours: 0,
+      skipToMinutes: 0,
+      skipToSeconds: 0,
+      skipToMilliseconds: 0,
+      overlayMediaType: "video",
+    });
+    dispatch(setEditingInstruction(null));
+    navigate(`/timeline/${timelineId}`);
   };
 
   return (
     <div className="p-6 overflow-x-hidden">
-      {renderForm()}
+      <FormProvider {...methods}>
+        <InstructionForm
+          isEditing={isEditing}
+          editingInstruction={editingInstruction}
+          selectedType={selectedType}
+          currentTime={currentTime}
+          onSubmit={handleInstructionSubmit}
+          onBack={handleBack}
+          onDelete={handleDelete}
+          onTimeChange={handleTimeChange}
+          onSkipToTimeChange={handleSkipToTimeChange}
+          onMediaPositionChange={handleMediaPositionChange}
+          onMediaDelete={handleDeleteOverlayMedia}
+          onCancel={handleCancel}
+          formChanged={formChanged}
+          uploadMedia={async (file: File) => {
+            const uploadResult = await uploadMediaMutation.mutateAsync({
+              file,
+              timelineId: currentTimeline!.id,
+            });
+            return uploadResult.url;
+          }}
+        />
+      </FormProvider>
       {(saveInstructionsMutation.isPending ||
         uploadMediaMutation.isPending ||
         deleteMediaMutation.isPending ||
@@ -857,6 +457,207 @@ const InstructionEditor: React.FC = () => {
           <LoadingSpinner size="lg" />
         </div>
       )}
+    </div>
+  );
+};
+
+// Create a new component for the form content
+interface InstructionFormProps {
+  isEditing: boolean;
+  editingInstruction: Instruction | null;
+  selectedType: string | null;
+  currentTime: number;
+  onSubmit: (instruction: Instruction) => Promise<void>;
+  onBack: () => void;
+  onDelete: () => void;
+  onTimeChange: (time: number) => void;
+  onSkipToTimeChange: (time: number) => void;
+  onMediaPositionChange: (position: MediaPosition) => void;
+  onMediaDelete: () => void;
+  onCancel: () => void;
+  formChanged: boolean;
+  uploadMedia: (file: File) => Promise<string>;
+}
+
+const InstructionForm: React.FC<InstructionFormProps> = ({
+  isEditing,
+  editingInstruction,
+  selectedType,
+  currentTime,
+  onSubmit,
+  onBack,
+  onDelete,
+  onTimeChange,
+  onSkipToTimeChange,
+  onMediaPositionChange,
+  onMediaDelete,
+  onCancel,
+  formChanged,
+  uploadMedia,
+}) => {
+  const methods = useFormContext();
+  const skipForm = useSkipInstructionForm(currentTime);
+  const overlayForm = useOverlayInstructionForm();
+  const textOverlayForm = useTextOverlayInstructionForm();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Handle form initialization
+  useEffect(() => {
+    if (!isInitialized && isEditing && editingInstruction) {
+      const totalSeconds = Math.floor(editingInstruction.triggerTime / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      const milliseconds = editingInstruction.triggerTime % 1000;
+
+      methods.setValue("hours", hours, { shouldValidate: false });
+      methods.setValue("minutes", minutes, { shouldValidate: false });
+      methods.setValue("seconds", seconds, { shouldValidate: false });
+      methods.setValue("milliseconds", milliseconds, { shouldValidate: false });
+
+      if (editingInstruction.type === "overlay") {
+        overlayForm.initializeForm(editingInstruction);
+      } else if (editingInstruction.type === "skip") {
+        skipForm.initializeForm(editingInstruction);
+      } else if (editingInstruction.type === "text-overlay") {
+        textOverlayForm.initializeForm(editingInstruction);
+      }
+
+      setIsInitialized(true);
+    }
+  }, [
+    isInitialized,
+    isEditing,
+    editingInstruction,
+    methods,
+    overlayForm,
+    skipForm,
+    textOverlayForm,
+  ]);
+
+  // Reset initialization when editing instruction changes
+  useEffect(() => {
+    if (!isEditing || !editingInstruction) {
+      setIsInitialized(false);
+    }
+  }, [isEditing, editingInstruction]);
+
+  const parseTimeInput = (data: TimeInputInterface) => {
+    return (
+      (Number(data.hours) * 3600 +
+        Number(data.minutes) * 60 +
+        Number(data.seconds)) *
+        1000 +
+      Number(data.milliseconds || 0)
+    );
+  };
+
+  const handleSubmit = async (data: any) => {
+    try {
+      let newInstruction: Instruction;
+
+      if (selectedType === "text-overlay") {
+        newInstruction = textOverlayForm.buildInstruction(
+          data,
+          editingInstruction?.id || Date.now().toString()
+        );
+      } else if (selectedType === "overlay") {
+        newInstruction = await overlayForm.buildInstruction(
+          data,
+          editingInstruction?.id || Date.now().toString(),
+          uploadMedia
+        );
+      } else if (selectedType === "skip") {
+        newInstruction = skipForm.buildInstruction(
+          data,
+          editingInstruction?.id || Date.now().toString()
+        );
+      } else {
+        return;
+      }
+
+      await onSubmit(newInstruction);
+    } catch (error) {
+      console.error("Failed to build instruction:", error);
+    }
+  };
+
+  if (!selectedType && !isEditing) {
+    return (
+      <div className="space-y-4">
+        <InstructionsList />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowLeft size={16} className="mr-2" />
+          Back
+        </Button>
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={onDelete}
+          label="Delete Instruction"
+        >
+          <Trash2 size={16} />
+        </Button>
+      </div>
+
+      <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-lg text-muted-foreground">Trigger Time</label>
+          <TimeInput
+            value={parseTimeInput({
+              hours: methods.watch("hours") || 0,
+              minutes: methods.watch("minutes") || 0,
+              seconds: methods.watch("seconds") || 0,
+              milliseconds: methods.watch("milliseconds") || 0,
+            })}
+            onChange={onTimeChange}
+          />
+        </div>
+
+        {selectedType === "overlay" && (
+          <OverlayInstructionForm
+            onMediaDelete={onMediaDelete}
+            onMediaSelected={overlayForm.handleMediaSelected}
+            onPositionChange={onMediaPositionChange}
+          />
+        )}
+
+        {selectedType === "skip" && (
+          <SkipInstructionForm onTimeChange={onSkipToTimeChange} />
+        )}
+
+        {selectedType === "text-overlay" && (
+          <TextOverlayInstructionForm
+            onPositionChange={(position) => {
+              methods.setValue("textOverlay.position", position);
+            }}
+          />
+        )}
+
+        <div className="flex gap-4">
+          <Button type="submit" className="flex-1" disabled={!formChanged}>
+            {isEditing ? "Update Instruction" : "Add Instruction"}
+          </Button>
+          {isEditing && (
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={onCancel}
+              disabled={!formChanged}
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      </form>
     </div>
   );
 };
