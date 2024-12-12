@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Plus, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/ui/Button";
@@ -8,7 +8,10 @@ import { Timeline } from "@/types";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "react-toastify";
-import { selectIsTimelineOwner } from "@/store/authSlice";
+import {
+  selectIsTimelineOwner,
+  selectIsAuthenticated,
+} from "@/store/authSlice";
 import { RootState, store } from "@/store";
 import { useAPI } from "@/hooks/useAPI";
 
@@ -18,6 +21,7 @@ const TimelineList: React.FC = () => {
   const queryClient = useQueryClient();
   const api = useAPI();
   const videoUrl = window.location.href.split("&")[0];
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   // Query for fetching timelines
   const {
@@ -29,9 +33,14 @@ const TimelineList: React.FC = () => {
     queryFn: async () => {
       console.log("TimelineList queryFn called");
       const response = await api.timelines.getAll(videoUrl);
-      console.log("TimelineList received response:", response, 
-        "Type:", typeof response, 
-        "Is Array:", Array.isArray(response));
+      console.log(
+        "TimelineList received response:",
+        response,
+        "Type:",
+        typeof response,
+        "Is Array:",
+        Array.isArray(response)
+      );
       return response;
     },
   });
@@ -67,10 +76,11 @@ const TimelineList: React.FC = () => {
 
   // Fetch ownership status for each timeline
   const timelineOwnerships = useMemo(() => {
+    if (!isAuthenticated) return timelines.map(() => false);
     return timelines.map((timeline) =>
       selectIsTimelineOwner(store.getState() as RootState, timeline)
     );
-  }, [timelines]);
+  }, [timelines, isAuthenticated]);
 
   const handleCreateTimeline = async () => {
     createTimelineMutation.mutate({
