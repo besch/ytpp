@@ -62,10 +62,10 @@ const InstructionEditor: React.FC = () => {
       muteOverlayMedia: false,
       pauseMainVideo: false,
       overlayMediaType: "video",
-      skipToHours: 0,
-      skipToMinutes: 0,
-      skipToSeconds: 0,
-      skipToMilliseconds: 0,
+      skipToHours: Math.floor((currentTime + 3000) / 1000 / 3600),
+      skipToMinutes: Math.floor((((currentTime + 3000) / 1000) % 3600) / 60),
+      skipToSeconds: Math.floor(((currentTime + 3000) / 1000) % 60),
+      skipToMilliseconds: (currentTime + 3000) % 1000,
     },
   });
 
@@ -397,21 +397,6 @@ const InstructionEditor: React.FC = () => {
   };
 
   const handleBack = () => {
-    methods.reset({
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-      milliseconds: 0,
-      pauseDuration: 0,
-      useOverlayDuration: false,
-      muteOverlayMedia: false,
-      overlayMedia: null,
-      skipToHours: 0,
-      skipToMinutes: 0,
-      skipToSeconds: 0,
-      skipToMilliseconds: 0,
-      overlayMediaType: "video",
-    });
     dispatch(setEditingInstruction(null));
     navigate(`/timeline/${timelineId}`);
   };
@@ -430,6 +415,44 @@ const InstructionEditor: React.FC = () => {
       methods.setValue("milliseconds", milliseconds);
     }
   }, [currentTime, isEditing, methods]);
+
+  // Add this effect to reset form when editingInstruction becomes null
+  useEffect(() => {
+    if (!editingInstruction) {
+      // Reset form with current time values
+      const hours = Math.floor(currentTime / 1000 / 3600);
+      const minutes = Math.floor(((currentTime / 1000) % 3600) / 60);
+      const seconds = Math.floor((currentTime / 1000) % 60);
+      const milliseconds = currentTime % 1000;
+
+      // Calculate skip time (current time + 3 seconds)
+      const skipTime = currentTime + 3000;
+      const skipHours = Math.floor(skipTime / 1000 / 3600);
+      const skipMinutes = Math.floor(((skipTime / 1000) % 3600) / 60);
+      const skipSeconds = Math.floor((skipTime / 1000) % 60);
+      const skipMilliseconds = skipTime % 1000;
+
+      methods.reset({
+        hours,
+        minutes,
+        seconds,
+        milliseconds,
+        pauseDuration: 0,
+        useOverlayDuration: false,
+        muteOverlayMedia: false,
+        overlayMedia: null,
+        skipToHours: skipHours,
+        skipToMinutes: skipMinutes,
+        skipToSeconds: skipSeconds,
+        skipToMilliseconds: skipMilliseconds,
+        overlayMediaType: "video",
+        overlayDuration: 5,
+        textOverlay: null,
+      });
+      setFormChanged(false);
+      setInitialValues(null);
+    }
+  }, [editingInstruction, currentTime, methods]);
 
   return (
     <div className="p-6 overflow-x-hidden">

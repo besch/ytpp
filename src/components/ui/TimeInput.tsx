@@ -14,18 +14,21 @@ export const TimeInput: React.FC<TimeInputProps> = ({
   className,
   showLabels = true,
 }) => {
+  // Round the incoming value to an integer
+  const roundedValue = Math.round(value);
+
   // Convert milliseconds to hours, minutes, seconds, milliseconds
-  const totalSeconds = Math.floor(value / 1000);
+  const totalSeconds = Math.floor(roundedValue / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = Math.floor(totalSeconds % 60);
-  const milliseconds = value % 1000;
+  const milliseconds = roundedValue % 1000;
 
   const handleChange = (
     type: "hours" | "minutes" | "seconds" | "milliseconds",
     newValue: number
   ) => {
-    let totalMs = value;
+    let totalMs = roundedValue;
     const msInHour = 3600000;
     const msInMinute = 60000;
     const msInSecond = 1000;

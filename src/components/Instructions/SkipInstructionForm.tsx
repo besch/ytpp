@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { TimeInput } from "../ui/TimeInput";
 import { useFormContext } from "react-hook-form";
 import { useDispatch } from "react-redux";
@@ -11,7 +11,7 @@ interface SkipInstructionFormProps {
 const SkipInstructionForm: React.FC<SkipInstructionFormProps> = ({
   onTimeChange,
 }) => {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
   const dispatch = useDispatch();
 
   const parseTimeInput = (data: any) => {
@@ -38,6 +38,30 @@ const SkipInstructionForm: React.FC<SkipInstructionFormProps> = ({
     // Update the timeline position to preview the skip location
     dispatch(seekToTime(time));
   };
+
+  // Set initial skip time when the form is first rendered
+  useEffect(() => {
+    if (skipToTime === 0) {
+      const triggerTime = parseTimeInput({
+        hours: watch("hours") || 0,
+        minutes: watch("minutes") || 0,
+        seconds: watch("seconds") || 0,
+        milliseconds: watch("milliseconds") || 0,
+      });
+
+      const newSkipTime = triggerTime + 3000; // Add 3 seconds
+      const totalSeconds = Math.floor(newSkipTime / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      const milliseconds = newSkipTime % 1000;
+
+      setValue("skipToHours", hours);
+      setValue("skipToMinutes", minutes);
+      setValue("skipToSeconds", seconds);
+      setValue("skipToMilliseconds", milliseconds);
+    }
+  }, []);
 
   return (
     <div className="space-y-2">
