@@ -83,7 +83,7 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-1 w-48 py-2 bg-background border border-border rounded-md shadow-lg">
+        <div className="absolute right-0 mt-1 w-48 py-2 bg-background border border-border rounded-md shadow-lg z-10">
           <div className="px-4 py-2 text-sm border-b border-border">
             {user?.name}
           </div>
@@ -91,7 +91,7 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="w-full justify-start text-red-500 px-4"
+            className="w-full justify-start text-red-500 px-4 mb-2"
           >
             <LogOut className="h-4 w-4 mr-2" />
             Logout
