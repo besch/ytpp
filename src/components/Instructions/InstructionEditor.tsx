@@ -53,10 +53,10 @@ const InstructionEditor: React.FC = () => {
 
   const methods = useForm<any>({
     defaultValues: {
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-      milliseconds: 0,
+      hours: Math.floor(currentTime / 1000 / 3600),
+      minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
+      seconds: Math.floor((currentTime / 1000) % 60),
+      milliseconds: currentTime % 1000,
       overlayDuration: 5,
       useOverlayDuration: false,
       muteOverlayMedia: false,
@@ -415,6 +415,21 @@ const InstructionEditor: React.FC = () => {
     dispatch(setEditingInstruction(null));
     navigate(`/timeline/${timelineId}`);
   };
+
+  // Add this effect to update form time values when currentTime changes and we're not editing
+  useEffect(() => {
+    if (!isEditing) {
+      const hours = Math.floor(currentTime / 1000 / 3600);
+      const minutes = Math.floor(((currentTime / 1000) % 3600) / 60);
+      const seconds = Math.floor((currentTime / 1000) % 60);
+      const milliseconds = currentTime % 1000;
+
+      methods.setValue("hours", hours);
+      methods.setValue("minutes", minutes);
+      methods.setValue("seconds", seconds);
+      methods.setValue("milliseconds", milliseconds);
+    }
+  }, [currentTime, isEditing, methods]);
 
   return (
     <div className="p-6 overflow-x-hidden">
