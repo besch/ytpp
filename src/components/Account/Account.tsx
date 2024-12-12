@@ -12,7 +12,7 @@ interface AccountProps {
 
 const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const accountRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
@@ -26,6 +26,9 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
   };
 
   const handleMouseLeave = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     timeoutRef.current = setTimeout(() => {
       setIsOpen(false);
     }, 150); // Small delay to allow mouse movement to dropdown
