@@ -111,7 +111,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
         {/* Media Controls */}
         {overlayMedia?.type.startsWith("video/") && (
           <div className="flex items-center space-x-2">
-            <input
+            <Input
               type="checkbox"
               {...register("muteOverlayMedia")}
               id="muteOverlayMedia"
@@ -124,7 +124,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
 
         {/* Pause Controls */}
         <div className="flex items-center space-x-2">
-          <input
+          <Input
             type="checkbox"
             {...register("pauseMainVideo")}
             id="pauseMainVideo"

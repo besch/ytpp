@@ -158,7 +158,7 @@ const TextOverlayInstructionForm: React.FC<{
 
           <div className="flex items-center">
             <div className="flex items-center space-x-2">
-              <input
+              <Input
                 type="checkbox"
                 {...register("textOverlay.style.transparentBackground")}
                 id="transparentBackground"
@@ -232,7 +232,7 @@ const TextOverlayInstructionForm: React.FC<{
       {/* Effects Toggles */}
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
-          <input
+          <Input
             type="checkbox"
             {...register("textOverlay.style.textShadow")}
             id="textShadow"
@@ -269,7 +269,7 @@ const TextOverlayInstructionForm: React.FC<{
         {/* Pause Controls */}
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <input
+            <Input
               type="checkbox"
               {...register("pauseMainVideo")}
               id="pauseMainVideo"
