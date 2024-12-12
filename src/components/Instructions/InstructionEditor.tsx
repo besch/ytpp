@@ -397,12 +397,6 @@ const InstructionEditor: React.FC = () => {
   };
 
   const handleBack = () => {
-    // Prefetch timelines before navigating
-    queryClient.prefetchQuery({
-      queryKey: ["timelines", window.location.href.split("&")[0]],
-      queryFn: () => api.timelines.getAll(window.location.href.split("&")[0]),
-    });
-
     methods.reset({
       hours: 0,
       minutes: 0,
