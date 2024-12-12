@@ -335,21 +335,21 @@
     background-color: theme("colors.secondary") !important;
   }
   & .instruction-marker[data-type="pause"]:hover {
-    background-color: rgb(147 51 234 / 0.8) !important; /* secondary/80 */
+    background-color: rgb(147 51 234 / 0.8) !important; 
   }
 
   & .instruction-marker[data-type="skip"] {
     background-color: theme("colors.primary") !important;
   }
   & .instruction-marker[data-type="skip"]:hover {
-    background-color: rgb(37 99 235 / 0.8) !important; /* primary/80 */
+    background-color: rgb(37 99 235 / 0.8) !important; 
   }
 
   & .instruction-marker[data-type="overlay"] {
     background-color: theme("colors.accent") !important;
   }
   & .instruction-marker[data-type="overlay"]:hover {
-    background-color: rgb(5 150 105 / 0.8) !important; /* accent/80 */
+    background-color: rgb(5 150 105 / 0.8) !important; 
   }
 
   & .instruction-marker[data-selected="true"] {
