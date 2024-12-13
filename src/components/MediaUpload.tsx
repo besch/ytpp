@@ -119,6 +119,12 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         if (src.startsWith("blob:")) {
           return src;
         }
+        if (src.startsWith("http://") || src.startsWith("https://")) {
+          const filename = src.split("/").pop();
+          if (filename) {
+            return getMediaUrl(filename);
+          }
+        }
         return getMediaUrl(src);
       }, [src]);
 

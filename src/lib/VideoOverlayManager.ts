@@ -1,5 +1,6 @@
 import config from "@/lib/config";
 import { TextStyle } from "@/types";
+import { getMediaUrl } from "@/lib/api";
 
 export class VideoOverlayManager {
   private videoElement: HTMLVideoElement;
@@ -18,8 +19,7 @@ export class VideoOverlayManager {
   }
 
   private initialize(): void {
-    this.container =
-      this.videoElement.parentElement || document.body;
+    this.container = this.videoElement.parentElement || document.body;
     this.setupOverlayElement();
     this.setupResizeObserver();
   }
@@ -95,7 +95,10 @@ export class VideoOverlayManager {
         URL.revokeObjectURL(this.mediaBlobUrl);
       }
 
-      this.mediaBlobUrl = mediaUrl;
+      const transformedUrl = mediaUrl.startsWith("blob:")
+        ? mediaUrl
+        : getMediaUrl(mediaUrl);
+      this.mediaBlobUrl = transformedUrl;
 
       if (mediaType === "video" || mediaType === "image") {
         const mediaElement =
@@ -103,7 +106,7 @@ export class VideoOverlayManager {
             ? document.createElement("video")
             : document.createElement("img");
 
-        mediaElement.src = mediaUrl;
+        mediaElement.src = transformedUrl;
         if (mediaElement instanceof HTMLVideoElement) {
           mediaElement.muted = muteOverlay;
         }
@@ -170,7 +173,7 @@ export class VideoOverlayManager {
         }
       } else if (mediaType === "audio") {
         this.audioElement = document.createElement("audio");
-        this.audioElement.src = mediaUrl;
+        this.audioElement.src = transformedUrl;
         this.audioElement.muted = muteOverlay;
 
         this.audioElement.addEventListener("ended", () => {

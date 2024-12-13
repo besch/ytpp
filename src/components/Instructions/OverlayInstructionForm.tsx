@@ -6,6 +6,7 @@ import Input from "@/components/ui/Input";
 import MediaUpload from "@/components/MediaUpload";
 import MediaPositioner, { MediaPosition } from "./MediaPositioner";
 import { MediaData } from "@/types";
+import { getMediaUrl } from "@/lib/api";
 
 interface OverlayInstructionFormProps {
   onMediaDelete: () => void;
@@ -139,11 +140,18 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
 };
 
 const MediaPreview: React.FC<{ media: any }> = ({ media }) => {
+  const mediaUrl = React.useMemo(() => {
+    if (media.url.startsWith("blob:")) {
+      return media.url;
+    }
+    return getMediaUrl(media.url);
+  }, [media.url]);
+
   if (media.type.startsWith("video/")) {
     return (
       <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
         <video
-          src={media.url}
+          src={mediaUrl}
           className="w-full h-full object-contain"
           controls
           preload="metadata"
@@ -159,7 +167,7 @@ const MediaPreview: React.FC<{ media: any }> = ({ media }) => {
       <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
         <div className="flex flex-col items-center justify-center h-full">
           <Music size={48} className="text-muted-foreground mb-2" />
-          <audio src={media.url} controls className="w-3/4" preload="metadata">
+          <audio src={mediaUrl} controls className="w-3/4" preload="metadata">
             Your browser does not support the audio tag.
           </audio>
         </div>
@@ -170,7 +178,7 @@ const MediaPreview: React.FC<{ media: any }> = ({ media }) => {
   return (
     <div className="relative aspect-video w-full bg-muted rounded-lg overflow-hidden">
       <img
-        src={media.url}
+        src={mediaUrl}
         className="w-full h-full object-contain"
         alt="Overlay Media"
       />
