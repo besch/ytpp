@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { ArrowLeft } from "lucide-react";
@@ -583,6 +583,33 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
   const overlayForm = useOverlayInstructionForm();
   const textOverlayForm = useTextOverlayInstructionForm();
   const [isInitialized, setIsInitialized] = useState(false);
+  const previousInstructionId = useRef<string | null>(null);
+
+  // Reset form when switching between instructions
+  useEffect(() => {
+    if (editingInstruction?.id !== previousInstructionId.current) {
+      // Reset form state
+      methods.reset({
+        hours: Math.floor(currentTime / 1000 / 3600),
+        minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
+        seconds: Math.floor((currentTime / 1000) % 60),
+        milliseconds: currentTime % 1000,
+        overlayDuration: 5,
+        useOverlayDuration: false,
+        muteOverlayMedia: false,
+        pauseMainVideo: false,
+        overlayMedia: null,
+        textOverlay: null,
+        skipToHours: Math.floor((currentTime + 3000) / 1000 / 3600),
+        skipToMinutes: Math.floor((((currentTime + 3000) / 1000) % 3600) / 60),
+        skipToSeconds: Math.floor(((currentTime + 3000) / 1000) % 60),
+        skipToMilliseconds: (currentTime + 3000) % 1000,
+      });
+
+      setIsInitialized(false);
+      previousInstructionId.current = editingInstruction?.id || null;
+    }
+  }, [editingInstruction?.id, currentTime, methods]);
 
   // Handle form initialization
   useEffect(() => {
@@ -622,6 +649,7 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
   useEffect(() => {
     if (!isEditing || !editingInstruction) {
       setIsInitialized(false);
+      previousInstructionId.current = null;
     }
   }, [isEditing, editingInstruction]);
 
