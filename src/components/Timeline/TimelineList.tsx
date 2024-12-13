@@ -157,15 +157,14 @@ const TimelineList: React.FC = () => {
               <div className="flex items-center space-x-2">
                 {timelineOwnerships[timelines.indexOf(timeline)] && (
                   <Button
-                    variant="ghost"
-                    size="sm"
+                    variant="destructive"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteTimeline(timeline.id);
                     }}
                     disabled={deleteTimelineMutation.isPending}
                   >
-                    <Trash2 size={16} className="text-destructive" />
+                    <Trash2 size={12} className="text-white" />
                   </Button>
                 )}
               </div>

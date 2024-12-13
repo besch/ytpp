@@ -199,7 +199,7 @@ const InstructionsList: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() =>
                       dispatch(seekToTime(instruction.triggerTime))
@@ -210,25 +210,25 @@ const InstructionsList: React.FC = () => {
                   {isOwner && (
                     <>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleClone(instruction)}
                       >
                         <Copy size={16} />
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleEdit(instruction)}
                       >
                         <Edit2 size={16} />
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(instruction.id)}
                       >
-                        <Trash2 size={16} className="text-destructive" />
+                        <Trash2 size={16} className="text-white" />
                       </Button>
                     </>
                   )}
