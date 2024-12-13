@@ -35,6 +35,10 @@ export const useTextOverlayInstructionForm = () => {
 
       setValue("overlayDuration", instruction.overlayDuration);
       setValue("pauseMainVideo", instruction.pauseMainVideo);
+      setValue(
+        "pauseDuration",
+        instruction.pauseDuration || instruction.overlayDuration
+      );
     }
   };
 
