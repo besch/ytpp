@@ -5,10 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { selectCurrentTimeline } from "@/store/timelineSlice";
 import { TimeInput } from "../ui/TimeInput";
-import {
-  Instruction,
-  TimeInput as TimeInputInterface,
-} from "@/types";
+import { Instruction, TimeInput as TimeInputInterface } from "@/types";
 import InstructionsList from "./InstructionsList";
 import { MediaPosition } from "./MediaPositioner";
 import OverlayInstructionForm from "./OverlayInstructionForm";
@@ -165,16 +162,13 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
     }
   };
 
-  if (!selectedType && !isEditing) {
-    return (
-      <div className="space-y-4">
-        <InstructionsList />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!selectedType && !isEditing) {
+      navigate(`/timeline/${currentTimeline?.id}`);
+    }
+  }, [selectedType, isEditing, currentTimeline, navigate]);
 
   if (!selectedType && !isEditing) {
-    navigate(`/timeline/${currentTimeline?.id}`);
     return null;
   }
 
