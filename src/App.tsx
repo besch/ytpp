@@ -42,7 +42,31 @@ const App: React.FC = () => {
       );
     };
 
+    // Add message listener for auth state response
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.data &&
+        event.data.source === "content-script" &&
+        event.data.type === "RESPONSE"
+      ) {
+        const payload = event.data.payload;
+        // Handle both direct user data and nested data structure
+        const userData = payload?.user || payload?.data?.user;
+
+        if (userData) {
+          console.log("App: Updating Redux store with user data:", userData);
+          dispatch(setUser(userData));
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
     checkAuthState();
+
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
   }, [dispatch]);
 
   // Listen for editingInstruction changes and navigate accordingly
