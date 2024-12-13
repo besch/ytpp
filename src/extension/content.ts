@@ -1,8 +1,5 @@
 import { api } from "@/lib/api";
-import {
-  addCustomEventListener,
-  eventSystem,
-} from "@/lib/eventSystem";
+import { addCustomEventListener, eventSystem } from "@/lib/eventSystem";
 import { VideoManager } from "@/lib/VideoManager";
 import { TextOverlayInstruction, OverlayInstruction } from "@/types";
 
@@ -209,7 +206,6 @@ class ContentScript {
         });
       }
 
-      // Initialize headers as Record<string, string>
       let headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
@@ -233,10 +229,22 @@ class ContentScript {
       };
 
       if (body) {
-        if (body instanceof FormData) {
+        // Handle the special FormData case
+        if (body.type === "FormDataWithFile") {
+          const formData = new FormData();
+
+          // Convert array buffer back to file
+          const arrayBuffer = body.file.arrayBuffer;
+          const file = new File([arrayBuffer], body.file.name, {
+            type: body.file.type,
+          });
+
+          formData.append("file", file);
+          formData.append("timelineId", body.timelineId as string);
+
           const { "Content-Type": _, ...headersWithoutContentType } = headers;
           options.headers = headersWithoutContentType;
-          options.body = body;
+          options.body = formData;
         } else {
           options.body = JSON.stringify(body);
         }

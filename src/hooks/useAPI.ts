@@ -16,6 +16,29 @@ export function useAPI() {
     body?: any;
     params?: Record<string, string>;
   }): Promise<T> => {
+    // If body is FormData, convert file to array buffer before sending
+    if (config.body instanceof FormData) {
+      const formData = config.body;
+      const file = formData.get("file") as File;
+      if (file) {
+        // Read file as array buffer
+        const arrayBuffer = await file.arrayBuffer();
+
+        // Create a structured clone-safe object
+        const safeBody = {
+          type: "FormDataWithFile",
+          file: {
+            arrayBuffer: arrayBuffer,
+            type: file.type,
+            name: file.name,
+          },
+          timelineId: formData.get("timelineId"),
+        };
+
+        config.body = safeBody;
+      }
+    }
+
     const response = await makeAPIRequest(config);
     console.log(
       "useAPI received response:",
