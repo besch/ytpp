@@ -666,23 +666,15 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
   const handleSubmit = async (data: any) => {
     try {
       let newInstruction: Instruction;
+      const id = editingInstruction?.id || Date.now().toString();
 
       if (selectedType === "text-overlay") {
-        newInstruction = textOverlayForm.buildInstruction(
-          data,
-          editingInstruction?.id || Date.now().toString()
-        );
+        newInstruction = textOverlayForm.buildInstruction( data, id );
       } else if (selectedType === "overlay") {
-        newInstruction = await overlayForm.buildInstruction(
-          data,
-          editingInstruction?.id || Date.now().toString(),
-          uploadMedia
+        newInstruction = await overlayForm.buildInstruction( data, id, uploadMedia
         );
       } else if (selectedType === "skip") {
-        newInstruction = skipForm.buildInstruction(
-          data,
-          editingInstruction?.id || Date.now().toString()
-        );
+        newInstruction = skipForm.buildInstruction( data, id );
       } else {
         return;
       }
