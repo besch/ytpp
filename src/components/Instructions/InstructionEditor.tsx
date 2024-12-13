@@ -584,6 +584,8 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
   const textOverlayForm = useTextOverlayInstructionForm();
   const [isInitialized, setIsInitialized] = useState(false);
   const previousInstructionId = useRef<string | null>(null);
+  const currentTimeline = useSelector(selectCurrentTimeline);
+  const navigate = useNavigate();
 
   // Reset form when switching between instructions
   useEffect(() => {
@@ -669,12 +671,15 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
       const id = editingInstruction?.id || Date.now().toString();
 
       if (selectedType === "text-overlay") {
-        newInstruction = textOverlayForm.buildInstruction( data, id );
+        newInstruction = textOverlayForm.buildInstruction(data, id);
       } else if (selectedType === "overlay") {
-        newInstruction = await overlayForm.buildInstruction( data, id, uploadMedia
+        newInstruction = await overlayForm.buildInstruction(
+          data,
+          id,
+          uploadMedia
         );
       } else if (selectedType === "skip") {
-        newInstruction = skipForm.buildInstruction( data, id );
+        newInstruction = skipForm.buildInstruction(data, id);
       } else {
         return;
       }
@@ -691,6 +696,11 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
         <InstructionsList />
       </div>
     );
+  }
+
+  if (!selectedType && !isEditing) {
+    navigate(`/timeline/${currentTimeline?.id}`);
+    return null;
   }
 
   return (
