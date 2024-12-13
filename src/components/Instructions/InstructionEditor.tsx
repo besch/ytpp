@@ -454,6 +454,57 @@ const InstructionEditor: React.FC = () => {
     }
   }, [editingInstruction, currentTime, methods]);
 
+  // Add this effect to update form values when editingInstruction changes
+  useEffect(() => {
+    if (isEditing && editingInstruction) {
+      // Update trigger time fields
+      const triggerTotalSeconds = Math.floor(
+        editingInstruction.triggerTime / 1000
+      );
+      const triggerHours = Math.floor(triggerTotalSeconds / 3600);
+      const triggerMinutes = Math.floor((triggerTotalSeconds % 3600) / 60);
+      const triggerSeconds = Math.floor(triggerTotalSeconds % 60);
+      const triggerMilliseconds = editingInstruction.triggerTime % 1000;
+
+      methods.setValue("hours", triggerHours, { shouldDirty: false });
+      methods.setValue("minutes", triggerMinutes, { shouldDirty: false });
+      methods.setValue("seconds", triggerSeconds, { shouldDirty: false });
+      methods.setValue("milliseconds", triggerMilliseconds, {
+        shouldDirty: false,
+      });
+
+      // If it's a skip instruction, update skipTo time fields
+      if (editingInstruction.type === "skip") {
+        const skipToTotalSeconds = Math.floor(
+          editingInstruction.skipToTime / 1000
+        );
+        const skipToHours = Math.floor(skipToTotalSeconds / 3600);
+        const skipToMinutes = Math.floor((skipToTotalSeconds % 3600) / 60);
+        const skipToSeconds = Math.floor(skipToTotalSeconds % 60);
+        const skipToMilliseconds = editingInstruction.skipToTime % 1000;
+
+        methods.setValue("skipToHours", skipToHours, { shouldDirty: false });
+        methods.setValue("skipToMinutes", skipToMinutes, {
+          shouldDirty: false,
+        });
+        methods.setValue("skipToSeconds", skipToSeconds, {
+          shouldDirty: false,
+        });
+        methods.setValue("skipToMilliseconds", skipToMilliseconds, {
+          shouldDirty: false,
+        });
+      }
+
+      // Update initial values to prevent unnecessary form changes
+      setInitialValues(methods.getValues());
+      setFormChanged(false);
+    }
+  }, [
+    isEditing,
+    editingInstruction?.triggerTime,
+    editingInstruction?.type === "skip" ? editingInstruction.skipToTime : null,
+  ]);
+
   return (
     <div className="p-6 overflow-x-hidden">
       <FormProvider {...methods}>
