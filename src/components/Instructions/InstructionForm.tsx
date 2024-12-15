@@ -12,10 +12,10 @@ import OverlayInstructionForm from "./OverlayInstructionForm";
 import SkipInstructionForm from "./SkipInstructionForm";
 import TextOverlayInstructionForm from "./TextOverlayInstructionForm";
 import { useNavigate } from "react-router-dom";
-import { Trash2 } from "lucide-react";
 import { useSkipInstructionForm } from "@/hooks/forms/useSkipInstructionForm";
 import { useOverlayInstructionForm } from "@/hooks/forms/useOverlayInstructionForm";
 import { useTextOverlayInstructionForm } from "@/hooks/forms/useTextOverlayInstructionForm";
+import InstructionDropdownMenu from "./InstructionDropdownMenu";
 
 interface InstructionFormProps {
   isEditing: boolean;
@@ -179,14 +179,15 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
           <ArrowLeft size={16} className="mr-2" />
           Back
         </Button>
-        <Button
-          type="button"
-          variant="destructive"
-          onClick={onDelete}
-          label="Delete Instruction"
-        >
-          <Trash2 size={16} />
-        </Button>
+        {isEditing && editingInstruction && currentTimeline && (
+          <InstructionDropdownMenu
+            instruction={editingInstruction}
+            timelineId={currentTimeline.id}
+            instructions={currentTimeline.instructions}
+            currentTimelineId={currentTimeline.id}
+            hideEdit={true}
+        />
+      )}
       </div>
 
       <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-6">

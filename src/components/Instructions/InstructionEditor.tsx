@@ -24,6 +24,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { isEqual } from "lodash";
 import InstructionForm from "./InstructionForm";
+import InstructionDropdownMenu from "./InstructionDropdownMenu";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();

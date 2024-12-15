@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
 import {
-  removeInstruction,
   setEditingInstruction,
   seekToTime,
   setInstructions,
@@ -27,6 +26,7 @@ interface InstructionDropdownMenuProps {
   timelineId: string;
   instructions: Instruction[];
   currentTimelineId: string;
+  hideEdit?: boolean;
 }
 
 const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
@@ -34,6 +34,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   timelineId,
   instructions,
   currentTimelineId,
+  hideEdit,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -56,24 +57,41 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 
   const deleteInstructionMutation = useMutation({
     mutationFn: async () => {
-      if (
-        instruction?.type === "overlay" &&
-        (instruction as OverlayInstruction).overlayMedia?.url
-      ) {
-        await api.timelines.deleteMedia(
-          (instruction as OverlayInstruction).overlayMedia!.url
-        );
-      }
+      try {
+        if (
+          instruction?.type === "overlay" &&
+          (instruction as OverlayInstruction).overlayMedia?.url
+        ) {
+          try {
+            await api.timelines.deleteMedia(
+              (instruction as OverlayInstruction).overlayMedia!.url
+            );
+          } catch (error) {
+            console.warn("Failed to delete media file:", error);
+          }
+        }
 
-      const updatedInstructions = instructions.filter(
-        (inst) => inst.id !== instruction.id
-      );
-      return api.timelines.update(currentTimelineId, {
-        instructions: updatedInstructions,
-      });
+        const updatedInstructions = instructions.filter(
+          (inst) => inst.id !== instruction.id
+        );
+
+        const updatedTimeline = await api.timelines.update(currentTimelineId, {
+          instructions: updatedInstructions,
+        });
+
+        return updatedTimeline;
+      } catch (error) {
+        console.error("Failed to delete instruction:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (savedTimeline) => {
+      dispatch(setCurrentTimeline(savedTimeline));
       queryClient.invalidateQueries({ queryKey: ["timelines"] });
+      setIsDeletingInstruction(false);
+    },
+    onError: (error) => {
+      console.error("Failed to delete instruction:", error);
       setIsDeletingInstruction(false);
     },
   });
@@ -129,7 +147,6 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   };
 
   const handleConfirmDelete = async () => {
-    dispatch(removeInstruction(instruction.id));
     await deleteInstructionMutation.mutateAsync();
   };
 
@@ -150,10 +167,12 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
             <Copy className="w-4 h-4 mr-2" />
             Clone
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleEdit}>
-            <Edit2 className="w-4 h-4 mr-2" />
-            Edit
-          </DropdownMenuItem>
+          {!hideEdit && (
+            <DropdownMenuItem onClick={handleEdit}>
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             className="text-destructive"
             onClick={handleDelete}
