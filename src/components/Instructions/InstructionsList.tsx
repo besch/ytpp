@@ -118,10 +118,11 @@ const InstructionsList: React.FC = () => {
                       ? "bg-primary/20 border-primary/50"
                       : "bg-muted/10 hover:bg-muted/20"
                   }`}
+                onClick={() => dispatch(seekToTime(instruction.triggerTime))}
               >
                 <div>
                   <h1 className="font-medium capitalize">
-                    {instruction.type} Instruction
+                    {instruction.name || `${instruction.type} Instruction`}
                   </h1>
                   <p className="text-sm text-muted-foreground ml-2">
                     at {formatTime(instruction.triggerTime)}
@@ -131,15 +132,6 @@ const InstructionsList: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      dispatch(seekToTime(instruction.triggerTime))
-                    }
-                  >
-                    <Play size={16} />
-                  </Button>
                   {isOwner && (
                     <InstructionDropdownMenu
                       instruction={instruction}

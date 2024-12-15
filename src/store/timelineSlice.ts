@@ -125,6 +125,19 @@ export const timelineSlice = createSlice({
         }
       }
     },
+    renameInstruction: (
+      state,
+      action: PayloadAction<{ id: string; name: string }>
+    ) => {
+      if (state.currentTimeline) {
+        const instruction = state.currentTimeline.instructions.find(
+          (i) => i.id === action.payload.id
+        );
+        if (instruction) {
+          instruction.name = action.payload.name;
+        }
+      }
+    },
   },
 });
 
@@ -145,6 +158,7 @@ export const {
   setVideoElement,
   seekToTime,
   updateTextOverlay,
+  renameInstruction,
 } = timelineSlice.actions;
 
 export const selectCurrentTime = (state: RootState) =>

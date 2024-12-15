@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Edit2, Trash2, Copy, MoreVertical, X } from "lucide-react";
+import { Edit2, Trash2, Copy, MoreVertical, X, Type } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePopper } from "react-popper";
@@ -16,10 +16,12 @@ import {
   seekToTime,
   setInstructions,
   setCurrentTimeline,
+  renameInstruction,
 } from "@/store/timelineSlice";
 import { useAPI } from "@/hooks/useAPI";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import Input from "@/components/ui/Input";
 
 interface InstructionDropdownMenuProps {
   instruction: Instruction;
@@ -44,13 +46,26 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   const api = useAPI();
   const [isDeletingInstruction, setIsDeletingInstruction] =
     React.useState(false);
+  const [isRenaming, setIsRenaming] = React.useState(false);
+  const [newName, setNewName] = React.useState(instruction.name || "");
 
   const deleteReferenceElement = useRef<HTMLButtonElement>(null);
   const deletePopperElement = useRef<HTMLDivElement>(null);
+  const renameReferenceElement = useRef<HTMLButtonElement>(null);
+  const renamePopperElement = useRef<HTMLDivElement>(null);
 
   const { styles: deleteStyles, attributes: deleteAttributes } = usePopper(
     deleteReferenceElement.current,
     deletePopperElement.current,
+    {
+      placement: "bottom-start",
+      modifiers: [{ name: "offset", options: { offset: [0, 8] } }],
+    }
+  );
+
+  const { styles: renameStyles, attributes: renameAttributes } = usePopper(
+    renameReferenceElement.current,
+    renamePopperElement.current,
     {
       placement: "bottom-start",
       modifiers: [{ name: "offset", options: { offset: [0, 8] } }],
@@ -159,6 +174,28 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     await cloneInstructionMutation.mutateAsync();
   };
 
+  const handleRename = () => {
+    setNewName(instruction.name || `${instruction.type} Instruction`);
+    setIsRenaming(true);
+  };
+
+  const handleConfirmRename = async () => {
+    const updatedInstructions = instructions.map((inst) =>
+      inst.id === instruction.id ? { ...inst, name: newName } : inst
+    );
+
+    try {
+      const savedTimeline = await api.timelines.update(currentTimelineId, {
+        instructions: updatedInstructions,
+      });
+      dispatch(setCurrentTimeline(savedTimeline));
+      dispatch(renameInstruction({ id: instruction.id, name: newName }));
+      setIsRenaming(false);
+    } catch (error) {
+      console.error("Failed to rename instruction:", error);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -185,6 +222,10 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleRename} ref={renameReferenceElement}>
+            <Type className="w-4 h-4 mr-2" />
+            Rename
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -214,6 +255,37 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isRenaming && (
+        <div
+          ref={renamePopperElement}
+          style={renameStyles.popper}
+          {...renameAttributes.popper}
+          className="z-50 bg-background border border-border rounded-md shadow-md p-4 animate-fade-in"
+        >
+          <div className="space-y-4">
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder={`${instruction.type} Instruction`}
+              className="w-full"
+            />
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsRenaming(false)}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleConfirmRename}>
+                Save
               </Button>
             </div>
           </div>

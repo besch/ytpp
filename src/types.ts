@@ -9,6 +9,7 @@ export interface BaseInstruction {
   id: string;
   type: string;
   triggerTime: number;
+  name?: string;
 }
 
 export interface OverlayInstruction extends BaseInstruction {
