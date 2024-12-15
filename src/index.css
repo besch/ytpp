@@ -581,6 +581,25 @@
     width: 1rem !important;
     height: 1rem !important;
   }
+
+  & .instruction-highlight {
+    animation: instruction-pulse 2s infinite;
+  }
+
+  @keyframes instruction-pulse {
+    0% {
+      background-color: theme("colors.primary/10");
+      border-color: theme("colors.primary/30");
+    }
+    50% {
+      background-color: theme("colors.primary/20");
+      border-color: theme("colors.primary/50");
+    }
+    100% {
+      background-color: theme("colors.primary/10");
+      border-color: theme("colors.primary/30");
+    }
+  }
 }
 
 @keyframes fadeIn {

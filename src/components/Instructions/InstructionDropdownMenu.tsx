@@ -168,16 +168,16 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleClone}>
-            <Copy className="w-4 h-4 mr-2" />
-            Clone
-          </DropdownMenuItem>
           {!hideEdit && (
             <DropdownMenuItem onClick={handleEdit}>
               <Edit2 className="w-4 h-4 mr-2" />
               Edit
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem onClick={handleClone}>
+            <Copy className="w-4 h-4 mr-2" />
+            Clone
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive"
             onClick={handleDelete}

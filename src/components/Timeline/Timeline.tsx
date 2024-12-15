@@ -129,8 +129,6 @@ const Timeline: React.FC = () => {
   ) => {
     e.stopPropagation();
     seekToTime(instruction.triggerTime);
-    dispatch(setSelectedInstructionId(instruction.id));
-    dispatch(setEditingInstruction(instruction));
   };
 
   const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {

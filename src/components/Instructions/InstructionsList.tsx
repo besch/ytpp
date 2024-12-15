@@ -8,6 +8,7 @@ import {
   selectCurrentTimeline,
   selectEditingInstruction,
   seekToTime,
+  selectCurrentTime,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
@@ -29,6 +30,7 @@ const InstructionsList: React.FC = () => {
   const isOwner = useSelector((state: RootState) =>
     selectIsTimelineOwner(state, currentTimeline)
   );
+  const currentTime = useSelector(selectCurrentTime);
 
   useEffect(() => {
     if (editingInstruction) {
@@ -59,6 +61,11 @@ const InstructionsList: React.FC = () => {
       return description;
     }
     return "";
+  };
+
+  const isTimeMatching = (triggerTime: number): boolean => {
+    const tolerance = 100;
+    return Math.abs(triggerTime - currentTime) < tolerance;
   };
 
   return (
@@ -105,7 +112,12 @@ const InstructionsList: React.FC = () => {
             .map((instruction) => (
               <div
                 key={instruction.id}
-                className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 flex items-center justify-between"
+                className={`p-3 border border-border rounded-lg flex items-center justify-between transition-all duration-200
+                  ${
+                    isTimeMatching(instruction.triggerTime)
+                      ? "bg-primary/20 border-primary/50"
+                      : "bg-muted/10 hover:bg-muted/20"
+                  }`}
               >
                 <div>
                   <h1 className="font-medium capitalize">
