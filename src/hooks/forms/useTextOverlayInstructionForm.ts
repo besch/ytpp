@@ -5,40 +5,64 @@ export const useTextOverlayInstructionForm = () => {
   const { setValue } = useFormContext();
 
   const initializeForm = (instruction: TextOverlayInstruction | null) => {
-    if (instruction) {
-      setValue("textOverlay", {
-        text: instruction.textOverlay.text,
-        style: {
-          fontFamily: instruction.textOverlay.style.fontFamily,
-          fontSize: instruction.textOverlay.style.fontSize,
-          color: instruction.textOverlay.style.color,
-          backgroundColor:
-            instruction.textOverlay.style.backgroundColor || "#000000",
-          fontWeight: instruction.textOverlay.style.fontWeight,
-          fontStyle: instruction.textOverlay.style.fontStyle || "normal",
-          transparentBackground:
-            instruction.textOverlay.style.transparentBackground || false,
-          textAlign: instruction.textOverlay.style.textAlign || "center",
-          opacity: instruction.textOverlay.style.opacity || 1,
-          animation: instruction.textOverlay.style.animation || "none",
-          textShadow: instruction.textOverlay.style.textShadow || false,
-          borderRadius: instruction.textOverlay.style.borderRadius || 0,
-          padding: instruction.textOverlay.style.padding || 8,
-        },
-        position: instruction.textOverlay.position || {
-          x: 32,
-          y: 18,
-          width: 160,
-          height: 90,
-        },
-      });
+    // Set default values if no instruction is provided (new instruction)
+    const defaultValues = {
+      text: "",
+      style: {
+        fontFamily: "Arial",
+        fontSize: 20,
+        color: "#ffffff",
+        backgroundColor: "#000000",
+        fontWeight: "normal",
+        fontStyle: "normal",
+        transparentBackground: false,
+        textAlign: "center",
+        opacity: 1,
+        animation: "none",
+        textShadow: false,
+        borderRadius: 0,
+        padding: 8,
+      },
+      position: {
+        x: 32,
+        y: 18,
+        width: 160,
+        height: 90,
+      },
+    };
 
+    setValue("textOverlay", instruction ? {
+      text: instruction.textOverlay.text,
+      style: {
+        fontFamily: instruction.textOverlay.style.fontFamily || defaultValues.style.fontFamily,
+        fontSize: instruction.textOverlay.style.fontSize || defaultValues.style.fontSize,
+        color: instruction.textOverlay.style.color || defaultValues.style.color,
+        backgroundColor: instruction.textOverlay.style.backgroundColor || defaultValues.style.backgroundColor,
+        fontWeight: instruction.textOverlay.style.fontWeight || defaultValues.style.fontWeight,
+        fontStyle: instruction.textOverlay.style.fontStyle || defaultValues.style.fontStyle,
+        transparentBackground: instruction.textOverlay.style.transparentBackground || defaultValues.style.transparentBackground,
+        textAlign: instruction.textOverlay.style.textAlign || defaultValues.style.textAlign,
+        opacity: instruction.textOverlay.style.opacity || defaultValues.style.opacity,
+        animation: instruction.textOverlay.style.animation || defaultValues.style.animation,
+        textShadow: instruction.textOverlay.style.textShadow || defaultValues.style.textShadow,
+        borderRadius: instruction.textOverlay.style.borderRadius || defaultValues.style.borderRadius,
+        padding: instruction.textOverlay.style.padding || defaultValues.style.padding,
+      },
+      position: instruction.textOverlay.position || defaultValues.position,
+    } : defaultValues);
+
+    if (instruction) {
       setValue("overlayDuration", instruction.overlayDuration);
       setValue("pauseMainVideo", instruction.pauseMainVideo);
       setValue(
         "pauseDuration",
         instruction.pauseDuration || instruction.overlayDuration
       );
+    } else {
+      // Set default values for new instructions
+      setValue("overlayDuration", 5);
+      setValue("pauseMainVideo", false);
+      setValue("pauseDuration", 5);
     }
   };
 

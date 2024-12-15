@@ -76,9 +76,22 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
         skipToSeconds: Math.floor(((currentTime + 3000) / 1000) % 60),
         skipToMilliseconds: (currentTime + 3000) % 1000,
       });
+
+      // Initialize form based on instruction type
+      if (selectedType === "text-overlay") {
+        textOverlayForm.initializeForm(null);
+      }
+
       setIsInitialized(true);
     }
-  }, [currentTime, isEditing, selectedType, isInitialized, methods]);
+  }, [
+    currentTime,
+    isEditing,
+    selectedType,
+    isInitialized,
+    methods,
+    textOverlayForm,
+  ]);
 
   // Reset initialization when editing instruction changes
   useEffect(() => {
