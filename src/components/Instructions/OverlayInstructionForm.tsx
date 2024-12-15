@@ -60,6 +60,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
                 {overlayMedia.name}
               </span>
               <Button
+                size="sm"
                 type="button"
                 variant="destructive"
                 label="Delete Media File"

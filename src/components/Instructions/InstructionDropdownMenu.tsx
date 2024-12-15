@@ -211,6 +211,10 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
               Edit
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem onClick={handleRename} ref={renameReferenceElement}>
+            <Type className="w-4 h-4 mr-2" />
+            Rename
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleClone}>
             <Copy className="w-4 h-4 mr-2" />
             Clone
@@ -222,10 +226,6 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleRename} ref={renameReferenceElement}>
-            <Type className="w-4 h-4 mr-2" />
-            Rename
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
