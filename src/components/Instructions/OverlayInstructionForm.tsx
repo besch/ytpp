@@ -66,7 +66,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
                 label="Delete Media File"
                 onClick={handleMediaDelete}
               >
-                <Trash2 size={16} />
+                <Trash2 size={12} />
               </Button>
             </div>
 

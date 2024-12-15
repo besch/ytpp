@@ -32,7 +32,7 @@ const Button: React.FC<ButtonProps> = ({
               variant === "outline",
             "hover:bg-accent hover:text-accent-foreground": variant === "ghost",
             "h-12 text-base": size === "default",
-            "h-10 px-4 text-sm": size === "sm",
+            "h-8 text-sm": size === "sm",
             "h-14 px-8 text-lg": size === "lg",
           },
           className
