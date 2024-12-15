@@ -1,6 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus, Edit2, Trash2, Play, Check, X, Copy } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Play,
+  Check,
+  X,
+  Copy,
+  MoreVertical,
+} from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
   selectInstructions,
@@ -18,10 +27,17 @@ import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
 import { useAPI } from "@/hooks/useAPI";
 import { RootState } from "@/store";
-import TimelineTitle from "./TimelineTitle";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropdownMenu";
+import { toast } from "react-toastify";
+import { usePopper } from "react-popper";
 
 const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
@@ -36,6 +52,38 @@ const InstructionsList: React.FC = () => {
   );
   const queryClient = useQueryClient();
   const api = useAPI();
+  const [isRenamingTimeline, setIsRenamingTimeline] = useState(false);
+  const [newTimelineTitle, setNewTimelineTitle] = useState("");
+  const referenceElement = useRef<HTMLButtonElement>(null);
+  const popperElement = useRef<HTMLDivElement>(null);
+  const [isDeletingTimeline, setIsDeletingTimeline] = useState(false);
+  const deleteReferenceElement = useRef<HTMLButtonElement>(null);
+  const deletePopperElement = useRef<HTMLDivElement>(null);
+
+  const { styles, attributes } = usePopper(
+    referenceElement.current,
+    popperElement.current,
+    {
+      placement: "bottom-start",
+      modifiers: [
+        {
+          name: "offset",
+          options: {
+            offset: [0, 8],
+          },
+        },
+      ],
+    }
+  );
+
+  const { styles: deleteStyles, attributes: deleteAttributes } = usePopper(
+    deleteReferenceElement.current,
+    deletePopperElement.current,
+    {
+      placement: "bottom-start",
+      modifiers: [{ name: "offset", options: { offset: [0, 8] } }],
+    }
+  );
 
   useEffect(() => {
     if (editingInstruction) {
@@ -148,11 +196,64 @@ const InstructionsList: React.FC = () => {
     return "";
   };
 
+  const deleteTimelineMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentTimeline) return;
+      return api.timelines.delete(currentTimeline.id);
+    },
+    onSuccess: () => {
+      setIsDeletingTimeline(false);
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+      navigate("/timelines");
+    },
+    onError: (error) => {
+      setIsDeletingTimeline(false);
+    },
+  });
+
+  const updateTimelineMutation = useMutation({
+    mutationFn: async (newTitle: string) => {
+      if (!currentTimeline) return;
+      return api.timelines.update(currentTimeline.id, { title: newTitle });
+    },
+    onSuccess: (savedTimeline) => {
+      if (savedTimeline) {
+        dispatch(setCurrentTimeline(savedTimeline));
+        queryClient.invalidateQueries({ queryKey: ["timelines"] });
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to update timeline:", error);
+      toast.error("Failed to update timeline");
+    },
+  });
+
+  const handleDeleteTimeline = () => {
+    setIsDeletingTimeline(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    await deleteTimelineMutation.mutateAsync();
+    setIsDeletingTimeline(false);
+  };
+
+  const handleRenameTimeline = () => {
+    setNewTimelineTitle(currentTimeline?.title || "");
+    setIsRenamingTimeline(true);
+  };
+
+  const handleRenameSubmit = async () => {
+    if (newTimelineTitle.trim() !== "") {
+      await updateTimelineMutation.mutateAsync(newTimelineTitle.trim());
+      setIsRenamingTimeline(false);
+    }
+  };
+
   return (
     <div className="space-y-4 p-8">
       <div className="flex items-center justify-between">
-        <TimelineTitle />
-        <div>
+        <h1 className="text-lg font-medium">{currentTimeline?.title}</h1>
+        <div className="flex items-center gap-2">
           {isOwner && (
             <>
               {showTypeSelect ? (
@@ -164,10 +265,36 @@ const InstructionsList: React.FC = () => {
                   Cancel
                 </Button>
               ) : (
-                <Button onClick={handleAddNew}>
-                  <Plus className="w-4 h-4 mr-4" />
-                  Add Instruction
-                </Button>
+                <>
+                  <Button onClick={handleAddNew}>
+                    <Plus className="w-4 h-4 mr-4" />
+                    Add Instruction
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={handleRenameTimeline}
+                        ref={referenceElement}
+                      >
+                        <Edit2 className="w-4 h-4 mr-2" />
+                        Rename Timeline
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={handleDeleteTimeline}
+                        ref={deleteReferenceElement}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Timeline
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               )}
             </>
           )}
@@ -243,9 +370,76 @@ const InstructionsList: React.FC = () => {
       )}
 
       {(deleteInstructionMutation.isPending ||
-        cloneInstructionMutation.isPending) && (
+        cloneInstructionMutation.isPending ||
+        deleteTimelineMutation.isPending ||
+        updateTimelineMutation.isPending) && (
         <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
           <LoadingSpinner size="lg" />
+        </div>
+      )}
+
+      {isRenamingTimeline && (
+        <div
+          ref={popperElement}
+          style={styles.popper}
+          {...attributes.popper}
+          className="z-50 bg-background border border-border rounded-md shadow-md p-4 animate-fade-in"
+        >
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={newTimelineTitle}
+              onChange={(e) => setNewTimelineTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              placeholder="Timeline title"
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsRenamingTimeline(false)}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleRenameSubmit}>
+                <Check className="w-4 h-4 mr-2" />
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDeletingTimeline && (
+        <div
+          ref={deletePopperElement}
+          style={deleteStyles.popper}
+          {...deleteAttributes.popper}
+          className="z-50 bg-background border border-border rounded-md shadow-md p-4 animate-fade-in"
+        >
+          <div className="space-y-4">
+            <p>Are you sure you want to delete this timeline?</p>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsDeletingTimeline(false)}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleConfirmDelete}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

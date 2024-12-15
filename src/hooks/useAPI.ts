@@ -59,7 +59,6 @@ export function useAPI() {
       "success" in response.data &&
       "user" in response.data
     ) {
-      console.warn("Skipping auth response:", response.data);
       return new Promise((resolve) => setTimeout(resolve, 0)) as Promise<T>;
     }
 

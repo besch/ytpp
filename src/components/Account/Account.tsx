@@ -54,7 +54,6 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
       }
 
       dispatch(logout());
-      toast.success("Successfully logged out!");
     } catch (error) {
       console.error("Logout error:", error);
       const errorMessage =

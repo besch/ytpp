@@ -97,7 +97,6 @@ const Navigation: React.FC = () => {
       if (response.user) {
         await api.users.createOrUpdate(response.user);
         dispatch(setUser(response.user));
-        toast.success("Successfully logged in!");
       } else {
         throw new Error("No user data received");
       }

@@ -60,20 +60,6 @@ const TimelineList: React.FC = () => {
     },
   });
 
-  // Mutation for deleting timeline
-  const deleteTimelineMutation = useMutation({
-    mutationFn: (timelineId: string) => api.timelines.delete(timelineId),
-    onSuccess: (_, timelineId) => {
-      dispatch(timelineDeleted(timelineId));
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
-      toast.success("Timeline deleted successfully");
-    },
-    onError: (error) => {
-      console.error("Failed to delete timeline:", error);
-      toast.error("Failed to delete timeline. Please try again.");
-    },
-  });
-
   // Fetch ownership status for each timeline
   const timelineOwnerships = useMemo(() => {
     if (!isAuthenticated) return timelines.map(() => false);
@@ -94,10 +80,6 @@ const TimelineList: React.FC = () => {
   const handleEditTimeline = async (timeline: Timeline) => {
     dispatch(setCurrentTimeline(timeline));
     navigate(`/timeline/${timeline.id}`);
-  };
-
-  const handleDeleteTimeline = async (timelineId: string) => {
-    deleteTimelineMutation.mutate(timelineId);
   };
 
   if (error) {
@@ -153,20 +135,6 @@ const TimelineList: React.FC = () => {
                     </>
                   )}
                 </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {timelineOwnerships[timelines.indexOf(timeline)] && (
-                  <Button
-                    variant="destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTimeline(timeline.id);
-                    }}
-                    disabled={deleteTimelineMutation.isPending}
-                  >
-                    <Trash2 size={12} className="text-white" />
-                  </Button>
-                )}
               </div>
             </div>
           ))}
