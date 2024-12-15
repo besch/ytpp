@@ -353,7 +353,9 @@ const TextOverlayInstructionForm: React.FC<{
               </div>
             ),
           }}
-          onPositionChange={onPositionChange}
+          onPositionChange={(position) => {
+            setValue("textOverlay.position", position, { shouldDirty: true });
+          }}
           initialPosition={watch("textOverlay.position")}
         />
       </div>

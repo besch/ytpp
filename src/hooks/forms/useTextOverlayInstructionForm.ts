@@ -49,20 +49,21 @@ export const useTextOverlayInstructionForm = () => {
         padding: instruction.textOverlay.style.padding || defaultValues.style.padding,
       },
       position: instruction.textOverlay.position || defaultValues.position,
-    } : defaultValues);
+    } : defaultValues, { shouldDirty: true });
 
     if (instruction) {
-      setValue("overlayDuration", instruction.overlayDuration);
-      setValue("pauseMainVideo", instruction.pauseMainVideo);
+      setValue("overlayDuration", instruction.overlayDuration, { shouldDirty: true });
+      setValue("pauseMainVideo", instruction.pauseMainVideo, { shouldDirty: true });
       setValue(
         "pauseDuration",
-        instruction.pauseDuration || instruction.overlayDuration
+        instruction.pauseDuration || instruction.overlayDuration,
+        { shouldDirty: true }
       );
     } else {
       // Set default values for new instructions
-      setValue("overlayDuration", 5);
-      setValue("pauseMainVideo", false);
-      setValue("pauseDuration", 5);
+      setValue("overlayDuration", 5, { shouldDirty: true });
+      setValue("pauseMainVideo", false, { shouldDirty: true });
+      setValue("pauseDuration", 5, { shouldDirty: true });
     }
   };
 
