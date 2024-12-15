@@ -24,7 +24,6 @@ interface InstructionFormProps {
   currentTime: number;
   onSubmit: (instruction: Instruction) => Promise<void>;
   onBack: () => void;
-  onDelete: () => void;
   onTimeChange: (time: number) => void;
   onSkipToTimeChange: (time: number) => void;
   onMediaPositionChange: (position: MediaPosition) => void;
@@ -41,7 +40,6 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
   currentTime,
   onSubmit,
   onBack,
-  onDelete,
   onTimeChange,
   onSkipToTimeChange,
   onMediaPositionChange,
@@ -186,8 +184,8 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
             instructions={currentTimeline.instructions}
             currentTimelineId={currentTimeline.id}
             hideEdit={true}
-        />
-      )}
+          />
+        )}
       </div>
 
       <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-6">

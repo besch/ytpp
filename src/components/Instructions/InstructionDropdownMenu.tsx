@@ -27,6 +27,7 @@ interface InstructionDropdownMenuProps {
   instructions: Instruction[];
   currentTimelineId: string;
   hideEdit?: boolean;
+  onDeleteSuccess?: () => void;
 }
 
 const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
@@ -35,6 +36,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   instructions,
   currentTimelineId,
   hideEdit,
+  onDeleteSuccess,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -148,6 +150,9 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 
   const handleConfirmDelete = async () => {
     await deleteInstructionMutation.mutateAsync();
+    dispatch(setEditingInstruction(null));
+    onDeleteSuccess?.();
+    navigate(`/timeline/${timelineId}`);
   };
 
   const handleClone = async () => {

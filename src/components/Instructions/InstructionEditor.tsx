@@ -145,44 +145,6 @@ const InstructionEditor: React.FC = () => {
     },
   });
 
-  // Update the title mutation
-  const updateTitleMutation = useMutation({
-    mutationFn: async ({ id, title }: { id: string; title: string }) => {
-      return api.timelines.update(id, { title });
-    },
-    onSuccess: (savedTimeline) => {
-      dispatch(setCurrentTimeline(savedTimeline));
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
-    },
-    onError: (error) => {
-      console.error("Failed to update timeline title:", error);
-    },
-  });
-
-  // Add this mutation near your other mutations
-  const deleteInstructionMutation = useMutation({
-    mutationFn: async (instruction: Instruction) => {
-      if (instruction.type === "overlay") {
-        const overlayInstruction = instruction as OverlayInstruction;
-        if (overlayInstruction.overlayMedia?.url) {
-          await api.timelines.deleteMedia(overlayInstruction.overlayMedia.url);
-        }
-      }
-
-      const updatedInstructions = instructions.filter(
-        (inst) => inst.id !== instruction.id
-      );
-
-      return api.timelines.update(currentTimeline!.id, {
-        ...currentTimeline!,
-        instructions: updatedInstructions,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
-    },
-  });
-
   const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
     await saveInstructionsMutation.mutateAsync(updatedInstructions);
   };
@@ -372,19 +334,6 @@ const InstructionEditor: React.FC = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!editingInstruction || !currentTimeline) return;
-
-    try {
-      await deleteInstructionMutation.mutateAsync(editingInstruction);
-      dispatch(setEditingInstruction(null));
-      dispatch(removeInstruction(editingInstruction.id));
-      navigate(`/timeline/${timelineId}`);
-    } catch (error) {
-      console.error("Failed to delete instruction:", error);
-    }
-  };
-
   const handleBack = () => {
     dispatch(setEditingInstruction(null));
     navigate(`/timeline/${timelineId}`);
@@ -504,7 +453,6 @@ const InstructionEditor: React.FC = () => {
           currentTime={currentTime}
           onSubmit={handleInstructionSubmit}
           onBack={handleBack}
-          onDelete={handleDelete}
           onTimeChange={handleTimeChange}
           onSkipToTimeChange={handleSkipToTimeChange}
           onMediaPositionChange={handleMediaPositionChange}
@@ -522,12 +470,7 @@ const InstructionEditor: React.FC = () => {
       </FormProvider>
       {(saveInstructionsMutation.isPending ||
         uploadMediaMutation.isPending ||
-        deleteMediaMutation.isPending ||
-        updateTitleMutation.isPending ||
-        deleteInstructionMutation.isPending) && (
-        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
-          <LoadingSpinner size="lg" />
-        </div>
+        deleteMediaMutation.isPending
       )}
     </div>
   );
