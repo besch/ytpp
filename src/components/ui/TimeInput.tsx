@@ -71,7 +71,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
     <div className={`flex space-x-2 ${className}`}>
       <div className="flex flex-col w-[40px]">
         {showLabels && (
-          <label className="text-xs text-muted-foreground mb-1">Hours</label>
+          <label className="text-sm text-muted-foreground mb-1">Hours</label>
         )}
         <Input
           type="number"
@@ -113,7 +113,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
       </div>
       <div className="flex flex-col w-[50px]">
         {showLabels && (
-          <label className="text-xs text-muted-foreground mb-1">ms</label>
+          <label className="text-xs text-muted-foreground mb-1">Ms</label>
         )}
         <Input
           type="number"

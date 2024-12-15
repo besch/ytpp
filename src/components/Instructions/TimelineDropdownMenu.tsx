@@ -135,7 +135,6 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
             Rename Timeline
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-destructive"
             onClick={handleDeleteTimeline}
             ref={deleteReferenceElement}
           >
