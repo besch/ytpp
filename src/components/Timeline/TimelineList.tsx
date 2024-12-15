@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/ui/Button";
-import { setCurrentTimeline, timelineDeleted } from "@/store/timelineSlice";
+import { setCurrentTimeline } from "@/store/timelineSlice";
 import { Timeline } from "@/types";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -91,14 +91,14 @@ const TimelineList: React.FC = () => {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-4 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Timelines</h1>
+        <h1 className="text-lg font-medium">Timelines</h1>
         <Button
           onClick={handleCreateTimeline}
           disabled={createTimelineMutation.isPending}
         >
-          <Plus size={16} className="mr-3" />
+          <Plus className="w-4 h-4 mr-4" />
           New Timeline
         </Button>
       </div>
@@ -108,40 +108,34 @@ const TimelineList: React.FC = () => {
           <LoadingSpinner size="lg" />
         </div>
       ) : Array.isArray(timelines) && timelines.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-2 max-h-[600px] overflow-y-auto">
           {timelines.map((timeline, index) => (
             <div
               key={`${timeline.id}-${index}`}
-              className="flex items-center justify-between p-6 bg-card rounded-lg hover:bg-muted/10"
+              className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 flex items-center justify-between"
+              onClick={() => handleEditTimeline(timeline)}
             >
-              <div className="flex-1">
-                <p
-                  className="text-lg font-medium cursor-pointer hover:text-primary"
-                  onClick={() => handleEditTimeline(timeline)}
-                >
-                  {timeline.title}
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  {timeline.users && (
-                    <>
-                      <img
-                        src={timeline.users.picture}
-                        alt={timeline.users.name}
-                        className="w-5 h-5 rounded-full"
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {timeline.users.name}
-                      </span>
-                    </>
-                  )}
-                </div>
+              <div>
+                <h1 className="font-medium">{timeline.title}</h1>
+                {timeline.users && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <img
+                      src={timeline.users.picture}
+                      alt={timeline.users.name}
+                      className="w-5 h-5 rounded-full"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {timeline.users.name}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-lg text-muted-foreground">
-          You have no timelines. Click "New Timeline" to create one.
+        <div className="text-center py-8 text-muted-foreground">
+          No timelines yet. Click the button above to create one.
         </div>
       )}
     </div>
