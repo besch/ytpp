@@ -5,7 +5,7 @@ export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, autoComplete = "off", ...props }, ref) => {
     if (type === "color") {
       return (
         <input
@@ -14,6 +14,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             "flex h-10 w-full cursor-pointer border-0 bg-transparent p-0",
             className
           )}
+          autoComplete={autoComplete}
           ref={ref}
           {...props}
         />
@@ -28,6 +29,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             "h-4 w-4 cursor-pointer border-input bg-background text-primary focus:ring-2 focus:ring-primary",
             className
           )}
+          autoComplete={autoComplete}
           ref={ref}
           {...props}
         />
@@ -41,6 +43,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
+        autoComplete={autoComplete}
         ref={ref}
         {...props}
       />
