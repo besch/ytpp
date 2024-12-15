@@ -1,27 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus, Edit2, Trash2, Play, Copy } from "lucide-react";
+import { Plus, Play } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
   selectInstructions,
   setEditingInstruction,
-  removeInstruction,
   selectCurrentTimeline,
   selectEditingInstruction,
   seekToTime,
-  setInstructions,
-  setCurrentTimeline,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
 import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
 import TimelineDropdownMenu from "./TimelineDropdownMenu";
-import { useAPI } from "@/hooks/useAPI";
 import { RootState } from "@/store";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import InstructionDropdownMenu from "./InstructionDropdownMenu";
 
 const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
@@ -34,8 +29,6 @@ const InstructionsList: React.FC = () => {
   const isOwner = useSelector((state: RootState) =>
     selectIsTimelineOwner(state, currentTimeline)
   );
-  const queryClient = useQueryClient();
-  const api = useAPI();
 
   useEffect(() => {
     if (editingInstruction) {
@@ -51,86 +44,6 @@ const InstructionsList: React.FC = () => {
     dispatch(setEditingInstruction({ type } as Instruction));
     setShowTypeSelect(false);
     navigate(`/timeline/${timelineId}/instruction`);
-  };
-
-  const handleEdit = (instruction: Instruction) => {
-    dispatch(setEditingInstruction(instruction));
-    dispatch(seekToTime(instruction.triggerTime));
-    navigate(`/timeline/${timelineId}/instruction/${instruction.id}`);
-  };
-
-  const deleteInstructionMutation = useMutation({
-    mutationFn: async ({
-      id,
-      instruction,
-    }: {
-      id: string;
-      instruction: Instruction;
-    }) => {
-      if (instruction?.type === "overlay" && instruction.overlayMedia?.url) {
-        await api.timelines.deleteMedia(instruction.overlayMedia.url);
-      }
-
-      const updatedInstructions = instructions.filter((inst) => inst.id !== id);
-      return api.timelines.update(currentTimeline!.id, {
-        instructions: updatedInstructions,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
-    },
-  });
-
-  const cloneInstructionMutation = useMutation({
-    mutationFn: async (instruction: Instruction) => {
-      const clonedInstruction = {
-        ...instruction,
-        id: Date.now().toString(),
-        triggerTime: instruction.triggerTime + 3000,
-      };
-
-      if (instruction.type === "skip") {
-        (clonedInstruction as SkipInstruction).skipToTime += 3000;
-      } else if (instruction.type === "overlay") {
-        const overlayInst = instruction as OverlayInstruction;
-        if (overlayInst.overlayMedia?.url) {
-          const clonedMedia = await api.timelines.cloneMedia(
-            overlayInst.overlayMedia.url,
-            currentTimeline!.id
-          );
-
-          (clonedInstruction as OverlayInstruction).overlayMedia = {
-            ...(clonedInstruction as OverlayInstruction).overlayMedia!,
-            url: clonedMedia.url,
-          };
-        }
-      }
-
-      const updatedInstructions = [...instructions, clonedInstruction];
-      return api.timelines.update(currentTimeline!.id, {
-        instructions: updatedInstructions,
-      });
-    },
-    onSuccess: (savedTimeline) => {
-      dispatch(setCurrentTimeline(savedTimeline));
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
-    },
-    onError: (error) => {
-      console.error("Failed to clone instruction:", error);
-      dispatch(setInstructions(instructions));
-    },
-  });
-
-  const handleDelete = async (id: string) => {
-    const instruction = instructions.find((inst) => inst.id === id);
-    if (!instruction) return;
-
-    dispatch(removeInstruction(id));
-    await deleteInstructionMutation.mutateAsync({ id, instruction });
-  };
-
-  const handleClone = async (instruction: Instruction) => {
-    await cloneInstructionMutation.mutateAsync(instruction);
   };
 
   const getInstructionDescription = (instruction: Instruction): string => {
@@ -216,29 +129,12 @@ const InstructionsList: React.FC = () => {
                     <Play size={16} />
                   </Button>
                   {isOwner && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleClone(instruction)}
-                      >
-                        <Copy size={16} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(instruction)}
-                      >
-                        <Edit2 size={16} />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(instruction.id)}
-                      >
-                        <Trash2 size={16} className="text-white" />
-                      </Button>
-                    </>
+                    <InstructionDropdownMenu
+                      instruction={instruction}
+                      timelineId={timelineId!}
+                      instructions={instructions}
+                      currentTimelineId={currentTimeline!.id}
+                    />
                   )}
                 </div>
               </div>
@@ -247,13 +143,6 @@ const InstructionsList: React.FC = () => {
       ) : (
         <div className="text-center py-8 text-muted-foreground">
           No instructions yet. {isOwner && "Click the button above to add one."}
-        </div>
-      )}
-
-      {(deleteInstructionMutation.isPending ||
-        cloneInstructionMutation.isPending) && (
-        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
-          <LoadingSpinner size="lg" />
         </div>
       )}
     </div>
