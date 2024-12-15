@@ -57,10 +57,9 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
   const currentTimeline = useSelector(selectCurrentTimeline);
   const navigate = useNavigate();
 
-  // Reset form when switching between instructions
+  // Initialize form for new instruction
   useEffect(() => {
-    if (editingInstruction?.id !== previousInstructionId.current) {
-      // Reset form state
+    if (!isEditing && selectedType && !isInitialized) {
       methods.reset({
         hours: Math.floor(currentTime / 1000 / 3600),
         minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
@@ -77,15 +76,21 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
         skipToSeconds: Math.floor(((currentTime + 3000) / 1000) % 60),
         skipToMilliseconds: (currentTime + 3000) % 1000,
       });
-
-      setIsInitialized(false);
-      previousInstructionId.current = editingInstruction?.id || null;
+      setIsInitialized(true);
     }
-  }, [editingInstruction?.id, currentTime, methods]);
+  }, [currentTime, isEditing, selectedType, isInitialized, methods]);
 
-  // Handle form initialization
+  // Reset initialization when editing instruction changes
   useEffect(() => {
-    if (!isInitialized && isEditing && editingInstruction) {
+    if (!editingInstruction) {
+      setIsInitialized(false);
+      previousInstructionId.current = null;
+    }
+  }, [editingInstruction]);
+
+  // Initialize form for editing existing instruction
+  useEffect(() => {
+    if (isEditing && editingInstruction && !isInitialized) {
       const totalSeconds = Math.floor(editingInstruction.triggerTime / 1000);
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -105,25 +110,25 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
         textOverlayForm.initializeForm(editingInstruction);
       }
 
+      previousInstructionId.current = editingInstruction.id;
       setIsInitialized(true);
     }
   }, [
-    isInitialized,
     isEditing,
     editingInstruction,
+    isInitialized,
     methods,
     overlayForm,
     skipForm,
     textOverlayForm,
   ]);
 
-  // Reset initialization when editing instruction changes
+  // Navigation effect
   useEffect(() => {
-    if (!isEditing || !editingInstruction) {
-      setIsInitialized(false);
-      previousInstructionId.current = null;
+    if (!selectedType && !isEditing && currentTimeline) {
+      navigate(`/timeline/${currentTimeline.id}`);
     }
-  }, [isEditing, editingInstruction]);
+  }, [selectedType, isEditing, currentTimeline, navigate]);
 
   const parseTimeInput = (data: TimeInputInterface) => {
     return (
@@ -159,12 +164,6 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
       console.error("Failed to build instruction:", error);
     }
   };
-
-  useEffect(() => {
-    if (!selectedType && !isEditing) {
-      navigate(`/timeline/${currentTimeline?.id}`);
-    }
-  }, [selectedType, isEditing, currentTimeline, navigate]);
 
   if (!selectedType && !isEditing) {
     return null;
