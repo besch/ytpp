@@ -311,20 +311,24 @@ const InstructionEditor: React.FC = () => {
           });
         }
 
-        // Reset trigger time fields
-        const totalSeconds = Math.floor(initialValues.triggerTime / 1000);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        const milliseconds = initialValues.triggerTime % 1000;
+        // Reset trigger time fields using editingInstruction's triggerTime
+        if (editingInstruction) {
+          const totalSeconds = Math.floor(
+            editingInstruction.triggerTime / 1000
+          );
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = Math.floor(totalSeconds % 60);
+          const milliseconds = editingInstruction.triggerTime % 1000;
 
-        methods.setValue("hours", hours);
-        methods.setValue("minutes", minutes);
-        methods.setValue("seconds", seconds);
-        methods.setValue("milliseconds", milliseconds);
+          methods.setValue("hours", hours);
+          methods.setValue("minutes", minutes);
+          methods.setValue("seconds", seconds);
+          methods.setValue("milliseconds", milliseconds);
+        }
 
         // Reset other fields
-        methods.setValue("duration", initialValues.duration);
+        methods.setValue("overlayDuration", initialValues.overlayDuration);
         methods.setValue("pauseMainVideo", initialValues.pauseMainVideo);
         methods.setValue("pauseDuration", initialValues.pauseDuration);
       }
@@ -468,10 +472,9 @@ const InstructionEditor: React.FC = () => {
           }}
         />
       </FormProvider>
-      {(saveInstructionsMutation.isPending ||
+      {saveInstructionsMutation.isPending ||
         uploadMediaMutation.isPending ||
-        deleteMediaMutation.isPending
-      )}
+        deleteMediaMutation.isPending}
     </div>
   );
 };
