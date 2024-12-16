@@ -69,7 +69,7 @@ const UserProfile: React.FC = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search timelines..."
+            placeholder="Search your timelines..."
             className="w-full pl-14 pr-4 py-2 border border-border rounded-md bg-background"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

@@ -128,7 +128,7 @@ export const DropdownMenuItem = React.forwardRef<
       ref={ref}
       onClick={handleClick}
       className={cn(
-        "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-base outline-none transition-colors hover:bg-muted/50",
+        "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-6 text-base outline-none transition-colors hover:bg-muted/50",
         className
       )}
     >
