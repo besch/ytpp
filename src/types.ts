@@ -70,7 +70,7 @@ export interface InstructionsState {
 }
 
 export interface Timeline {
-  id: string;
+  id: number;
   title: string;
   video_url: string;
   instructions: Instruction[];
@@ -83,6 +83,13 @@ export interface Timeline {
   isOwner?: boolean;
   created_at: string;
   updated_at: string;
+  reactions?: {
+    reaction_type: "like" | "dislike";
+    user_id: string;
+  }[];
+  likes_count: number;
+  dislikes_count: number;
+  user_reaction: "like" | "dislike" | null;
 }
 
 export interface MediaFile {

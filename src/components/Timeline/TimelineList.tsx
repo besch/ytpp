@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus } from "lucide-react";
+import { Plus, ThumbsUp, ThumbsDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/ui/Button";
 import { setCurrentTimeline } from "@/store/timelineSlice";
@@ -60,6 +60,60 @@ const TimelineList: React.FC = () => {
     },
   });
 
+  // Mutation for adding reaction
+  const addReactionMutation = useMutation({
+    mutationFn: ({
+      timelineId,
+      type,
+    }: {
+      timelineId: number;
+      type: "like" | "dislike";
+    }) => api.timelines.addReaction(timelineId, type),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timelines", videoUrl] });
+    },
+    onError: (error) => {
+      console.error("Failed to add reaction:", error);
+      toast.error("Failed to add reaction");
+    },
+  });
+
+  // Mutation for removing reaction
+  const removeReactionMutation = useMutation({
+    mutationFn: (timelineId: number) =>
+      api.timelines.removeReaction(timelineId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timelines", videoUrl] });
+    },
+    onError: (error) => {
+      console.error("Failed to remove reaction:", error);
+      toast.error("Failed to remove reaction");
+    },
+  });
+
+  const handleReaction = async (
+    timeline: Timeline,
+    type: "like" | "dislike"
+  ) => {
+    if (!isAuthenticated) {
+      toast.error("Please log in to react to timelines");
+      return;
+    }
+
+    try {
+      if (timeline.user_reaction === type) {
+        await removeReactionMutation.mutateAsync(timeline.id);
+      } else {
+        await addReactionMutation.mutateAsync({
+          timelineId: timeline.id,
+          type,
+        });
+      }
+    } catch (error) {
+      console.error("Error handling reaction:", error);
+    }
+  };
+
   // Fetch ownership status for each timeline
   const timelineOwnerships = useMemo(() => {
     if (!isAuthenticated) return timelines.map(() => false);
@@ -70,7 +124,6 @@ const TimelineList: React.FC = () => {
 
   const handleCreateTimeline = async () => {
     createTimelineMutation.mutate({
-      id: Date.now().toString(),
       title: "New Timeline",
       video_url: videoUrl,
       instructions: [],
@@ -112,23 +165,55 @@ const TimelineList: React.FC = () => {
           {timelines.map((timeline, index) => (
             <div
               key={`${timeline.id}-${index}`}
-              className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 flex items-center justify-between"
-              onClick={() => handleEditTimeline(timeline)}
+              className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20"
             >
-              <div>
-                <h1 className="font-medium">{timeline.title}</h1>
-                {timeline.users && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <img
-                      src={timeline.users.picture}
-                      alt={timeline.users.name}
-                      className="w-5 h-5 rounded-full"
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      {timeline.users.name}
-                    </span>
+              <div className="flex items-center justify-between">
+                <div
+                  className="cursor-pointer"
+                  onClick={() => handleEditTimeline(timeline)}
+                >
+                  <h1 className="font-medium">{timeline.title}</h1>
+                  {timeline.users && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <img
+                        src={timeline.users.picture}
+                        alt={timeline.users.name}
+                        className="w-5 h-5 rounded-full"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {timeline.users.name}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleReaction(timeline, "like")}
+                      className={`p-1 rounded hover:bg-muted/20 ${
+                        timeline.user_reaction === "like" ? "text-primary" : ""
+                      }`}
+                      disabled={!isAuthenticated}
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm">{timeline.likes_count}</span>
                   </div>
-                )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleReaction(timeline, "dislike")}
+                      className={`p-1 rounded hover:bg-muted/20 ${
+                        timeline.user_reaction === "dislike"
+                          ? "text-primary"
+                          : ""
+                      }`}
+                      disabled={!isAuthenticated}
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm">{timeline.dislikes_count}</span>
+                  </div>
+                </div>
               </div>
             </div>
           ))}

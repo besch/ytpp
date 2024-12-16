@@ -90,7 +90,7 @@ export const timelineSlice = createSlice({
     setCurrentTimeline: (state, action: PayloadAction<Timeline | null>) => {
       state.currentTimeline = action.payload;
     },
-    timelineDeleted: (state, action: PayloadAction<string>) => {
+    timelineDeleted: (state, action: PayloadAction<number>) => {
       state.timelines = state.timelines.filter((t) => t.id !== action.payload);
       if (state.currentTimeline?.id === action.payload) {
         state.currentTimeline = null;

@@ -25,9 +25,9 @@ import Input from "@/components/ui/Input";
 
 interface InstructionDropdownMenuProps {
   instruction: Instruction;
-  timelineId: string;
+  timelineId: number;
   instructions: Instruction[];
-  currentTimelineId: string;
+  currentTimelineId: number;
   hideEdit?: boolean;
   onDeleteSuccess?: () => void;
 }
@@ -92,9 +92,12 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
           (inst) => inst.id !== instruction.id
         );
 
-        const updatedTimeline = await api.timelines.update(currentTimelineId, {
-          instructions: updatedInstructions,
-        });
+        const updatedTimeline = await api.timelines.update(
+          Number(currentTimelineId),
+          {
+            instructions: updatedInstructions,
+          }
+        );
 
         return updatedTimeline;
       } catch (error) {
@@ -128,7 +131,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
         if (overlayInst.overlayMedia?.url) {
           const clonedMedia = await api.timelines.cloneMedia(
             overlayInst.overlayMedia.url,
-            currentTimelineId
+            Number(currentTimelineId)
           );
 
           (clonedInstruction as OverlayInstruction).overlayMedia = {
@@ -139,7 +142,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
       }
 
       const updatedInstructions = [...instructions, clonedInstruction];
-      return api.timelines.update(currentTimelineId, {
+      return api.timelines.update(Number(currentTimelineId), {
         instructions: updatedInstructions,
       });
     },
@@ -185,9 +188,12 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     );
 
     try {
-      const savedTimeline = await api.timelines.update(currentTimelineId, {
-        instructions: updatedInstructions,
-      });
+      const savedTimeline = await api.timelines.update(
+        Number(currentTimelineId),
+        {
+          instructions: updatedInstructions,
+        }
+      );
       dispatch(setCurrentTimeline(savedTimeline));
       dispatch(renameInstruction({ id: instruction.id, name: newName }));
       setIsRenaming(false);

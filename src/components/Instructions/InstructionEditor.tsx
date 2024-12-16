@@ -128,7 +128,7 @@ const InstructionEditor: React.FC = () => {
       timelineId,
     }: {
       file: File;
-      timelineId: string;
+      timelineId: number;
     }) => {
       return api.timelines.uploadMedia(file, timelineId);
     },
@@ -466,7 +466,7 @@ const InstructionEditor: React.FC = () => {
           uploadMedia={async (file: File) => {
             const uploadResult = await uploadMediaMutation.mutateAsync({
               file,
-              timelineId: currentTimeline!.id,
+              timelineId: Number(currentTimeline!.id),
             });
             return uploadResult.url;
           }}

@@ -135,7 +135,7 @@ const InstructionsList: React.FC = () => {
                   {isOwner && (
                     <InstructionDropdownMenu
                       instruction={instruction}
-                      timelineId={timelineId!}
+                      timelineId={Number(timelineId!)}
                       instructions={instructions}
                       currentTimelineId={currentTimeline!.id}
                     />

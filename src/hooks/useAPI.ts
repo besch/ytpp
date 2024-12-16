@@ -160,7 +160,7 @@ export function useAPI() {
       },
 
       update: async (
-        id: string,
+        id: number,
         data: Partial<Timeline>
       ): Promise<Timeline> => {
         return request({
@@ -170,7 +170,7 @@ export function useAPI() {
         });
       },
 
-      delete: async (id: string): Promise<void> => {
+      delete: async (id: number): Promise<void> => {
         return request({
           endpoint: `/timelines/${id}`,
           method: "DELETE",
@@ -179,11 +179,11 @@ export function useAPI() {
 
       uploadMedia: async (
         file: File,
-        timelineId: string
+        timelineId: number
       ): Promise<MediaUploadResponse> => {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("timelineId", timelineId);
+        formData.append("timelineId", timelineId.toString());
 
         return request({
           endpoint: "/media",
@@ -202,7 +202,7 @@ export function useAPI() {
 
       cloneMedia: async (
         url: string,
-        timelineId: string
+        timelineId: number
       ): Promise<MediaCloneResponse> => {
         return request({
           endpoint: "/media/clone",
@@ -211,6 +211,26 @@ export function useAPI() {
             sourceUrl: url.split("/").pop(),
             timelineId,
           },
+        });
+      },
+
+      addReaction: async (
+        timelineId: number,
+        type: "like" | "dislike"
+      ): Promise<{ likes_count: number; dislikes_count: number }> => {
+        return request({
+          endpoint: `/timelines/${timelineId}/reactions`,
+          method: "POST",
+          body: { type },
+        });
+      },
+
+      removeReaction: async (
+        timelineId: number
+      ): Promise<{ likes_count: number; dislikes_count: number }> => {
+        return request({
+          endpoint: `/timelines/${timelineId}/reactions`,
+          method: "DELETE",
         });
       },
     },
