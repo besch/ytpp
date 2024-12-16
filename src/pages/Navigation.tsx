@@ -111,17 +111,8 @@ const Navigation: React.FC = () => {
     }
   };
 
-  const handleHomeClick = async () => {
-    try {
-      const videoUrl = window.location.href.split("&")[0];
-      const fetchedTimelines = await api.timelines.getAll(videoUrl);
-      dispatch(setCurrentTimeline(null));
-      dispatch(setTimelines(fetchedTimelines));
-      navigate("/");
-    } catch (error) {
-      console.error("Failed to fetch timelines:", error);
-      toast.error("Failed to fetch timelines");
-    }
+  const handleHomeClick = () => {
+    navigate("/");
   };
 
   return (

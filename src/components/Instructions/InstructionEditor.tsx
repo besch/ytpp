@@ -139,7 +139,8 @@ const InstructionEditor: React.FC = () => {
 
   // Mutation for media deletion
   const deleteMediaMutation = useMutation({
-    mutationFn: (url: string) => api.timelines.deleteMedia(url, Number(timelineId)),
+    mutationFn: (url: string) =>
+      api.timelines.deleteMedia(url, Number(timelineId)),
     onError: (error) => {
       console.error("Failed to delete media:", error);
     },
@@ -153,7 +154,7 @@ const InstructionEditor: React.FC = () => {
     try {
       let updatedInstructions: Instruction[];
       if (isEditing) {
-        updatedInstructions = instructions.map((i) =>
+        updatedInstructions = instructions.map((i: Instruction) =>
           i.id === newInstruction.id ? newInstruction : i
         );
       } else {

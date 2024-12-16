@@ -90,10 +90,9 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
             {user?.name}
           </div>
           <Button
-            variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="w-full justify-start text-red-500 px-4 mb-2"
+            className="w-full justify-start px-4 mb-2 text-destructive"
           >
             <LogOut className="h-4 w-4 mr-2" />
             Logout

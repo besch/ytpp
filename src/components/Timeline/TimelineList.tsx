@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Plus, ThumbsUp, ThumbsDown, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/ui/Button";
 import { setCurrentTimeline } from "@/store/timelineSlice";
@@ -28,6 +28,7 @@ const TimelineList: React.FC = () => {
     data: timelines = [],
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["timelines", videoUrl],
     queryFn: async () => {
@@ -43,6 +44,8 @@ const TimelineList: React.FC = () => {
       );
       return response;
     },
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 30,
   });
 
   // Mutation for creating timeline
@@ -135,6 +138,15 @@ const TimelineList: React.FC = () => {
     navigate(`/timeline/${timeline.id}`);
   };
 
+  const handleRefresh = async () => {
+    try {
+      await refetch();
+      toast.success("Timelines refreshed");
+    } catch (error) {
+      toast.error("Failed to refresh timelines");
+    }
+  };
+
   if (error) {
     return (
       <div className="text-destructive text-lg text-center py-6">
@@ -146,12 +158,23 @@ const TimelineList: React.FC = () => {
   return (
     <div className="space-y-4 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium">Timelines</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-medium">Timelines</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="p-1 h-auto"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
         <Button
           onClick={handleCreateTimeline}
           disabled={createTimelineMutation.isPending}
         >
-          <Plus className="w-4 h-4 mr-4" />
+          <Plus className="w-4 h-4 mr-2" />
           New Timeline
         </Button>
       </div>
