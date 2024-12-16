@@ -14,7 +14,6 @@ import {
 import {
   setEditingInstruction,
   seekToTime,
-  setInstructions,
   setCurrentTimeline,
   renameInstruction,
   removeInstruction,

@@ -16,6 +16,7 @@ import TimelineList from "@/components/Timeline/TimelineList";
 import InstructionEditor from "@/components/Instructions/InstructionEditor";
 import InstructionsList from "@/components/Instructions/InstructionsList";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import UserProfile from "@/pages/UserProfile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,7 @@ const AppContent: React.FC = () => {
         <div className="flex-grow overflow-auto">
           <Routes>
             <Route path="/" element={<TimelineList />} />
+            <Route path="/profile" element={<UserProfile />} />
             <Route path="/timeline/:id" element={<InstructionsList />} />
             <Route
               path="/timeline/:id/instruction/:instructionId?"

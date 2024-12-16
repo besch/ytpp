@@ -127,7 +127,9 @@ const Navigation: React.FC = () => {
 
       <div className="flex items-center gap-4">
         {isAuthenticated ? (
-          <Account sendMessageToContentScript={sendMessageToContentScript} />
+          <div className="flex items-center gap-4">
+            <Account sendMessageToContentScript={sendMessageToContentScript} />
+          </div>
         ) : (
           <Button variant="ghost" size="sm" onClick={handleLogin}>
             <LogIn className="h-5 w-5 mr-2" />
