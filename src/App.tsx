@@ -1,6 +1,10 @@
 import React, { useEffect } from "react";
 import { Route, Routes, Navigate, useNavigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useIsFetching,
+} from "@tanstack/react-query";
 import { useSelector, useDispatch } from "react-redux";
 import {
   selectEditingInstruction,
@@ -11,6 +15,7 @@ import Navigation from "@/pages/Navigation";
 import TimelineList from "@/components/Timeline/TimelineList";
 import InstructionEditor from "@/components/Instructions/InstructionEditor";
 import InstructionsList from "@/components/Instructions/InstructionsList";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,11 +26,12 @@ const queryClient = new QueryClient({
   },
 });
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const editingInstruction = useSelector(selectEditingInstruction);
   const currentTimeline = useSelector(selectCurrentTimeline);
+  const isFetching = useIsFetching();
 
   // Single auth check on app load
   useEffect(() => {
@@ -86,24 +92,31 @@ const App: React.FC = () => {
   }, [editingInstruction, currentTimeline, navigate]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="h-full flex overflow-hidden">
-        <div className="w-full h-full flex flex-col bg-background text-foreground">
-          <Navigation />
-          <div className="flex-grow overflow-auto">
-            <Routes>
-              <Route path="/" element={<TimelineList />} />
-              <Route path="/timeline/:id" element={<InstructionsList />} />
-              <Route
-                path="/timeline/:id/instruction/:instructionId?"
-                element={<InstructionEditor />}
-              />
-              <Route path="/timeline/new" element={<InstructionEditor />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
+    <div className="h-full flex overflow-hidden relative">
+      <div className="w-full h-full flex flex-col bg-background text-foreground">
+        <Navigation />
+        <div className="flex-grow overflow-auto">
+          <Routes>
+            <Route path="/" element={<TimelineList />} />
+            <Route path="/timeline/:id" element={<InstructionsList />} />
+            <Route
+              path="/timeline/:id/instruction/:instructionId?"
+              element={<InstructionEditor />}
+            />
+            <Route path="/timeline/new" element={<InstructionEditor />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
       </div>
+      {isFetching > 0 && <LoadingSpinner size="lg" />}
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
     </QueryClientProvider>
   );
 };
