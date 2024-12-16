@@ -11,6 +11,8 @@ import { VideoManager } from "@/lib/VideoManager";
 import { setVideoElement } from "@/store/timelineSlice";
 import { setUser } from "@/store/authSlice";
 import { eventSystem } from "@/lib/eventSystem";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function init() {
   // Listen for messages from content script
@@ -172,6 +174,19 @@ function init() {
         <Router>
           <Provider store={store}>
             <App />
+            <ToastContainer
+              position="bottom-right"
+              autoClose={1000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="dark"
+              className="toast-container"
+            />
           </Provider>
         </Router>
       </React.StrictMode>

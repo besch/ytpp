@@ -74,8 +74,9 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
       queryClient.invalidateQueries({ queryKey: ["timelines"] });
       navigate("/timelines");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       setIsDeletingTimeline(false);
+      toast.error(error.message);
     },
   });
 
@@ -87,11 +88,13 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
       if (savedTimeline) {
         dispatch(setCurrentTimeline(savedTimeline));
         queryClient.invalidateQueries({ queryKey: ["timelines"] });
+        setIsRenamingTimeline(false);
+        toast.success("Timeline renamed successfully");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to update timeline:", error);
-      toast.error("Failed to update timeline");
+      toast.error(error.message);
     },
   });
 

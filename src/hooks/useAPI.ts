@@ -50,6 +50,9 @@ export function useAPI() {
     );
 
     if (!response.success) {
+      if (response.status === 403) {
+        throw new Error("You don't have permission to perform this action");
+      }
       throw new Error(response.error || "Request failed");
     }
 
@@ -192,11 +195,14 @@ export function useAPI() {
         });
       },
 
-      deleteMedia: async (url: string): Promise<void> => {
+      deleteMedia: async (url: string, timelineId: number): Promise<void> => {
         return request({
           endpoint: "/media",
           method: "DELETE",
-          body: { url: url.split("/").pop() },
+          body: {
+            url: url.split("/").pop(),
+            timelineId,
+          },
         });
       },
 

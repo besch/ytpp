@@ -94,11 +94,14 @@ export const api = {
       };
     },
 
-    deleteMedia: async (url: string): Promise<void> => {
+    deleteMedia: async (url: string, timelineId: string): Promise<void> => {
       await makeAPIRequest({
         endpoint: "/media",
         method: "DELETE",
-        body: { url: url.split("/").pop() },
+        body: {
+          url: url.split("/").pop(),
+          timelineId,
+        },
       });
     },
 

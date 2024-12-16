@@ -17,11 +17,13 @@ import {
   setInstructions,
   setCurrentTimeline,
   renameInstruction,
+  removeInstruction,
 } from "@/store/timelineSlice";
 import { useAPI } from "@/hooks/useAPI";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Input from "@/components/ui/Input";
+import { toast } from "react-toastify";
 
 interface InstructionDropdownMenuProps {
   instruction: Instruction;
@@ -74,45 +76,35 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 
   const deleteInstructionMutation = useMutation({
     mutationFn: async () => {
-      try {
-        if (
-          instruction?.type === "overlay" &&
-          (instruction as OverlayInstruction).overlayMedia?.url
-        ) {
-          try {
-            await api.timelines.deleteMedia(
-              (instruction as OverlayInstruction).overlayMedia!.url
-            );
-          } catch (error) {
-            console.warn("Failed to delete media file:", error);
-          }
+      if (
+        instruction?.type === "overlay" &&
+        (instruction as OverlayInstruction).overlayMedia?.url
+      ) {
+        try {
+          await api.timelines.deleteMedia(
+            (instruction as OverlayInstruction).overlayMedia!.url,
+            currentTimelineId
+          );
+        } catch (error) {
+          console.warn("Failed to delete media file:", error);
         }
-
-        const updatedInstructions = instructions.filter(
-          (inst) => inst.id !== instruction.id
-        );
-
-        const updatedTimeline = await api.timelines.update(
-          Number(currentTimelineId),
-          {
-            instructions: updatedInstructions,
-          }
-        );
-
-        return updatedTimeline;
-      } catch (error) {
-        console.error("Failed to delete instruction:", error);
-        throw error;
       }
+
+      const updatedInstructions = instructions.filter(
+        (inst) => inst.id !== instruction.id
+      );
+      return api.timelines.update(Number(currentTimelineId), {
+        instructions: updatedInstructions,
+      });
     },
-    onSuccess: (savedTimeline) => {
-      dispatch(setCurrentTimeline(savedTimeline));
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+    onSuccess: () => {
       setIsDeletingInstruction(false);
+      dispatch(removeInstruction(instruction.id));
+      toast.success("Instruction deleted successfully");
     },
-    onError: (error) => {
-      console.error("Failed to delete instruction:", error);
+    onError: (error: Error) => {
       setIsDeletingInstruction(false);
+      toast.error(error.message);
     },
   });
 
@@ -148,11 +140,10 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     },
     onSuccess: (savedTimeline) => {
       dispatch(setCurrentTimeline(savedTimeline));
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+      toast.success("Instruction cloned successfully");
     },
-    onError: (error) => {
-      console.error("Failed to clone instruction:", error);
-      dispatch(setInstructions(instructions));
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
 
@@ -197,8 +188,12 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
       dispatch(setCurrentTimeline(savedTimeline));
       dispatch(renameInstruction({ id: instruction.id, name: newName }));
       setIsRenaming(false);
+      toast.success("Instruction renamed successfully");
     } catch (error) {
       console.error("Failed to rename instruction:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to rename instruction"
+      );
     }
   };
 
