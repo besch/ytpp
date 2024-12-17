@@ -10,6 +10,7 @@ import {
   setLoading,
   logout,
 } from "@/store/authSlice";
+import { setCurrentTimeline } from "@/store/timelineSlice";
 import { toast } from "react-toastify";
 import { useAPI } from "@/hooks/useAPI";
 import Account from "@/components/Account/Account";
@@ -119,6 +120,7 @@ const Navigation: React.FC = () => {
   };
 
   const handleHomeClick = () => {
+    dispatch(setCurrentTimeline(null));
     navigate("/");
   };
 
