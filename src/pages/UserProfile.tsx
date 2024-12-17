@@ -77,47 +77,56 @@ const UserProfile: React.FC = () => {
         </div>
       </div>
 
-      <div className="space-y-4">
-        {filteredTimelines?.map((timeline: Timeline) => (
-          <div
-            key={timeline.id}
-            className="p-4 border border-border rounded-lg hover:border-primary cursor-pointer"
-            onClick={() => handleTimelineClick(timeline)}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <h2 className="text-lg font-semibold">{timeline.title}</h2>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <ThumbsUp className="w-4 h-4" />
-                  {timeline.likes_count || 0}
-                </span>
-                <span className="flex items-center gap-1">
-                  <ThumbsDown className="w-4 h-4" />
-                  {timeline.dislikes_count || 0}
-                </span>
+      {filteredTimelines?.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          No timelines yet. Click the button above to create one.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredTimelines?.map((timeline: Timeline) => (
+            <div
+              key={timeline.id}
+              className="p-4 border border-border rounded-lg hover:border-primary cursor-pointer"
+              onClick={() => handleTimelineClick(timeline)}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h2 className="text-lg font-semibold">{timeline.title}</h2>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp className="w-4 h-4" />
+                    {timeline.likes_count || 0}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ThumbsDown className="w-4 h-4" />
+                    {timeline.dislikes_count || 0}
+                  </span>
+                </div>
               </div>
-            </div>
-            <p className="text-sm text-muted-foreground mb-2 truncate">
-              {timeline.video_url}
-            </p>
-            <div className="flex gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                Created {formatDistanceToNow(new Date(timeline.created_at))} ago
-              </span>
-              {timeline.updated_at && (
+              <p className="text-sm text-muted-foreground mb-2 truncate">
+                {timeline.video_url}
+              </p>
+              <div className="flex gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  Updated {formatDistanceToNow(
-                    new Date(timeline.updated_at)
+                  Created {formatDistanceToNow(
+                    new Date(timeline.created_at)
                   )}{" "}
                   ago
                 </span>
-              )}
+                {timeline.updated_at && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    Updated {formatDistanceToNow(
+                      new Date(timeline.updated_at)
+                    )}{" "}
+                    ago
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
