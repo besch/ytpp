@@ -1,0 +1,26 @@
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: theme("colors.background");
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: theme("colors.muted");
+  border-radius: 4px;
+  transition: background-color 200ms;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: theme("colors.muted-foreground");
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme("colors.muted") theme("colors.background");
+}

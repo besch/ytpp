@@ -3,6 +3,7 @@
 @import "./styles/animations.css";
 @import "./styles/text.css";
 @import "./styles/timeline-container.css";
+@import "./styles/global.css";
 
 #timeline-container,
 #react-overlay-root,
