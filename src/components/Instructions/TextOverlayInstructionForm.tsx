@@ -156,16 +156,14 @@ const TextOverlayInstructionForm: React.FC<{
             />
           </div>
 
-          <div className="flex items-center">
-            <div className="flex items-center space-x-2 mt-auto">
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">Transparent</label>
+            <div className="flex items-center">
               <Input
                 type="checkbox"
                 {...register("textOverlay.style.transparentBackground")}
                 id="transparentBackground"
               />
-              <label htmlFor="transparentBackground" className="text-sm">
-                Transparent
-              </label>
             </div>
           </div>
         </div>
