@@ -31,13 +31,39 @@ const formatTime = (timeMs: number): string => {
 };
 
 const getInstructionLabel = (instruction: Instruction): string => {
-  if (instruction.type === "skip") {
-    return `Skip to ${formatTime((instruction as SkipInstruction).skipToTime)}`;
-  } else if (instruction.type === "overlay") {
-    const overlayInstruction = instruction as OverlayInstruction;
-    return `Overlay ${overlayInstruction.overlayMedia?.name || "media"}`;
+  switch (instruction.type) {
+    case "skip":
+      const skipInstruction = instruction as SkipInstruction;
+      return `${formatTime(skipInstruction.triggerTime)} - ${formatTime(
+        skipInstruction.skipToTime
+      )}`;
+
+    case "text-overlay":
+      return ""; // Show nothing for text overlays
+
+    case "overlay":
+      const overlayInstruction = instruction as OverlayInstruction;
+      if (!overlayInstruction.overlayMedia) return "No media";
+
+      // Get file extension
+      const fileExt =
+        overlayInstruction.overlayMedia.name?.split(".").pop()?.toLowerCase() ||
+        "";
+
+      // Determine media type based on extension
+      const mediaType = (() => {
+        if (["mp4", "webm", "mov"].includes(fileExt)) return "Video";
+        if (["mp3", "wav", "ogg"].includes(fileExt)) return "Audio";
+        if (["gif"].includes(fileExt)) return "GIF";
+        if (["jpg", "jpeg", "png", "webp"].includes(fileExt)) return "Image";
+        return "Media";
+      })();
+
+      return mediaType;
+
+    default:
+      return "";
   }
-  return "Unknown instruction";
 };
 
 const MARKER_SPACING = 2; // Minimum spacing in percentage points
@@ -74,6 +100,36 @@ const calculateMarkerLevels = (
   }
 
   return markersWithLevels;
+};
+
+const getInstructionColor = (type: string): string => {
+  switch (type) {
+    case "pause":
+      return "rgb(147 51 234)"; // secondary color
+    case "skip":
+      return "rgb(37 99 235)"; // primary color
+    case "overlay":
+      return "rgb(5 150 105)"; // accent color
+    case "text-overlay":
+      return "rgb(234 179 8)"; // yellow color
+    default:
+      return "rgb(37 99 235)"; // primary color as fallback
+  }
+};
+
+const getInstructionTitle = (type: string): string => {
+  switch (type) {
+    case "pause":
+      return "Pause";
+    case "skip":
+      return "Skip";
+    case "overlay":
+      return "Media";
+    case "text-overlay":
+      return "Text";
+    default:
+      return type.charAt(0).toUpperCase() + type.slice(1);
+  }
 };
 
 const Timeline: React.FC = () => {
@@ -392,9 +448,11 @@ const Timeline: React.FC = () => {
                       rounded-lg shadow-xl
                       text-xs`}
                   >
-                    <div className="font-medium mb-1">
-                      {instruction.type.charAt(0).toUpperCase() +
-                        instruction.type.slice(1)}
+                    <div
+                      className="font-medium mb-1"
+                      style={{ color: getInstructionColor(instruction.type) }}
+                    >
+                      {getInstructionTitle(instruction.type)}
                     </div>
                     <div className="text-muted-foreground">
                       {draggingInstructionId === instruction.id &&
