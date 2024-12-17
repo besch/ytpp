@@ -1,0 +1,33 @@
+& #timeline-container .text-lg,
+& #react-overlay-root .text-lg,
+& #visibility-toggler .text-lg {
+  font-size: 1.3rem !important;
+  line-height: 1.75rem !important;
+}
+
+& #timeline-container .text-xl,
+& #react-overlay-root .text-xl,
+& #visibility-toggler .text-xl {
+  font-size: 1.5rem !important;
+  line-height: 2rem !important;
+}
+
+& #timeline-container .text-sm,
+& #react-overlay-root .text-sm,
+& #visibility-toggler .text-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+& #timeline-container p,
+& #timeline-container span,
+& #timeline-container label,
+& #react-overlay-root p,
+& #react-overlay-root span,
+& #react-overlay-root label,
+& #visibility-toggler p,
+& #visibility-toggler span,
+& #visibility-toggler label {
+  font-size: 1.1rem !important;
+  line-height: 1.5rem !important;
+}

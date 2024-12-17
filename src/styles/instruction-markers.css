@@ -1,0 +1,74 @@
+.instruction-marker {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 9999px !important;
+  position: relative !important;
+  z-index: 30 !important;
+  cursor: pointer !important;
+  transition: all 200ms ease-out !important;
+}
+
+.instruction-marker:hover {
+  transform: scale(1.1) !important;
+}
+
+.instruction-marker[data-selected="true"]:hover {
+  transform: scale(1.35) !important;
+}
+
+.instruction-marker[data-selected="true"] {
+  transform: scale(1.25) !important;
+  box-shadow: 0 0 0 2px theme("colors.background"),
+    0 0 0 4px theme("colors.white") !important;
+}
+
+.instruction-marker[data-type="pause"] {
+  background-color: theme("colors.secondary") !important;
+}
+.instruction-marker[data-type="pause"]:hover {
+  background-color: rgb(147 51 234 / 0.8) !important;
+}
+.instruction-marker[data-type="pause"][data-selected="true"] {
+  box-shadow: 0 0 0 2px theme("colors.background"),
+    0 0 0 4px theme("colors.secondary") !important;
+}
+
+.instruction-marker[data-type="skip"] {
+  background-color: theme("colors.primary") !important;
+}
+.instruction-marker[data-type="skip"]:hover {
+  background-color: rgb(37 99 235 / 0.8) !important;
+}
+.instruction-marker[data-type="skip"][data-selected="true"] {
+  box-shadow: 0 0 0 2px theme("colors.background"),
+    0 0 0 4px theme("colors.primary") !important;
+}
+
+.instruction-marker[data-type="overlay"] {
+  background-color: theme("colors.accent") !important;
+}
+.instruction-marker[data-type="overlay"]:hover {
+  background-color: rgb(5 150 105 / 0.8) !important;
+}
+.instruction-marker[data-type="overlay"][data-selected="true"] {
+  box-shadow: 0 0 0 2px theme("colors.background"),
+    0 0 0 4px theme("colors.accent") !important;
+}
+
+.instruction-marker[data-type="text-overlay"] {
+  background-color: theme("colors.yellow.500") !important;
+}
+.instruction-marker[data-type="text-overlay"]:hover {
+  background-color: theme("colors.yellow.400") !important;
+}
+.instruction-marker[data-type="text-overlay"][data-selected="true"] {
+  box-shadow: 0 0 0 2px theme("colors.background"),
+    0 0 0 4px theme("colors.yellow.500") !important;
+}
+
+.instruction-highlight {
+  animation: instruction-pulse 2s infinite;
+}

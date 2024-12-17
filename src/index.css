@@ -1,3 +1,8 @@
+@import "./styles/instruction-markers.css";
+@import "./styles/dropdown.css";
+@import "./styles/animations.css";
+@import "./styles/text.css";
+
 #timeline-container,
 #react-overlay-root,
 #visibility-toggler {
@@ -140,61 +145,6 @@
     top: -1.5rem;
   }
 
-  & .time-markers {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: 0 0.5rem;
-  }
-
-  & .time-marker {
-    position: relative;
-    text-align: center;
-    flex: 1;
-  }
-
-  & .time-marker-line {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 1px;
-    height: 100%;
-    background-color: theme("colors.muted");
-    opacity: 0.2;
-  }
-
-  & .timeline-track {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 0.25rem;
-    background-color: theme("colors.muted");
-    opacity: 0.3;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  & .progress-bar {
-    position: absolute;
-    height: 100%;
-    background-color: theme("colors.primary");
-    opacity: 0.3;
-    transition: width 200ms;
-  }
-
-  & .current-time-marker {
-    position: absolute;
-    top: 0;
-    height: 100%;
-    width: 0.125rem;
-    background-color: theme("colors.primary");
-    transition: left 200ms;
-  }
-
   & .px-2 {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
@@ -258,18 +208,6 @@
       0 4px 6px -4px rgb(0 0 0 / 0.1);
   }
 
-  & .instruction-marker {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 16px !important;
-    height: 16px !important;
-    border-radius: 9999px !important;
-    position: relative !important;
-    z-index: 30 !important;
-    cursor: pointer !important;
-  }
-
   & .instruction-popover {
     display: none !important;
     position: absolute !important;
@@ -331,60 +269,6 @@
     cursor: pointer !important;
   }
 
-  & .instruction-marker[data-type="pause"] {
-    background-color: theme("colors.secondary") !important;
-  }
-  & .instruction-marker[data-type="pause"]:hover {
-    background-color: rgb(147 51 234 / 0.8) !important;
-  }
-
-  & .instruction-marker[data-type="skip"] {
-    background-color: theme("colors.primary") !important;
-  }
-  & .instruction-marker[data-type="skip"]:hover {
-    background-color: rgb(37 99 235 / 0.8) !important;
-  }
-
-  & .instruction-marker[data-type="overlay"] {
-    background-color: theme("colors.accent") !important;
-  }
-  & .instruction-marker[data-type="overlay"]:hover {
-    background-color: rgb(5 150 105 / 0.8) !important;
-  }
-
-  & .instruction-marker[data-selected="true"] {
-    transform: scale(1.25) !important;
-    box-shadow: 0 0 0 2px theme("colors.background"),
-      0 0 0 4px theme("colors.white") !important;
-  }
-
-  & .instruction-marker[data-type="pause"][data-selected="true"] {
-    box-shadow: 0 0 0 2px theme("colors.background"),
-      0 0 0 4px theme("colors.secondary") !important;
-  }
-
-  & .instruction-marker[data-type="skip"][data-selected="true"] {
-    box-shadow: 0 0 0 2px theme("colors.background"),
-      0 0 0 4px theme("colors.primary") !important;
-  }
-
-  & .instruction-marker[data-type="overlay"][data-selected="true"] {
-    box-shadow: 0 0 0 2px theme("colors.background"),
-      0 0 0 4px theme("colors.accent") !important;
-  }
-
-  & .instruction-marker {
-    transition: all 200ms ease-out !important;
-  }
-
-  & .instruction-marker:hover {
-    transform: scale(1.1) !important;
-  }
-
-  & .instruction-marker[data-selected="true"]:hover {
-    transform: scale(1.35) !important;
-  }
-
   & .flex.gap-2 {
     width: auto !important;
   }
@@ -431,17 +315,6 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
-  & .instruction-marker[data-type="text-overlay"] {
-    background-color: theme("colors.yellow.500") !important;
-  }
-  & .instruction-marker[data-type="text-overlay"]:hover {
-    background-color: theme("colors.yellow.400") !important;
-  }
-  & .instruction-marker[data-type="text-overlay"][data-selected="true"] {
-    box-shadow: 0 0 0 2px theme("colors.background"),
-      0 0 0 4px theme("colors.yellow.500") !important;
-  }
-
   & .text-overlay-preview {
     border: 1px solid theme("colors.border");
     border-radius: theme("borderRadius.md");
@@ -468,28 +341,6 @@
     line-height: 1.75rem !important;
     font-weight: 500 !important;
     margin-bottom: 0.5rem !important;
-  }
-
-  & p,
-  & span,
-  & label {
-    font-size: 1.1rem !important;
-    line-height: 1.5rem !important;
-  }
-
-  & .text-lg {
-    font-size: 1.3rem !important;
-    line-height: 1.75rem !important;
-  }
-
-  & .text-xl {
-    font-size: 1.5rem !important;
-    line-height: 2rem !important;
-  }
-
-  & .text-sm {
-    font-size: 0.875rem !important;
-    line-height: 1.25rem !important;
   }
 
   & .form-group {
@@ -539,196 +390,8 @@
     color: theme("colors.accent") !important;
   }
 
-  & [role="menu"] {
-    position: relative !important;
-  }
-
-  & .dropdown-content {
-    position: absolute !important;
-    z-index: 9999 !important;
-    min-width: 8rem !important;
-    padding: 0.25rem !important;
-    margin-top: 0.25rem !important;
-    background-color: theme("colors.background") !important;
-    border: 1px solid theme("colors.border") !important;
-    border-radius: 0.375rem !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    transform-origin: top right !important;
-  }
-
-  & .dropdown-item {
-    display: flex !important;
-    align-items: center !important;
-    width: 100% !important;
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.875rem !important;
-    color: theme("colors.foreground") !important;
-    border-radius: 0.25rem !important;
-    cursor: pointer !important;
-    transition: all 200ms !important;
-  }
-
-  & .dropdown-item:hover {
-    background-color: theme("colors.muted/50") !important;
-    color: theme("colors.accent") !important;
-  }
-
-  & .dropdown-item.destructive {
-    color: theme("colors.destructive") !important;
-  }
-
-  & .dropdown-item.destructive:hover {
-    background-color: theme("colors.destructive/10") !important;
-    color: theme("colors.destructive") !important;
-  }
-
   & button svg {
     width: 1rem !important;
     height: 1rem !important;
   }
-
-  & .instruction-highlight {
-    animation: instruction-pulse 2s infinite;
-  }
-
-  @keyframes instruction-pulse {
-    0% {
-      background-color: theme("colors.primary/10");
-      border-color: theme("colors.primary/30");
-    }
-    50% {
-      background-color: theme("colors.primary/20");
-      border-color: theme("colors.primary/50");
-    }
-    100% {
-      background-color: theme("colors.primary/10");
-      border-color: theme("colors.primary/30");
-    }
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes bounceIn {
-  0% {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-  70% {
-    transform: scale(0.9);
-    opacity: 0.9;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.animate-slide-in {
-  animation: slideIn 0.3s ease-in-out;
-}
-
-.animate-bounce-in {
-  animation: bounceIn 0.5s cubic-bezier(0.36, 0, 0.66, -0.56);
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.3s ease-in-out;
-}
-
-.popper-container {
-  z-index: 1000;
-}
-
-.popper-arrow {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: inherit;
-}
-
-.popper-arrow::before {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: inherit;
-}
-
-.popper-arrow::after {
-  content: "";
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: inherit;
-}
-
-#timeline-container .text-lg,
-#react-overlay-root .text-lg,
-#visibility-toggler .text-lg {
-  font-size: 1.3rem !important;
-  line-height: 1.75rem !important;
-}
-
-#timeline-container .text-xl,
-#react-overlay-root .text-xl,
-#visibility-toggler .text-xl {
-  font-size: 1.5rem !important;
-  line-height: 2rem !important;
-}
-
-#timeline-container .text-sm,
-#react-overlay-root .text-sm,
-#visibility-toggler .text-sm {
-  font-size: 0.875rem !important;
-  line-height: 1.25rem !important;
-}
-
-#timeline-container p,
-#timeline-container span,
-#timeline-container label,
-#react-overlay-root p,
-#react-overlay-root span,
-#react-overlay-root label,
-#visibility-toggler p,
-#visibility-toggler span,
-#visibility-toggler label {
-  font-size: 1.1rem !important;
-  line-height: 1.5rem !important;
 }
