@@ -8,10 +8,10 @@ import {
   setUser,
   setError,
   setLoading,
+  logout,
 } from "@/store/authSlice";
 import { toast } from "react-toastify";
 import { useAPI } from "@/hooks/useAPI";
-import { setCurrentTimeline, setTimelines } from "@/store/timelineSlice";
 import Account from "@/components/Account/Account";
 
 const Navigation: React.FC = () => {
@@ -83,29 +83,37 @@ const Navigation: React.FC = () => {
       dispatch(setLoading(true));
       console.log("Navigation: Starting login process");
 
+      // Clear existing auth state first
+      dispatch(logout());
+
+      // Wait a bit for the auth state to clear
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       const response = await sendMessageToContentScript({
         type: "HANDLE_LOGIN",
       });
-
-      console.log("Navigation: Received login response", response);
 
       if (!response?.success) {
         throw new Error(response?.error || "Login failed");
       }
 
-      // Save user to database before setting in Redux store
-      if (response.user) {
-        await api.users.createOrUpdate(response.user);
-        dispatch(setUser(response.user));
-      } else {
-        throw new Error("No user data received");
+      // User data is now directly in the response
+      const userData = response.user;
+
+      // Verify user data structure
+      if (!userData || !userData.id || !userData.email) {
+        throw new Error("Invalid user data received");
       }
+
+      // Save user to database before setting in Redux store
+      await api.users.createOrUpdate(userData);
+      dispatch(setUser(userData));
     } catch (error) {
-      console.error("Navigation: Login error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Login failed";
       dispatch(setError(errorMessage));
       toast.error(errorMessage);
+      dispatch(logout());
     } finally {
       dispatch(setLoading(false));
     }

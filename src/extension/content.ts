@@ -126,24 +126,13 @@ class ContentScript {
       try {
         switch (type) {
           case "HANDLE_LOGIN":
-            response = {
-              success: true,
-              status: 200,
-              data: await this.handleAuthMessage("HANDLE_LOGIN"),
-            };
-            break;
           case "HANDLE_LOGOUT":
-            response = {
-              success: true,
-              status: 200,
-              data: await this.handleAuthMessage("HANDLE_LOGOUT"),
-            };
-            break;
           case "CHECK_AUTH_STATE":
+            const authResponse = await this.handleAuthMessage(type);
+            // Don't wrap the auth response in a data field
             response = {
-              success: true,
-              status: 200,
-              data: await this.handleAuthMessage("CHECK_AUTH_STATE"),
+              ...authResponse,
+              status: authResponse.success ? 200 : 400,
             };
             break;
           case "api:request":
@@ -420,16 +409,37 @@ class ContentScript {
   ): Promise<{ success: boolean; error?: string; user?: any }> {
     try {
       console.log("Content: Sending auth message to background", action);
+
+      // Clear local storage before login
+      if (action === "HANDLE_LOGIN") {
+        localStorage.removeItem("user");
+      }
+
       return new Promise((resolve) => {
         chrome.runtime.sendMessage({ action }, async (response) => {
-          console.log("Content: Received response from background", response);
+          if (response?.success && response.user) {
+            const { id, email, name, picture } = response.user;
+
+            if (!id || !email || !name) {
+              resolve({
+                success: false,
+                error: "Invalid user data structure",
+              });
+              return;
+            }
+          }
+
           if (response?.success && response.user?.id) {
             // Only make API call for HANDLE_LOGIN action
             if (action === "HANDLE_LOGIN") {
               try {
                 await api.users.createOrUpdate(response.user);
               } catch (error) {
-                console.error("Error creating/updating user:", error);
+                resolve({
+                  success: false,
+                  error: "Failed to create/update user",
+                });
+                return;
               }
             }
             resolve(response);
