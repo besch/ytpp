@@ -204,12 +204,8 @@ const Timeline: React.FC = () => {
         updatedTimeline
       );
       dispatch(setCurrentTimeline(savedTimeline));
-      toast.success("Timeline updated successfully");
     } catch (error) {
       console.error("Failed to save instructions:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save instructions"
-      );
     }
   };
 
@@ -446,7 +442,7 @@ const Timeline: React.FC = () => {
                       bg-background/95 backdrop-blur-sm
                       border border-border px-3 py-2
                       rounded-lg shadow-xl
-                      text-xs`}
+                      text-sm`}
                   >
                     <div
                       className="font-medium mb-1"

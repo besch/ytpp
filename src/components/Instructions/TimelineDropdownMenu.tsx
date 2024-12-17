@@ -76,7 +76,6 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
     },
     onError: (error: Error) => {
       setIsDeletingTimeline(false);
-      toast.error(error.message);
     },
   });
 
@@ -89,12 +88,10 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
         dispatch(setCurrentTimeline(savedTimeline));
         queryClient.invalidateQueries({ queryKey: ["timelines"] });
         setIsRenamingTimeline(false);
-        toast.success("Timeline renamed successfully");
       }
     },
     onError: (error: Error) => {
       console.error("Failed to update timeline:", error);
-      toast.error(error.message);
     },
   });
 

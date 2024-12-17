@@ -59,7 +59,6 @@ const TimelineList: React.FC = () => {
     },
     onError: (error) => {
       console.error("Failed to create timeline:", error);
-      toast.error("Failed to create timeline");
     },
   });
 
@@ -77,7 +76,6 @@ const TimelineList: React.FC = () => {
     },
     onError: (error) => {
       console.error("Failed to add reaction:", error);
-      toast.error("Failed to add reaction");
     },
   });
 
@@ -90,7 +88,6 @@ const TimelineList: React.FC = () => {
     },
     onError: (error) => {
       console.error("Failed to remove reaction:", error);
-      toast.error("Failed to remove reaction");
     },
   });
 
@@ -99,7 +96,6 @@ const TimelineList: React.FC = () => {
     type: "like" | "dislike"
   ) => {
     if (!isAuthenticated) {
-      toast.error("Please log in to react to timelines");
       return;
     }
 
@@ -141,10 +137,7 @@ const TimelineList: React.FC = () => {
   const handleRefresh = async () => {
     try {
       await refetch();
-      toast.success("Timelines refreshed");
-    } catch (error) {
-      toast.error("Failed to refresh timelines");
-    }
+    } catch (error) {}
   };
 
   if (error) {

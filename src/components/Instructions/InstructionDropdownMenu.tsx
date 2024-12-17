@@ -99,11 +99,9 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     onSuccess: () => {
       setIsDeletingInstruction(false);
       dispatch(removeInstruction(instruction.id));
-      toast.success("Instruction deleted successfully");
     },
     onError: (error: Error) => {
       setIsDeletingInstruction(false);
-      toast.error(error.message);
     },
   });
 
@@ -139,10 +137,9 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     },
     onSuccess: (savedTimeline) => {
       dispatch(setCurrentTimeline(savedTimeline));
-      toast.success("Instruction cloned successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error(error.message);
     },
   });
 
@@ -187,12 +184,8 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
       dispatch(setCurrentTimeline(savedTimeline));
       dispatch(renameInstruction({ id: instruction.id, name: newName }));
       setIsRenaming(false);
-      toast.success("Instruction renamed successfully");
     } catch (error) {
       console.error("Failed to rename instruction:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to rename instruction"
-      );
     }
   };
 

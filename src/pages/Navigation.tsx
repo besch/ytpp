@@ -112,7 +112,6 @@ const Navigation: React.FC = () => {
       const errorMessage =
         error instanceof Error ? error.message : "Login failed";
       dispatch(setError(errorMessage));
-      toast.error(errorMessage);
       dispatch(logout());
     } finally {
       dispatch(setLoading(false));

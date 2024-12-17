@@ -39,7 +39,6 @@ const Account: React.FC<AccountProps> = ({ sendMessageToContentScript }) => {
       const errorMessage =
         error instanceof Error ? error.message : "Logout failed";
       dispatch(setError(errorMessage));
-      toast.error(errorMessage);
     } finally {
       setIsLoggingOut(false);
     }
