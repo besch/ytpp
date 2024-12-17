@@ -1,28 +1,28 @@
-import React, { useRef } from "react";
-import { Edit2, Trash2, Copy, MoreVertical, X, Type } from "lucide-react";
+import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { usePopper } from "react-popper";
 import { useNavigate } from "react-router-dom";
-import Button from "@/components/ui/Button";
+import { useMutation } from "@tanstack/react-query";
+import { MoreVertical, Edit2, Trash2, Copy, Type, X } from "lucide-react";
+import { useAPI } from "@/hooks/useAPI";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu";
-import {
+  removeInstruction,
   setEditingInstruction,
-  seekToTime,
   setCurrentTimeline,
   renameInstruction,
-  removeInstruction,
+  seekToTime,
 } from "@/store/timelineSlice";
-import { useAPI } from "@/hooks/useAPI";
-import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Instruction, OverlayInstruction, SkipInstruction } from "@/types";
+import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { toast } from "react-toastify";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/DropdownMenu";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
+import Dialog from "../ui/Dialog";
 
 interface InstructionDropdownMenuProps {
   instruction: Instruction;
@@ -32,6 +32,59 @@ interface InstructionDropdownMenuProps {
   hideEdit?: boolean;
   onDeleteSuccess?: () => void;
 }
+
+const styles = {
+  inputContainer: {
+    marginBottom: "24px",
+    paddingRight: "24px",
+  },
+  input: {
+    width: "100%",
+    padding: "8px 12px",
+    backgroundColor: "rgb(17 24 39)",
+    border: "1px solid #4B5563",
+    borderRadius: "6px",
+    color: "#ffffff",
+    fontSize: "14px",
+    outline: "none",
+  },
+  buttonGroup: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "8px",
+  },
+  icon: {
+    width: "14px",
+    height: "14px",
+    marginRight: "6px",
+  },
+  button: {
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    fontSize: "14px",
+    fontWeight: 500,
+    transition: "background-color 200ms",
+  },
+  cancelButton: {
+    backgroundColor: "transparent",
+    color: "#9CA3AF",
+    border: "1px solid #4B5563",
+    "&:hover": {
+      backgroundColor: "rgba(75, 85, 99, 0.3)",
+    },
+  },
+  confirmButton: {
+    backgroundColor: "#2563EB",
+    color: "#ffffff",
+    border: "none",
+    "&:hover": {
+      backgroundColor: "#4F46E5",
+    },
+  },
+} as const;
 
 const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   instruction,
@@ -43,35 +96,11 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const api = useAPI();
-  const [isDeletingInstruction, setIsDeletingInstruction] =
-    React.useState(false);
-  const [isRenaming, setIsRenaming] = React.useState(false);
-  const [newName, setNewName] = React.useState(instruction.name || "");
-
-  const deleteReferenceElement = useRef<HTMLButtonElement>(null);
-  const deletePopperElement = useRef<HTMLDivElement>(null);
-  const renameReferenceElement = useRef<HTMLButtonElement>(null);
-  const renamePopperElement = useRef<HTMLDivElement>(null);
-
-  const { styles: deleteStyles, attributes: deleteAttributes } = usePopper(
-    deleteReferenceElement.current,
-    deletePopperElement.current,
-    {
-      placement: "bottom-start",
-      modifiers: [{ name: "offset", options: { offset: [0, 8] } }],
-    }
-  );
-
-  const { styles: renameStyles, attributes: renameAttributes } = usePopper(
-    renameReferenceElement.current,
-    renamePopperElement.current,
-    {
-      placement: "bottom-start",
-      modifiers: [{ name: "offset", options: { offset: [0, 8] } }],
-    }
-  );
+  const [isDeletingInstruction, setIsDeletingInstruction] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newName, setNewName] = useState(instruction.name || "");
+  const [isRenamingLoading, setIsRenamingLoading] = useState(false);
 
   const deleteInstructionMutation = useMutation({
     mutationFn: async () => {
@@ -82,7 +111,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
         try {
           await api.timelines.deleteMedia(
             (instruction as OverlayInstruction).overlayMedia!.url,
-            currentTimelineId
+            Number(currentTimelineId)
           );
         } catch (error) {
           console.warn("Failed to delete media file:", error);
@@ -170,6 +199,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   };
 
   const handleConfirmRename = async () => {
+    setIsRenamingLoading(true);
     const updatedInstructions = instructions.map((inst) =>
       inst.id === instruction.id ? { ...inst, name: newName } : inst
     );
@@ -186,8 +216,18 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
       setIsRenaming(false);
     } catch (error) {
       console.error("Failed to rename instruction:", error);
+    } finally {
+      setIsRenamingLoading(false);
     }
   };
+
+  const getButtonStyle = (baseStyle: any) => ({
+    ...styles.button,
+    ...baseStyle,
+    "&:hover": {
+      ...baseStyle["&:hover"],
+    },
+  });
 
   return (
     <>
@@ -204,7 +244,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
               Edit
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={handleRename} ref={renameReferenceElement}>
+          <DropdownMenuItem onClick={handleRename}>
             <Type className="w-4 h-4 mr-2" />
             Rename
           </DropdownMenuItem>
@@ -212,78 +252,75 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
             <Copy className="w-4 h-4 mr-2" />
             Clone
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive"
-            onClick={handleDelete}
-            ref={deleteReferenceElement}
-          >
+          <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {isDeletingInstruction && (
-        <div
-          ref={deletePopperElement}
-          style={deleteStyles.popper}
-          {...deleteAttributes.popper}
-          className="z-50 bg-background border border-border rounded-md shadow-md p-4 animate-fade-in"
-        >
-          <div className="space-y-4">
-            <p>Are you sure you want to delete this instruction?</p>
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDeletingInstruction(false)}
-              >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleConfirmDelete}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationDialog
+        open={isDeletingInstruction}
+        onClose={() => setIsDeletingInstruction(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Instruction"
+        description="Are you sure you want to delete this instruction?"
+        confirmLabel="Delete"
+        variant="destructive"
+      />
 
-      {isRenaming && (
-        <div
-          ref={renamePopperElement}
-          style={renameStyles.popper}
-          {...renameAttributes.popper}
-          className="z-50 bg-background border border-border rounded-md shadow-md p-4 animate-fade-in"
-        >
-          <div className="space-y-4">
+      <Dialog
+        open={isRenaming}
+        onClose={() => !isRenamingLoading && setIsRenaming(false)}
+        title="Rename Instruction"
+      >
+        <div>
+          <div style={styles.inputContainer}>
             <Input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={`${instruction.type} Instruction`}
-              className="w-full"
+              style={styles.input}
+              disabled={isRenamingLoading}
             />
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsRenaming(false)}
-              >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button size="sm" onClick={handleConfirmRename}>
-                Save
-              </Button>
-            </div>
           </div>
+          <div style={styles.buttonGroup}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsRenaming(false)}
+              style={getButtonStyle(styles.cancelButton)}
+              disabled={isRenamingLoading}
+            >
+              <X style={styles.icon} />
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleConfirmRename}
+              style={getButtonStyle(styles.confirmButton)}
+              disabled={isRenamingLoading}
+            >
+              Save
+            </Button>
+          </div>
+          {isRenamingLoading && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "8px",
+              }}
+            >
+              <LoadingSpinner size="sm" />
+            </div>
+          )}
         </div>
-      )}
+      </Dialog>
 
       {(deleteInstructionMutation.isPending ||
         cloneInstructionMutation.isPending) && (

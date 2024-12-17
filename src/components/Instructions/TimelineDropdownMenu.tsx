@@ -1,21 +1,21 @@
-import React, { useState, useRef } from "react";
-import { Edit2, Trash2, Check, X, MoreVertical } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { usePopper } from "react-popper";
-import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { MoreVertical, Edit2, Trash2, X, Check } from "lucide-react";
+import { useAPI } from "@/hooks/useAPI";
+import { setCurrentTimeline } from "@/store/timelineSlice";
+import { Timeline } from "@/types";
 import Button from "@/components/ui/Button";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
-import { setCurrentTimeline } from "@/store/timelineSlice";
-import { useAPI } from "@/hooks/useAPI";
-import type { Timeline } from "@/types";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
+import Dialog from "@/components/ui/Dialog";
 
 interface TimelineDropdownMenuProps {
   currentTimeline: Timeline;
@@ -34,36 +34,6 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
   const [isRenamingTimeline, setIsRenamingTimeline] = useState(false);
   const [isDeletingTimeline, setIsDeletingTimeline] = useState(false);
   const [newTimelineTitle, setNewTimelineTitle] = useState("");
-
-  const referenceElement = useRef<HTMLButtonElement>(null);
-  const popperElement = useRef<HTMLDivElement>(null);
-  const deleteReferenceElement = useRef<HTMLButtonElement>(null);
-  const deletePopperElement = useRef<HTMLDivElement>(null);
-
-  const { styles, attributes } = usePopper(
-    referenceElement.current,
-    popperElement.current,
-    {
-      placement: "bottom-start",
-      modifiers: [
-        {
-          name: "offset",
-          options: {
-            offset: [0, 8],
-          },
-        },
-      ],
-    }
-  );
-
-  const { styles: deleteStyles, attributes: deleteAttributes } = usePopper(
-    deleteReferenceElement.current,
-    deletePopperElement.current,
-    {
-      placement: "bottom-start",
-      modifiers: [{ name: "offset", options: { offset: [0, 8] } }],
-    }
-  );
 
   const deleteTimelineMutation = useMutation({
     mutationFn: async () => {
@@ -101,7 +71,6 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
 
   const handleConfirmDelete = async () => {
     await deleteTimelineMutation.mutateAsync();
-    setIsDeletingTimeline(false);
   };
 
   const handleRenameTimeline = () => {
@@ -112,7 +81,6 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
   const handleRenameSubmit = async () => {
     if (newTimelineTitle.trim() !== "") {
       await updateTimelineMutation.mutateAsync(newTimelineTitle.trim());
-      setIsRenamingTimeline(false);
     }
   };
 
@@ -127,17 +95,13 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={handleRenameTimeline}
-            ref={referenceElement}
-          >
+          <DropdownMenuItem onClick={handleRenameTimeline}>
             <Edit2 className="w-4 h-4 mr-2" />
             Rename Timeline
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive"
             onClick={handleDeleteTimeline}
-            ref={deleteReferenceElement}
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete Timeline
@@ -145,70 +109,46 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {isRenamingTimeline && (
-        <div
-          ref={popperElement}
-          style={styles.popper}
-          {...attributes.popper}
-          className="z-50 bg-background border border-border rounded-md shadow-md p-4 animate-fade-in"
-        >
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={newTimelineTitle}
-              onChange={(e) => setNewTimelineTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-              placeholder="Timeline title"
-              autoFocus
-            />
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsRenamingTimeline(false)}
-              >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button size="sm" onClick={handleRenameSubmit}>
-                <Check className="w-4 h-4 mr-2" />
-                Save
-              </Button>
-            </div>
+      <Dialog
+        open={isRenamingTimeline}
+        onClose={() => setIsRenamingTimeline(false)}
+        title="Rename Timeline"
+      >
+        <div className="space-y-4">
+          <input
+            type="text"
+            value={newTimelineTitle}
+            onChange={(e) => setNewTimelineTitle(e.target.value)}
+            className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+            placeholder="Timeline title"
+            autoFocus
+          />
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsRenamingTimeline(false)}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleRenameSubmit}>
+              <Check className="w-4 h-4 mr-2" />
+              Save
+            </Button>
           </div>
         </div>
-      )}
+      </Dialog>
 
-      {isDeletingTimeline && (
-        <div
-          ref={deletePopperElement}
-          style={deleteStyles.popper}
-          {...deleteAttributes.popper}
-          className="z-50 bg-background border border-border rounded-md shadow-md p-4 animate-fade-in"
-        >
-          <div className="space-y-4">
-            <p>Are you sure you want to delete this timeline?</p>
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDeletingTimeline(false)}
-              >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleConfirmDelete}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationDialog
+        open={isDeletingTimeline}
+        onClose={() => setIsDeletingTimeline(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Timeline"
+        description="Are you sure you want to delete this timeline?"
+        confirmLabel="Delete"
+        variant="destructive"
+      />
 
       {(deleteTimelineMutation.isPending ||
         updateTimelineMutation.isPending) && (

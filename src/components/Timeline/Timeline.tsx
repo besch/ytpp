@@ -498,7 +498,6 @@ const Timeline: React.FC = () => {
   return (
     <div className="bg-background border border-border rounded-lg">
       <div className="flex items-center justify-between p-4">
-        <h3 className="text-sm font-medium text-foreground">Timeline</h3>
         <div className="flex gap-2 items-center mb-4">
           <Button
             variant="ghost"

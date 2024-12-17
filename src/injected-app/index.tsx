@@ -89,7 +89,7 @@ function init() {
     left: ${playerRect ? playerRect.left : 20}px;
     width: ${playerRect ? `${playerRect.width}px` : "auto"};
     min-width: 400px;
-    z-index: 2147483647;
+    z-index: 9999;
     contain: layout style;
     isolation: isolate;
     pointer-events: auto !important;
