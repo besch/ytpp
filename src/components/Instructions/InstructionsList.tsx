@@ -121,9 +121,9 @@ const InstructionsList: React.FC = () => {
                 onClick={() => dispatch(seekToTime(instruction.triggerTime))}
               >
                 <div>
-                  <h1 className="font-medium capitalize">
+                  <p className="text-lg font-medium capitalize">
                     {instruction.name || `${instruction.type} Instruction`}
-                  </h1>
+                  </p>
                   <p className="text-sm text-muted-foreground ml-2">
                     at {formatTime(instruction.triggerTime)}
                   </p>

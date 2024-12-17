@@ -26,7 +26,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           type={type}
           className={cn(
-            "h-4 w-4 cursor-pointer border-input bg-background text-primary focus:ring-2 focus:ring-primary",
+            "h-6 w-6 cursor-pointer border-input bg-background text-primary focus:ring-2 focus:ring-primary",
             className
           )}
           autoComplete={autoComplete}

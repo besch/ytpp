@@ -63,7 +63,7 @@ const TextOverlayInstructionForm: React.FC<{
           className="w-full"
         />
         {errors.textOverlay?.text && (
-          <span className="text-xs text-destructive">Text is required</span>
+          <span className="text-sm text-destructive">Text is required</span>
         )}
       </div>
 
@@ -138,7 +138,7 @@ const TextOverlayInstructionForm: React.FC<{
         </label>
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Text Color</label>
+            <label className="text-sm text-muted-foreground">Text Color</label>
             <Input
               type="color"
               {...register("textOverlay.style.color")}
@@ -147,7 +147,7 @@ const TextOverlayInstructionForm: React.FC<{
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Background</label>
+            <label className="text-sm text-muted-foreground">Background</label>
             <Input
               type="color"
               {...register("textOverlay.style.backgroundColor")}
@@ -157,7 +157,7 @@ const TextOverlayInstructionForm: React.FC<{
           </div>
 
           <div className="flex items-center">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 mt-auto">
               <Input
                 type="checkbox"
                 {...register("textOverlay.style.transparentBackground")}
@@ -260,7 +260,7 @@ const TextOverlayInstructionForm: React.FC<{
             })}
           />
           {errors.overlayDuration && (
-            <span className="text-xs text-destructive">
+            <span className="text-sm text-destructive">
               Please enter a valid duration
             </span>
           )}
@@ -294,7 +294,7 @@ const TextOverlayInstructionForm: React.FC<{
                 })}
               />
               {errors.pauseDuration && (
-                <span className="text-xs text-destructive">
+                <span className="text-sm text-destructive">
                   Please enter a valid duration
                 </span>
               )}

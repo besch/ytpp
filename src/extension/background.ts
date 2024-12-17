@@ -85,7 +85,6 @@ class BackgroundService {
 
       return response.ok;
     } catch (error) {
-      console.error("Token verification failed:", error);
       return false;
     }
   }

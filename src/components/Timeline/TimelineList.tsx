@@ -159,7 +159,7 @@ const TimelineList: React.FC = () => {
     <div className="space-y-4 p-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-medium">Timelines</h1>
+          <p className="text-lg font-medium">Timelines</p>
           <Button
             variant="ghost"
             size="sm"
@@ -167,7 +167,9 @@ const TimelineList: React.FC = () => {
             disabled={isLoading}
             className="p-1 h-auto"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+            />
           </Button>
         </div>
         <Button
@@ -195,7 +197,7 @@ const TimelineList: React.FC = () => {
                   className="cursor-pointer"
                   onClick={() => handleEditTimeline(timeline)}
                 >
-                  <h1 className="font-medium">{timeline.title}</h1>
+                  <p className="text-lg font-medium">{timeline.title}</p>
                   {timeline.users && (
                     <div className="flex items-center gap-2 mt-1">
                       <img
