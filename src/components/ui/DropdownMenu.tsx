@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { createPortal } from "react-dom";
 
 interface DropdownMenuProps {
   children: React.ReactNode;
@@ -61,6 +61,57 @@ export const DropdownMenuTrigger: React.FC<DropdownMenuTriggerProps> = ({
   );
 };
 
+const dropdownStyles = {
+  wrapper: {
+    fontFamily: "system-ui, sans-serif",
+    position: "relative",
+  },
+  content: {
+    position: "fixed",
+    zIndex: 9999,
+    minWidth: "8rem",
+    overflow: "hidden",
+    padding: "0.25rem",
+    marginTop: "0.25rem",
+    backgroundColor: "rgb(31 41 55)",
+    border: "1px solid #333333",
+    borderRadius: "0.375rem",
+    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+    transformOrigin: "top right",
+  },
+  menuItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    width: "100%",
+    padding: "0.5rem 0.75rem",
+    fontSize: "0.875rem",
+    color: "#ffffff",
+    backgroundColor: "transparent",
+    border: "none",
+    borderRadius: "0.25rem",
+    cursor: "pointer",
+    transition: "all 200ms",
+    "& svg": {
+      width: "16px",
+      height: "16px",
+      flexShrink: 0,
+      marginRight: "8px",
+    },
+  },
+  menuItemHover: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    color: "#ffffff",
+  },
+  menuItemDestructive: {
+    color: "#ef4444",
+  },
+  menuItemDestructiveHover: {
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    color: "#ef4444",
+  },
+} as const;
+
 export const DropdownMenuContent: React.FC<DropdownMenuContentProps> = ({
   children,
   align = "end",
@@ -68,6 +119,14 @@ export const DropdownMenuContent: React.FC<DropdownMenuContentProps> = ({
 }) => {
   const { open, setOpen } = React.useContext(DropdownMenuContext);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,39 +135,105 @@ export const DropdownMenuContent: React.FC<DropdownMenuContentProps> = ({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [setOpen]);
+    const updatePosition = () => {
+      if (!ref.current || !triggerRef.current?.parentElement) return;
 
-  if (!open) return null;
+      const triggerRect =
+        triggerRef.current.parentElement.getBoundingClientRect();
+      const dropdownRect = ref.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
 
-  return (
+      // Calculate available space
+      const spaceBelow = viewportHeight - triggerRect.bottom;
+      const spaceAbove = triggerRect.top;
+
+      // Determine if dropdown should appear above
+      const showAbove =
+        spaceBelow < dropdownRect.height && spaceAbove > spaceBelow;
+
+      // Calculate left position based on alignment and available space
+      let leftPos =
+        align === "end"
+          ? triggerRect.right - dropdownRect.width
+          : triggerRect.left;
+
+      // Adjust horizontal position if it would overflow
+      if (leftPos + dropdownRect.width > viewportWidth) {
+        leftPos = viewportWidth - dropdownRect.width - 8;
+      }
+      if (leftPos < 8) {
+        leftPos = 8;
+      }
+
+      // Calculate top position
+      let topPos = showAbove
+        ? triggerRect.top - dropdownRect.height - 4
+        : triggerRect.bottom + 4;
+
+      // Adjust vertical position if it would overflow
+      if (topPos + dropdownRect.height > viewportHeight) {
+        topPos = viewportHeight - dropdownRect.height - 8;
+      }
+      if (topPos < 8) {
+        topPos = 8;
+      }
+
+      setPosition({
+        top: topPos,
+        left: leftPos,
+      });
+    };
+
+    if (open) {
+      requestAnimationFrame(updatePosition);
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open, setOpen, align]);
+
+  if (!open || !mounted) return null;
+
+  const triggerElement = (
     <div
-      ref={ref}
-      className={cn(
-        "fixed",
-        "z-[9999]",
-        "min-w-[8rem]",
-        "overflow-hidden",
-        "rounded-md",
-        "border",
-        "border-border",
-        "bg-background",
-        "p-1",
-        "shadow-md",
-        "animate-fade-in",
-        align === "end" ? "right-0" : "left-0",
-        "mt-1",
-        className
-      )}
+      ref={triggerRef}
       style={{
         position: "absolute",
-        top: "100%",
-        [align === "end" ? "right" : "left"]: 0,
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
       }}
-    >
-      {children}
+    />
+  );
+
+  const dropdownContent = (
+    <div style={dropdownStyles.wrapper}>
+      <div
+        ref={ref}
+        style={{
+          ...dropdownStyles.content,
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+        }}
+      >
+        {children}
+      </div>
     </div>
+  );
+
+  return (
+    <>
+      {triggerElement}
+      {createPortal(dropdownContent, document.body)}
+    </>
   );
 };
 
@@ -117,6 +242,7 @@ export const DropdownMenuItem = React.forwardRef<
   DropdownMenuItemProps
 >(({ children, className, onClick }, ref) => {
   const { setOpen } = React.useContext(DropdownMenuContext);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
     onClick?.();
@@ -127,12 +253,26 @@ export const DropdownMenuItem = React.forwardRef<
     <button
       ref={ref}
       onClick={handleClick}
-      className={cn(
-        "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-4 text-base outline-none transition-colors hover:bg-muted/50",
-        className
-      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        ...dropdownStyles.menuItem,
+        ...(isHovered ? dropdownStyles.menuItemHover : {}),
+      }}
     >
-      {children}
+      {React.Children.map(children, (child) => {
+        if (React.isValidElement(child) && child.type === "svg") {
+          return React.cloneElement(child as React.ReactElement, {
+            style: {
+              width: "16px",
+              height: "16px",
+              flexShrink: 0,
+              marginRight: "8px",
+            },
+          });
+        }
+        return child;
+      })}
     </button>
   );
 });
