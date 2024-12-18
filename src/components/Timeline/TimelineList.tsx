@@ -188,7 +188,14 @@ const TimelineList: React.FC = () => {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-medium">{timeline.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-medium">{timeline.title}</p>
+                    {timelineOwnerships[index] && (
+                      <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
+                        Owner
+                      </span>
+                    )}
+                  </div>
                   {timeline.users && (
                     <div className="flex items-center gap-2 mt-1">
                       <img
