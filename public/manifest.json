@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Timelines",
+  "name": "Video Timeline",
   "version": "0.0.1",
   "description": "Enhance video original with instructions and media elements on any website",
   "permissions": [

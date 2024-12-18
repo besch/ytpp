@@ -1,12 +1,13 @@
 import { makeAPIRequest } from "@/lib/eventSystem";
 import { Timeline, Instruction, MediaFile } from "@/types";
+const { API_BASE_URL } = require("../config.js");
 
-const API_BASE_URL = "http://localhost:3000/api";
+const API_URL = `${API_BASE_URL}/api`;
 
 export const getMediaUrl = (path: string): string => {
   if (!path) return "";
   const filename = path.split("/").pop();
-  return `${API_BASE_URL}/media/${filename}`;
+  return `${API_URL}/media/${filename}`;
 };
 
 export const api = {

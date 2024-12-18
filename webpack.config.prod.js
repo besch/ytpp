@@ -2,6 +2,7 @@ const path = require("path");
 const webpack = require("webpack");
 const TerserPlugin = require("terser-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
+const { API_BASE_URL } = require("./src/config.js");
 
 module.exports = {
   entry: {
@@ -81,9 +82,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      "process.env.REACT_APP_BASE_API_URL": JSON.stringify(
-        process.env.REACT_APP_BASE_API_URL || ""
-      ),
+      "process.env.API_BASE_URL": JSON.stringify(API_BASE_URL),
     }),
     new webpack.optimize.LimitChunkCountPlugin({
       maxChunks: 1,

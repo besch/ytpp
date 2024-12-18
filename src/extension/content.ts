@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import { addCustomEventListener, eventSystem } from "@/lib/eventSystem";
 import { VideoManager } from "@/lib/VideoManager";
 import { TextOverlayInstruction, OverlayInstruction } from "@/types";
+const { API_BASE_URL } = require("../config.js");
 
 interface AuthResponse {
   success: boolean;
@@ -188,7 +189,7 @@ class ContentScript {
       const { endpoint, method, body, params } = payload;
       console.log("Handling API request:", { endpoint, method, params });
 
-      const url = new URL(`http://localhost:3000/api${endpoint}`);
+      const url = new URL(`${API_BASE_URL}/api${endpoint}`);
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
           url.searchParams.append(key, value as string);
