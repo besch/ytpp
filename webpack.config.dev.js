@@ -1,12 +1,13 @@
 //  DEV
 const path = require("path");
 const webpack = require("webpack");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: {
-    content: path.join(__dirname, "src", "extension", "content.ts"),
-    background: path.join(__dirname, "src", "extension", "background.ts"),
-    "injected-app": path.join(__dirname, "src", "injected-app", "index.tsx"),
+    content: "./src/extension/content.ts",
+    background: "./src/extension/background.ts",
+    "injected-app": "./src/injected-app/index.tsx",
   },
   mode: "development",
   devtool: "inline-source-map",
@@ -19,7 +20,7 @@ module.exports = {
             loader: "ts-loader",
             options: {
               transpileOnly: true,
-              configFile: "tsconfig.extension.json",
+              configFile: path.resolve(__dirname, "tsconfig.extension.json"),
             },
           },
         ],
@@ -48,16 +49,16 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".css"],
-    modules: [path.resolve(__dirname, "src"), "node_modules"],
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".css"],
+    modules: ["node_modules"],
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   output: {
     filename: "[name].js",
     path: path.resolve(__dirname, "build"),
-    publicPath: "/",
+    clean: true,
   },
   optimization: {
     minimize: false,
@@ -66,11 +67,23 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       "process.env.REACT_APP_BASE_API_URL": JSON.stringify(
-        "${process.env.REACT_APP_BASE_API_URL}"
+        process.env.REACT_APP_BASE_API_URL || ""
       ),
     }),
     new webpack.optimize.LimitChunkCountPlugin({
       maxChunks: 1,
+    }),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: "public/manifest.json",
+          to: "manifest.json",
+        },
+        {
+          from: "public/assets",
+          to: "assets",
+        },
+      ],
     }),
   ],
 };

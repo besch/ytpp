@@ -1,16 +1,15 @@
-// PROD
 const path = require("path");
 const webpack = require("webpack");
 const TerserPlugin = require("terser-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: {
-    content: path.join(__dirname, "src", "extension", "content.ts"),
-    background: path.join(__dirname, "src", "extension", "background.ts"),
-    "injected-app": path.join(__dirname, "src", "injected-app", "index.tsx"),
+    content: "./src/extension/content.ts",
+    background: "./src/extension/background.ts",
+    "injected-app": "./src/injected-app/index.tsx",
   },
   mode: "production",
-  devtool: false,
   module: {
     rules: [
       {
@@ -20,7 +19,7 @@ module.exports = {
             loader: "ts-loader",
             options: {
               transpileOnly: true,
-              configFile: "tsconfig.extension.json",
+              configFile: path.resolve(__dirname, "tsconfig.extension.json"),
             },
           },
         ],
@@ -30,7 +29,12 @@ module.exports = {
         test: /\.css$/,
         use: [
           "style-loader",
-          "css-loader",
+          {
+            loader: "css-loader",
+            options: {
+              importLoaders: 1,
+            },
+          },
           {
             loader: "postcss-loader",
             options: {
@@ -44,16 +48,15 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".css"],
-    modules: [path.resolve(__dirname, "src"), "node_modules"],
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".css"],
+    modules: ["node_modules"],
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   output: {
     filename: "[name].js",
     path: path.resolve(__dirname, "build"),
-    publicPath: "/",
     clean: true,
   },
   optimization: {
@@ -61,55 +64,41 @@ module.exports = {
     minimizer: [
       new TerserPlugin({
         terserOptions: {
-          parse: {
-            ecma: 8,
-          },
           compress: {
-            ecma: 5,
-            warnings: false,
-            comparisons: false,
-            inline: 2,
             drop_console: true,
           },
           mangle: {
-            safari10: true,
+            keep_fnames: false,
           },
-          output: {
-            ecma: 5,
+          format: {
             comments: false,
-            ascii_only: true,
           },
         },
         extractComments: false,
       }),
     ],
-    splitChunks: {
-      cacheGroups: {
-        commons: {
-          test: /[\\/]node_modules[\\/]/,
-          name: "vendors",
-          chunks: "all",
-        },
-      },
-    },
-  },
-  performance: {
-    maxEntrypointSize: 512000,
-    maxAssetSize: 512000,
+    concatenateModules: true,
   },
   plugins: [
     new webpack.DefinePlugin({
       "process.env.REACT_APP_BASE_API_URL": JSON.stringify(
-        "${process.env.REACT_APP_BASE_API_URL}"
+        process.env.REACT_APP_BASE_API_URL || ""
       ),
-      "process.env.NODE_ENV": JSON.stringify("production"),
     }),
     new webpack.optimize.LimitChunkCountPlugin({
       maxChunks: 1,
     }),
-    new webpack.ids.DeterministicModuleIdsPlugin({
-      maxLength: 5,
+    new CopyPlugin({
+      patterns: [
+        {
+          from: "public/manifest.json",
+          to: "manifest.json",
+        },
+        {
+          from: "public/assets",
+          to: "assets",
+        },
+      ],
     }),
-    new webpack.optimize.ModuleConcatenationPlugin(),
   ],
 };
