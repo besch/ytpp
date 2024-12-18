@@ -22,7 +22,7 @@
     "128": "assets/icons/icon.png"
   },
   "background": {
-    "service_worker": "./background.js",
+    "service_worker": "background.js",
     "type": "module"
   },
   "content_security_policy": {
@@ -31,7 +31,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["injected-app.js", "assets/*"],
+      "resources": ["injected-app.js", "assets/*", "content.js"],
       "matches": ["<all_urls>"]
     }
   ],
