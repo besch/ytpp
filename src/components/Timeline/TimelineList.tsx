@@ -183,13 +183,11 @@ const TimelineList: React.FC = () => {
           {timelines.map((timeline, index) => (
             <div
               key={`${timeline.id}-${index}`}
-              className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20"
+              className="p-3 bg-muted/10 border border-border rounded-lg hover:bg-muted/20 cursor-pointer"
+              onClick={() => handleEditTimeline(timeline)}
             >
               <div className="flex items-center justify-between">
-                <div
-                  className="cursor-pointer"
-                  onClick={() => handleEditTimeline(timeline)}
-                >
+                <div>
                   <p className="text-lg font-medium">{timeline.title}</p>
                   {timeline.users && (
                     <div className="flex items-center gap-2 mt-1">
@@ -204,7 +202,10 @@ const TimelineList: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-4">
+                <div
+                  className="flex items-center gap-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleReaction(timeline, "like")}

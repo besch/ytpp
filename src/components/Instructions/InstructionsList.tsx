@@ -112,7 +112,7 @@ const InstructionsList: React.FC = () => {
             .map((instruction) => (
               <div
                 key={instruction.id}
-                className={`p-3 border border-border rounded-lg flex items-center justify-between transition-all duration-200
+                className={`p-3 border border-border rounded-lg flex items-center justify-between transition-all duration-200 cursor-pointer
                   ${
                     isTimeMatching(instruction.triggerTime)
                       ? "bg-primary/20 border-primary/50"
