@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { MoreVertical, Edit2, Trash2, Copy, Type, X } from "lucide-react";
 import { useAPI } from "@/hooks/useAPI";
 import {
@@ -104,6 +104,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const api = useAPI();
+  const queryClient = useQueryClient();
   const [isDeletingInstruction, setIsDeletingInstruction] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(instruction.name || "");
@@ -135,6 +136,12 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     onSuccess: () => {
       setIsDeletingInstruction(false);
       dispatch(removeInstruction(instruction.id));
+      queryClient.invalidateQueries({
+        queryKey: ["instructions", timelineId.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+      onDeleteSuccess?.();
+      navigate(`/timeline/${timelineId}`);
     },
     onError: (error: Error) => {
       setIsDeletingInstruction(false);
