@@ -171,6 +171,12 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
       );
       return clonedInstruction;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["instructions", timelineId.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+    },
     onError: (error: Error) => {
       console.error("Failed to clone instruction:", error);
     },
