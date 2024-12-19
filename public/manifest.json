@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Video Timeline",
   "version": "0.0.1",
-  "description": "Enhance video original with instructions and media elements on any website",
+  "description": "Video Timelines is a powerful Chrome extension designed to enhance your video viewing experience by creating interactive timelines. This tool allows users to connect to videos on various websites, enabling them to skip sections, display media elements (such as images, GIFs, text, and videos) over the video, and augment the content dynamically. If a user wants to add or modify content in a video after it has been posted online, Video Timelines provides an easy way to do so, ensuring that important information is never overlooked.",
   "permissions": [
     "activeTab",
     "storage",
