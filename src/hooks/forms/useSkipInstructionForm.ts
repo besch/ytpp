@@ -16,19 +16,23 @@ export const useSkipInstructionForm = (currentTime: number) => {
   };
 
   const buildInstruction = (data: any, id: string): SkipInstruction => {
-    const triggerTime = parseTimeInput({
-      hours: data.hours || 0,
-      minutes: data.minutes || 0,
-      seconds: data.seconds || 0,
-      milliseconds: data.milliseconds || 0,
-    });
+    const triggerTime = Number(
+      parseTimeInput({
+        hours: data.hours || 0,
+        minutes: data.minutes || 0,
+        seconds: data.seconds || 0,
+        milliseconds: data.milliseconds || 0,
+      }).toFixed(3)
+    );
 
-    const skipToTime = parseTimeInput({
-      hours: data.skipToHours || 0,
-      minutes: data.skipToMinutes || 0,
-      seconds: data.skipToSeconds || 0,
-      milliseconds: data.skipToMilliseconds || 0,
-    });
+    const skipToTime = Number(
+      parseTimeInput({
+        hours: data.skipToHours || 0,
+        minutes: data.skipToMinutes || 0,
+        seconds: data.skipToSeconds || 0,
+        milliseconds: data.skipToMilliseconds || 0,
+      }).toFixed(3)
+    );
 
     return {
       id,
