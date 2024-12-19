@@ -185,8 +185,6 @@ const Timeline: React.FC = () => {
   ) => {
     e.stopPropagation();
     seekToTime(instruction.triggerTime);
-    dispatch(setSelectedInstructionId(null));
-    dispatch(setEditingInstruction(null));
   };
 
   const handleInstructionDrag = (
