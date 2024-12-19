@@ -279,11 +279,15 @@ class ContentScript {
 
       const response = await fetch(url.toString(), options);
       let data;
-      try {
-        data = await response.json();
-      } catch (error) {
-        console.error("Content: Error parsing response JSON:", error);
-        data = null;
+
+      // Don't try to parse JSON for 204 No Content responses
+      if (response.status !== 204) {
+        try {
+          data = await response.json();
+        } catch (error) {
+          console.error("Content: Error parsing response JSON:", error);
+          data = null;
+        }
       }
 
       console.log("Content: API response:", {
