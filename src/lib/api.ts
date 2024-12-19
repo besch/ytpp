@@ -69,8 +69,9 @@ export const api = {
       timelineId: string,
       instruction: Instruction
     ): Promise<InstructionResponse> => {
+      const { id, ...instructionWithoutId } = instruction;
       const clonedInstruction = {
-        ...instruction,
+        ...instructionWithoutId,
         triggerTime: instruction.triggerTime + 3000,
       };
 
