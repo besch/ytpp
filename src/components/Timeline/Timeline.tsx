@@ -227,15 +227,18 @@ const Timeline: React.FC = () => {
           triggerTime: newTime,
         };
         dispatch(updateInstruction(updatedInstruction));
-        // Update editing instruction with new time
-        dispatch(setEditingInstruction(updatedInstruction));
       }
     };
 
     const handleMouseUp = async () => {
       if (isDragging && updatedInstruction) {
-        // Keep editing instruction after drop but don't update backend
-        dispatch(setEditingInstruction(updatedInstruction));
+        // Pass both the updated instruction and original time when setting editing state
+        dispatch(
+          setEditingInstruction({
+            ...updatedInstruction,
+            _originalTriggerTime: startTime,
+          } as Instruction)
+        );
       }
 
       setDraggingInstructionId(null);
@@ -288,15 +291,18 @@ const Timeline: React.FC = () => {
           skipToTime: newTime,
         };
         dispatch(updateInstruction(updatedInstruction));
-        // Update editing instruction with new time
-        dispatch(setEditingInstruction(updatedInstruction));
       }
     };
 
     const handleMouseUp = async () => {
       if (isDragging && updatedInstruction) {
-        // Keep editing instruction after drop but don't update backend
-        dispatch(setEditingInstruction(updatedInstruction));
+        // Pass both the updated instruction and original time when setting editing state
+        dispatch(
+          setEditingInstruction({
+            ...updatedInstruction,
+            _originalSkipToTime: startTime,
+          } as SkipInstruction)
+        );
       }
 
       setDraggingInstructionId(null);

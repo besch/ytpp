@@ -12,7 +12,12 @@ export interface BaseInstruction {
   name?: string;
 }
 
-export interface OverlayInstruction extends BaseInstruction {
+export interface InstructionWithOriginalTimes extends BaseInstruction {
+  _originalTriggerTime?: number;
+  _originalSkipToTime?: number;
+}
+
+export interface OverlayInstruction extends InstructionWithOriginalTimes {
   type: "overlay";
   overlayMedia: OverlayMedia | null;
   overlayDuration: number;
@@ -20,7 +25,7 @@ export interface OverlayInstruction extends BaseInstruction {
   muteOverlayMedia?: boolean;
 }
 
-export interface SkipInstruction extends BaseInstruction {
+export interface SkipInstruction extends InstructionWithOriginalTimes {
   type: "skip";
   skipToTime: number;
 }
@@ -52,7 +57,7 @@ export interface TextStyle {
   padding?: number;
 }
 
-export interface TextOverlayInstruction extends BaseInstruction {
+export interface TextOverlayInstruction extends InstructionWithOriginalTimes {
   type: "text-overlay";
   textOverlay: TextOverlayMedia;
   overlayDuration: number;

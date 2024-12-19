@@ -11,11 +11,13 @@ import {
   setCurrentTimeline,
   seekToTime,
   removeInstruction,
+  updateInstruction,
 } from "@/store/timelineSlice";
 import { useAPI } from "@/hooks/useAPI";
 import {
   Instruction,
   OverlayInstruction,
+  SkipInstruction,
   TextOverlayInstruction,
 } from "@/types";
 import { MediaPosition } from "./MediaPositioner";
@@ -60,6 +62,12 @@ const InstructionEditor: React.FC = () => {
 
   const [formChanged, setFormChanged] = useState(false);
   const [initialValues, setInitialValues] = useState<any>(null);
+  const [originalTriggerTime, setOriginalTriggerTime] = useState<number | null>(
+    null
+  );
+  const [originalSkipToTime, setOriginalSkipToTime] = useState<number | null>(
+    null
+  );
 
   const handleTimeChange = (time: number) => {
     const totalSeconds = Math.floor(time / 1000);
@@ -285,6 +293,26 @@ const InstructionEditor: React.FC = () => {
 
   // Update the handleCancel function
   const handleCancel = () => {
+    if (
+      editingInstruction &&
+      (originalTriggerTime !== null || originalSkipToTime !== null)
+    ) {
+      let updatedInstruction = { ...editingInstruction } as Instruction;
+
+      if (originalTriggerTime !== null) {
+        updatedInstruction.triggerTime = originalTriggerTime;
+      }
+
+      if (originalSkipToTime !== null && updatedInstruction.type === "skip") {
+        (updatedInstruction as SkipInstruction).skipToTime = originalSkipToTime;
+      }
+
+      dispatch(updateInstruction(updatedInstruction));
+      dispatch(setEditingInstruction(null));
+      navigate(`/timeline/${timelineId}`);
+      return;
+    }
+
     if (initialValues) {
       // Reset the form with the initial values
       methods.reset(initialValues, {
@@ -401,9 +429,29 @@ const InstructionEditor: React.FC = () => {
     }
   }, [editingInstruction, currentTime, methods]);
 
-  // Add this effect to update form values when editingInstruction changes
+  // Update the effect that handles editingInstruction changes
   useEffect(() => {
     if (isEditing && editingInstruction) {
+      // Store original times if they exist from drag operation
+      if ("_originalTriggerTime" in editingInstruction) {
+        setOriginalTriggerTime(editingInstruction._originalTriggerTime ?? null);
+      } else {
+        // Set original time on first edit
+        setOriginalTriggerTime(editingInstruction.triggerTime);
+      }
+
+      if (
+        "_originalSkipToTime" in editingInstruction &&
+        editingInstruction.type === "skip"
+      ) {
+        setOriginalSkipToTime(editingInstruction._originalSkipToTime ?? null);
+      } else if (editingInstruction.type === "skip") {
+        // Set original skip time on first edit
+        setOriginalSkipToTime(
+          (editingInstruction as SkipInstruction).skipToTime
+        );
+      }
+
       // Update trigger time fields
       const triggerTotalSeconds = Math.floor(
         editingInstruction.triggerTime / 1000
@@ -442,15 +490,19 @@ const InstructionEditor: React.FC = () => {
         });
       }
 
-      // Update initial values to prevent unnecessary form changes
+      // Check if times have changed from original values
+      const hasTimeChanges =
+        (originalTriggerTime !== null &&
+          originalTriggerTime !== editingInstruction.triggerTime) ||
+        (originalSkipToTime !== null &&
+          editingInstruction.type === "skip" &&
+          originalSkipToTime !==
+            (editingInstruction as SkipInstruction).skipToTime);
+
+      setFormChanged(hasTimeChanges);
       setInitialValues(methods.getValues());
-      setFormChanged(false);
     }
-  }, [
-    isEditing,
-    editingInstruction?.triggerTime,
-    editingInstruction?.type === "skip" ? editingInstruction.skipToTime : null,
-  ]);
+  }, [isEditing, editingInstruction, originalTriggerTime, originalSkipToTime]);
 
   return (
     <div className="p-6 overflow-x-hidden">
