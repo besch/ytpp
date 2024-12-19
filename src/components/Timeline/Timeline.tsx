@@ -189,22 +189,6 @@ const Timeline: React.FC = () => {
     dispatch(setEditingInstruction(null));
   };
 
-  const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
-    if (!currentTimeline) return;
-
-    try {
-      // Update each instruction individually using the instructions API
-      await Promise.all(
-        updatedInstructions.map(async (instruction) => {
-          await api.instructions.update(instruction.id, instruction);
-        })
-      );
-    } catch (error) {
-      console.error("Failed to save instructions:", error);
-      toast.error("Failed to save instructions");
-    }
-  };
-
   const handleInstructionDrag = (
     e: React.MouseEvent,
     instruction: Instruction
