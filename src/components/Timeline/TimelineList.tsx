@@ -125,7 +125,6 @@ const TimelineList: React.FC = () => {
     createTimelineMutation.mutate({
       title: "New Timeline",
       video_url: videoUrl,
-      instructions: [],
     });
   };
 

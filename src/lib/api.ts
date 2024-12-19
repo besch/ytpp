@@ -1,5 +1,11 @@
 import { makeAPIRequest } from "@/lib/eventSystem";
-import { Timeline, Instruction, MediaFile } from "@/types";
+import {
+  Timeline,
+  Instruction,
+  MediaFile,
+  InstructionResponse,
+  SkipInstruction,
+} from "@/types";
 const { API_BASE_URL } = require("../config.js");
 
 const API_URL = `${API_BASE_URL}/api`;
@@ -26,6 +32,79 @@ export const api = {
       return response.data;
     },
   },
+  instructions: {
+    getAll: async (timelineId: string): Promise<InstructionResponse[]> => {
+      const response = await makeAPIRequest({
+        endpoint: "/instructions",
+        method: "GET",
+        params: { timeline_id: timelineId },
+      });
+      return response.data;
+    },
+
+    get: async (id: string): Promise<InstructionResponse> => {
+      const response = await makeAPIRequest({
+        endpoint: `/instructions/${id}`,
+        method: "GET",
+      });
+      return response.data;
+    },
+
+    create: async (
+      timelineId: string,
+      instruction: Omit<Instruction, "id">
+    ): Promise<InstructionResponse> => {
+      const response = await makeAPIRequest({
+        endpoint: "/instructions",
+        method: "POST",
+        body: {
+          timeline_id: timelineId,
+          instruction,
+        },
+      });
+      return response.data;
+    },
+
+    clone: async (
+      timelineId: string,
+      instruction: Instruction
+    ): Promise<InstructionResponse> => {
+      const clonedInstruction = {
+        ...instruction,
+        triggerTime: instruction.triggerTime + 3000,
+      };
+
+      if (instruction.type === "skip") {
+        (clonedInstruction as SkipInstruction).skipToTime += 3000;
+      }
+
+      return api.instructions.create(timelineId, clonedInstruction);
+    },
+
+    update: async (
+      id: string,
+      instruction: Partial<Instruction>
+    ): Promise<InstructionResponse> => {
+      const response = await makeAPIRequest({
+        endpoint: `/instructions/${id}`,
+        method: "PUT",
+        body: {
+          type: instruction.type,
+          trigger_time: instruction.triggerTime,
+          name: instruction.name,
+          data: instruction,
+        },
+      });
+      return response.data;
+    },
+
+    delete: async (id: string): Promise<void> => {
+      await makeAPIRequest({
+        endpoint: `/instructions/${id}`,
+        method: "DELETE",
+      });
+    },
+  },
   timelines: {
     getAll: async (videoUrl?: string): Promise<Timeline[]> => {
       const params = videoUrl ? { video_url: videoUrl } : undefined;
@@ -45,7 +124,9 @@ export const api = {
       return response.data;
     },
 
-    create: async (timeline: Partial<Timeline>): Promise<Timeline> => {
+    create: async (
+      timeline: Omit<Timeline, "id" | "instructions">
+    ): Promise<Timeline> => {
       const response = await makeAPIRequest({
         endpoint: "/timelines",
         method: "POST",
@@ -59,7 +140,6 @@ export const api = {
       data: {
         title?: string;
         elements?: any[];
-        instructions?: Instruction[];
       }
     ): Promise<Timeline> => {
       const response = await makeAPIRequest({

@@ -11,7 +11,12 @@ import {
   renameInstruction,
   seekToTime,
 } from "@/store/timelineSlice";
-import { Instruction, OverlayInstruction, SkipInstruction } from "@/types";
+import {
+  Instruction,
+  OverlayInstruction,
+  SkipInstruction,
+  Timeline,
+} from "@/types";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -31,6 +36,7 @@ interface InstructionDropdownMenuProps {
   currentTimelineId: number;
   hideEdit?: boolean;
   onDeleteSuccess?: () => void;
+  timeline: Timeline;
 }
 
 const styles = {
@@ -93,6 +99,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   currentTimelineId,
   hideEdit,
   onDeleteSuccess,
+  timeline,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -136,39 +143,25 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 
   const cloneInstructionMutation = useMutation({
     mutationFn: async () => {
-      const clonedInstruction = {
-        ...instruction,
-        id: Date.now().toString(),
-        triggerTime: instruction.triggerTime + 3000,
-      };
+      const response = await api.instructions.clone(
+        currentTimelineId.toString(),
+        instruction
+      );
 
-      if (instruction.type === "skip") {
-        (clonedInstruction as SkipInstruction).skipToTime += 3000;
-      } else if (instruction.type === "overlay") {
-        const overlayInst = instruction as OverlayInstruction;
-        if (overlayInst.overlayMedia?.url) {
-          const clonedMedia = await api.timelines.cloneMedia(
-            overlayInst.overlayMedia.url,
-            Number(currentTimelineId)
-          );
-
-          (clonedInstruction as OverlayInstruction).overlayMedia = {
-            ...(clonedInstruction as OverlayInstruction).overlayMedia!,
-            url: clonedMedia.url,
-          };
-        }
-      }
-
+      // Convert API response to Instruction type
+      const clonedInstruction = response.data as Instruction;
       const updatedInstructions = [...instructions, clonedInstruction];
-      return api.timelines.update(Number(currentTimelineId), {
-        instructions: updatedInstructions,
-      });
-    },
-    onSuccess: (savedTimeline) => {
-      dispatch(setCurrentTimeline(savedTimeline));
+
+      dispatch(
+        setCurrentTimeline({
+          ...timeline,
+          instructions: updatedInstructions,
+        })
+      );
+      return clonedInstruction;
     },
     onError: (error: Error) => {
-      console.error(error.message);
+      console.error("Failed to clone instruction:", error);
     },
   });
 

@@ -187,7 +187,11 @@ class ContentScript {
   private async handleApiRequest(payload: any): Promise<APIResponse> {
     try {
       const { endpoint, method, body, params } = payload;
-      console.log("Handling API request:", { endpoint, method, params });
+      console.log("Content: API Request details:", {
+        endpoint,
+        method,
+        params,
+      });
 
       const url = new URL(`${API_BASE_URL}/api${endpoint}`);
       if (params) {
@@ -202,14 +206,33 @@ class ContentScript {
 
       // Add auth headers if needed
       const userStr = localStorage.getItem("user");
-      if (userStr) {
+      console.log("Content: User data from localStorage:", userStr);
+
+      if (!userStr) {
+        console.warn(
+          "Content: No user data found in localStorage. Request may fail if authentication is required."
+        );
+      } else {
         try {
           const user = JSON.parse(userStr);
-          if (user?.id) {
+          console.log("Content: Parsed user data:", user);
+
+          if (!user?.id) {
+            console.error(
+              "Content: User data found but no ID present. Request may fail if authentication is required."
+            );
+          } else {
             headers["user-id"] = user.id;
+            console.log("Content: Added user-id to headers:", headers);
           }
         } catch (error) {
-          console.error("Error parsing user from localStorage:", error);
+          console.error(
+            "Content: Error parsing user from localStorage:",
+            error
+          );
+          console.warn(
+            "Content: Request may fail if authentication is required."
+          );
         }
       }
 
@@ -232,49 +255,67 @@ class ContentScript {
           formData.append("file", file);
           formData.append("timelineId", body.timelineId as string);
 
+          // Keep the user-id header but remove Content-Type for FormData
           const { "Content-Type": _, ...headersWithoutContentType } = headers;
           options.headers = headersWithoutContentType;
           options.body = formData;
+
+          console.log(
+            "Content: Prepared FormData request with headers:",
+            options.headers
+          );
         } else {
           options.body = JSON.stringify(body);
         }
       }
 
-      console.log("Fetching:", url.toString(), options);
+      console.log("Content: Making API request:", {
+        url: url.toString(),
+        method: options.method,
+        headers: options.headers,
+        bodyType: options.body instanceof FormData ? "FormData" : "JSON",
+        endpoint,
+      });
+
       const response = await fetch(url.toString(), options);
-      const data = await response.json();
-      console.log(
-        "Raw API response data:",
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.error("Content: Error parsing response JSON:", error);
+        data = null;
+      }
+
+      console.log("Content: API response:", {
+        status: response.status,
+        ok: response.ok,
         data,
-        "Type:",
-        typeof data,
-        "Is Array:",
-        Array.isArray(data)
-      );
+        endpoint,
+      });
 
       // Ensure the response has the correct structure
       const apiResponse: APIResponse = {
         success: response.ok,
-        data: data, // Keep the original array
+        data: data,
         status: response.status,
       };
 
-      console.log(
-        "Structured API response:",
-        apiResponse,
-        "Data type:",
-        typeof apiResponse.data,
-        "Is Array:",
-        Array.isArray(apiResponse.data)
-      );
-
       if (!response.ok) {
-        apiResponse.error = data.message || "Request failed";
+        apiResponse.error = data?.error || data?.message || "Request failed";
+        console.error("Content: API request failed:", {
+          error: apiResponse.error,
+          endpoint,
+          status: response.status,
+        });
       }
 
       return apiResponse;
     } catch (error) {
-      console.error("API request error:", error);
+      console.error("Content: API request error:", {
+        error,
+        endpoint: payload?.endpoint,
+        method: payload?.method,
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -413,38 +454,89 @@ class ContentScript {
 
       // Clear local storage before login
       if (action === "HANDLE_LOGIN") {
+        console.log("Content: Clearing localStorage before login");
         localStorage.removeItem("user");
       }
 
       return new Promise((resolve) => {
         chrome.runtime.sendMessage({ action }, async (response) => {
+          console.log("Content: Received response from background", response);
+
           if (response?.success && response.user) {
             const { id, email, name, picture } = response.user;
+            console.log("Content: Got user data", { id, email, name, picture });
 
             if (!id || !email || !name) {
+              console.error("Content: Invalid user data structure");
               resolve({
                 success: false,
                 error: "Invalid user data structure",
               });
               return;
             }
-          }
 
-          if (response?.success && response.user?.id) {
             // Only make API call for HANDLE_LOGIN action
             if (action === "HANDLE_LOGIN") {
               try {
-                await api.users.createOrUpdate(response.user);
+                console.log(
+                  "Content: Attempting to create/update user via API"
+                );
+
+                // Construct the URL and request options
+                const url = new URL(`${API_BASE_URL}/api/users`);
+                console.log("Content: API URL", url.toString());
+
+                const options: RequestInit = {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ id, email, name, picture }),
+                };
+
+                console.log(
+                  "Content: Making fetch request with options",
+                  options
+                );
+
+                const apiResponse = await fetch(url.toString(), options);
+                const data = await apiResponse.json();
+                console.log("Content: API response", data);
+
+                if (!apiResponse.ok) {
+                  console.error("Content: API request failed", data);
+                  resolve({
+                    success: false,
+                    error: data.error || "Failed to create/update user",
+                  });
+                  return;
+                }
+
+                // Store user data from API response to ensure consistency
+                console.log("Content: Storing user data in localStorage", data);
+                localStorage.setItem("user", JSON.stringify(data));
+
+                resolve({ success: true, user: data });
               } catch (error) {
+                console.error("Content: Failed to create/update user", error);
                 resolve({
                   success: false,
                   error: "Failed to create/update user",
                 });
                 return;
               }
+            } else {
+              // For non-login actions, still store the user data if we have it
+              const userData = { id, email, name, picture };
+              console.log(
+                "Content: Storing user data in localStorage",
+                userData
+              );
+              localStorage.setItem("user", JSON.stringify(userData));
+              resolve(response);
             }
-            resolve(response);
           } else {
+            console.log("Content: No valid response or user ID", response);
             resolve(
               response || {
                 success: false,
@@ -455,11 +547,8 @@ class ContentScript {
         });
       });
     } catch (error) {
-      console.error(`Content: ${action} error:`, error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
+      console.error("Content: Unexpected error in handleAuthMessage", error);
+      throw error;
     }
   }
 }

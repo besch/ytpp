@@ -44,12 +44,12 @@ export const timelineSlice = createSlice({
       state.currentTime = action.payload;
     },
     addInstruction: (state, action: PayloadAction<Instruction>) => {
-      if (state.currentTimeline) {
+      if (state.currentTimeline && state.currentTimeline.instructions) {
         state.currentTimeline.instructions.push(action.payload);
       }
     },
     updateInstruction: (state, action: PayloadAction<Instruction>) => {
-      if (state.currentTimeline) {
+      if (state.currentTimeline && state.currentTimeline.instructions) {
         const index = state.currentTimeline.instructions.findIndex(
           (instruction) => instruction.id === action.payload.id
         );
@@ -59,11 +59,10 @@ export const timelineSlice = createSlice({
       }
     },
     removeInstruction: (state, action: PayloadAction<string>) => {
-      if (state.currentTimeline) {
-        state.currentTimeline.instructions =
-          state.currentTimeline.instructions.filter(
-            (instruction) => instruction.id !== action.payload
-          );
+      if (state.currentTimeline && state.currentTimeline.instructions) {
+        state.currentTimeline.instructions = (
+          state.currentTimeline.instructions || []
+        ).filter((instruction) => instruction.id !== action.payload);
       }
     },
     setEditingInstruction: (
@@ -78,7 +77,13 @@ export const timelineSlice = createSlice({
     },
     setInstructions: (state, action: PayloadAction<Instruction[]>) => {
       if (state.currentTimeline) {
-        state.currentTimeline.instructions = action.payload;
+        state.currentTimeline.instructions = action.payload.filter(
+          (instruction) =>
+            instruction &&
+            typeof instruction.triggerTime === "number" &&
+            typeof instruction.type === "string" &&
+            typeof instruction.id === "string"
+        );
       }
     },
     setCanvasVisibility: (state, action: PayloadAction<boolean>) => {
@@ -115,7 +120,7 @@ export const timelineSlice = createSlice({
         textOverlay: TextOverlayMedia;
       }>
     ) => {
-      if (state.currentTimeline) {
+      if (state.currentTimeline && state.currentTimeline.instructions) {
         const instruction = state.currentTimeline.instructions.find(
           (i) => i.id === action.payload.instructionId
         ) as TextOverlayInstruction | undefined;
@@ -129,7 +134,7 @@ export const timelineSlice = createSlice({
       state,
       action: PayloadAction<{ id: string; name: string }>
     ) => {
-      if (state.currentTimeline) {
+      if (state.currentTimeline && state.currentTimeline.instructions) {
         const instruction = state.currentTimeline.instructions.find(
           (i) => i.id === action.payload.id
         );

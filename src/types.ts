@@ -73,7 +73,7 @@ export interface Timeline {
   id: number;
   title: string;
   video_url: string;
-  instructions: Instruction[];
+  instructions?: Instruction[];
   user_id: string;
   users?: {
     id: string;
@@ -122,3 +122,18 @@ export interface MediaData {
   name: string;
   type: string;
 }
+
+export interface InstructionResponse {
+  id: string;
+  timeline_id: number;
+  type: string;
+  trigger_time: number;
+  name?: string;
+  data: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export type InstructionRequest = Omit<Instruction, "id"> & {
+  timeline_id: number;
+};

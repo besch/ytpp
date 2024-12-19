@@ -1,5 +1,11 @@
 import { makeAPIRequest, APIRequest } from "@/lib/eventSystem";
-import { Timeline, MediaFile } from "@/types";
+import {
+  Timeline,
+  MediaFile,
+  InstructionResponse,
+  Instruction,
+  SkipInstruction,
+} from "@/types";
 
 export interface MediaUploadResponse {
   url: string;
@@ -80,6 +86,82 @@ export function useAPI() {
           endpoint: "/users",
           method: "POST",
           body: user,
+        });
+      },
+    },
+    instructions: {
+      getAll: async (timelineId: string): Promise<InstructionResponse[]> => {
+        return request({
+          endpoint: "/instructions",
+          method: "GET",
+          params: { timeline_id: timelineId },
+        });
+      },
+
+      get: async (id: string): Promise<InstructionResponse> => {
+        return request({
+          endpoint: `/instructions/${id}`,
+          method: "GET",
+        });
+      },
+
+      create: async (
+        timelineId: string,
+        instruction: Omit<Instruction, "id">
+      ): Promise<InstructionResponse> => {
+        return request({
+          endpoint: "/instructions",
+          method: "POST",
+          body: {
+            timeline_id: timelineId,
+            instruction,
+          },
+        });
+      },
+
+      clone: async (
+        timelineId: string,
+        instruction: Instruction
+      ): Promise<InstructionResponse> => {
+        const clonedInstruction = {
+          ...instruction,
+          triggerTime: instruction.triggerTime + 3000,
+        };
+
+        if (instruction.type === "skip") {
+          (clonedInstruction as SkipInstruction).skipToTime += 3000;
+        }
+
+        return request({
+          endpoint: "/instructions",
+          method: "POST",
+          body: {
+            timeline_id: timelineId,
+            instruction: clonedInstruction,
+          },
+        });
+      },
+
+      update: async (
+        id: string,
+        instruction: Partial<Instruction>
+      ): Promise<InstructionResponse> => {
+        return request({
+          endpoint: `/instructions/${id}`,
+          method: "PUT",
+          body: {
+            type: instruction.type,
+            trigger_time: instruction.triggerTime,
+            name: instruction.name,
+            data: instruction,
+          },
+        });
+      },
+
+      delete: async (id: string): Promise<void> => {
+        return request({
+          endpoint: `/instructions/${id}`,
+          method: "DELETE",
         });
       },
     },

@@ -9,6 +9,7 @@ import {
   selectEditingInstruction,
   seekToTime,
   selectCurrentTime,
+  setInstructions,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
@@ -18,19 +19,40 @@ import TimelineDropdownMenu from "./TimelineDropdownMenu";
 import { RootState } from "@/store";
 import { useNavigate, useParams } from "react-router-dom";
 import InstructionDropdownMenu from "./InstructionDropdownMenu";
+import { useAPI } from "@/hooks/useAPI";
+import { useQuery } from "@tanstack/react-query";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { id: timelineId } = useParams();
   const currentTimeline = useSelector(selectCurrentTimeline);
-  const instructions = useSelector(selectInstructions);
   const editingInstruction = useSelector(selectEditingInstruction);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
   const isOwner = useSelector((state: RootState) =>
     selectIsTimelineOwner(state, currentTimeline)
   );
   const currentTime = useSelector(selectCurrentTime);
+  const api = useAPI();
+
+  // Use React Query for fetching instructions
+  const { data: instructions = [], isLoading } = useQuery({
+    queryKey: ["instructions", timelineId],
+    queryFn: async () => {
+      if (!timelineId) return [];
+      const responses = await api.instructions.getAll(timelineId);
+      const transformedInstructions = responses.map((response) => ({
+        ...response.data,
+        id: response.id,
+        triggerTime: response.trigger_time,
+      })) as Instruction[];
+      dispatch(setInstructions(transformedInstructions));
+      return transformedInstructions;
+    },
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 30, // 30 minutes
+  });
 
   useEffect(() => {
     if (editingInstruction) {
@@ -67,6 +89,14 @@ const InstructionsList: React.FC = () => {
     const tolerance = 100;
     return Math.abs(triggerTime - currentTime) < tolerance;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[600px]">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-8">
@@ -138,6 +168,7 @@ const InstructionsList: React.FC = () => {
                       timelineId={Number(timelineId!)}
                       instructions={instructions}
                       currentTimelineId={currentTimeline!.id}
+                      timeline={currentTimeline!}
                     />
                   )}
                 </div>
