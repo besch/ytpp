@@ -7,7 +7,7 @@ import { setCurrentTimeline } from "@/store/timelineSlice";
 import { Timeline } from "@/types";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { toast } from "react-toastify";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import {
   selectIsTimelineOwner,
   selectIsAuthenticated,
@@ -193,6 +193,9 @@ const TimelineList: React.FC = () => {
                       <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
                         Owner
                       </span>
+                    )}
+                    {timeline.isYouTubeChannelOwner && (
+                      <VerifiedBadge className="ml-1" />
                     )}
                   </div>
                   {timeline.users && (

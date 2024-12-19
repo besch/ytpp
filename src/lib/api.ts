@@ -32,6 +32,24 @@ export const api = {
       return response.data;
     },
   },
+  auth: {
+    getYouTubeAuthUrl: async () => {
+      const response = await makeAPIRequest({
+        endpoint: "/auth/youtube",
+        method: "GET",
+      });
+      return response.data.url;
+    },
+
+    handleYouTubeCallback: async (code: string) => {
+      const response = await makeAPIRequest({
+        endpoint: "/auth/callback",
+        method: "GET",
+        params: { code },
+      });
+      return response.data;
+    },
+  },
   instructions: {
     getAll: async (timelineId: string): Promise<InstructionResponse[]> => {
       const response = await makeAPIRequest({
@@ -131,7 +149,12 @@ export const api = {
       const response = await makeAPIRequest({
         endpoint: "/timelines",
         method: "POST",
-        body: timeline,
+        body: {
+          ...timeline,
+          verify_youtube_ownership:
+            timeline.video_url?.includes("youtube.com") ||
+            timeline.video_url?.includes("youtu.be"),
+        },
       });
       return response.data;
     },

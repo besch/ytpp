@@ -87,6 +87,7 @@ export interface Timeline {
     picture: string;
   };
   isOwner?: boolean;
+  isYouTubeChannelOwner?: boolean;
   created_at: string;
   updated_at: string;
   reactions?: {
