@@ -156,7 +156,11 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
   const handleSubmit = async (data: any) => {
     try {
       let newInstruction: Instruction;
-      const id = editingInstruction?.id || Date.now().toString();
+      // Always generate a new ID when cloning, use existing ID only when editing
+      const id =
+        !isEditing || editingInstruction?.isClone
+          ? Date.now().toString()
+          : editingInstruction?.id || Date.now().toString();
 
       if (selectedType === "text-overlay") {
         newInstruction = textOverlayForm.buildInstruction(data, id);

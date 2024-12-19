@@ -10,6 +10,7 @@ export interface BaseInstruction {
   type: string;
   triggerTime: number;
   name?: string;
+  isClone?: boolean;
 }
 
 export interface InstructionWithOriginalTimes extends BaseInstruction {

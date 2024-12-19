@@ -347,7 +347,7 @@ const Timeline: React.FC = () => {
       const position = getTimelinePosition(instruction.triggerTime);
 
       markers.push({
-        id: instruction.id,
+        id: `marker-${instruction.id}`,
         position,
         instruction,
         isEndMarker: false,
@@ -356,7 +356,7 @@ const Timeline: React.FC = () => {
       if (instruction.type === "skip") {
         const skipInstruction = instruction as SkipInstruction;
         markers.push({
-          id: `${instruction.id}-end`,
+          id: `marker-${instruction.id}-end`,
           position: getTimelinePosition(skipInstruction.skipToTime),
           instruction: skipInstruction,
           isEndMarker: true,
