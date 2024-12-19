@@ -49,6 +49,7 @@ export class VideoOverlayManager {
   private setupResizeObserver(): void {
     this.resizeObserver = new ResizeObserver(() => {
       this.updateOverlaySize();
+      this.updateActiveOverlaysPosition();
     });
 
     if (this.videoElement) {
@@ -62,6 +63,82 @@ export class VideoOverlayManager {
     const { width, height } = this.videoElement.getBoundingClientRect();
     this.overlayElement.style.width = `${width}px`;
     this.overlayElement.style.height = `${height}px`;
+  }
+
+  private updateActiveOverlaysPosition(): void {
+    this.overlayElements.forEach((overlayContainer) => {
+      // Handle media overlays
+      const mediaContainer = overlayContainer.querySelector(
+        'div[style*="position: absolute"]'
+      );
+      if (mediaContainer) {
+        const videoRect = this.videoElement.getBoundingClientRect();
+        const scale = videoRect.width / config.mediaPositionerWidth;
+
+        // Get original position data from the data attributes
+        const originalX = mediaContainer.getAttribute("data-original-x");
+        const originalY = mediaContainer.getAttribute("data-original-y");
+        const originalWidth = mediaContainer.getAttribute(
+          "data-original-width"
+        );
+        const originalHeight = mediaContainer.getAttribute(
+          "data-original-height"
+        );
+
+        if (originalX && originalY && originalWidth && originalHeight) {
+          const container = mediaContainer as HTMLElement;
+          container.style.left = `${parseFloat(originalX) * scale}px`;
+          container.style.top = `${parseFloat(originalY) * scale}px`;
+          container.style.width = `${parseFloat(originalWidth) * scale}px`;
+          container.style.height = `${parseFloat(originalHeight) * scale}px`;
+        }
+      }
+
+      // Handle text overlays
+      const textElement = overlayContainer.querySelector(
+        'div[style*="font-family"]'
+      ) as HTMLElement;
+      if (textElement) {
+        const videoRect = this.videoElement.getBoundingClientRect();
+        const scale = videoRect.width / config.mediaPositionerWidth;
+
+        const originalX = textElement.getAttribute("data-original-x");
+        const originalY = textElement.getAttribute("data-original-y");
+        const originalWidth = textElement.getAttribute("data-original-width");
+        const originalHeight = textElement.getAttribute("data-original-height");
+        const originalFontSize = textElement.getAttribute(
+          "data-original-font-size"
+        );
+        const originalPadding = textElement.getAttribute(
+          "data-original-padding"
+        );
+        const originalBorderRadius = textElement.getAttribute(
+          "data-original-border-radius"
+        );
+
+        if (originalX && originalY && originalWidth && originalHeight) {
+          textElement.style.left = `${parseFloat(originalX) * scale}px`;
+          textElement.style.top = `${parseFloat(originalY) * scale}px`;
+          textElement.style.width = `${parseFloat(originalWidth) * scale}px`;
+          textElement.style.height = `${parseFloat(originalHeight) * scale}px`;
+          if (originalFontSize) {
+            textElement.style.fontSize = `${
+              parseFloat(originalFontSize) * scale
+            }px`;
+          }
+          if (originalPadding) {
+            textElement.style.padding = `${
+              parseFloat(originalPadding) * scale
+            }px`;
+          }
+          if (originalBorderRadius) {
+            textElement.style.borderRadius = `${
+              parseFloat(originalBorderRadius) * scale
+            }px`;
+          }
+        }
+      }
+    });
   }
 
   /**
@@ -115,15 +192,24 @@ export class VideoOverlayManager {
           const videoRect = this.videoElement.getBoundingClientRect();
           const scale = videoRect.width / config.mediaPositionerWidth;
 
-          // Create a container div to maintain aspect ratio
           const containerDiv = document.createElement("div");
           containerDiv.style.position = "absolute";
+          containerDiv.setAttribute("data-original-x", position.x.toString());
+          containerDiv.setAttribute("data-original-y", position.y.toString());
+          containerDiv.setAttribute(
+            "data-original-width",
+            position.width.toString()
+          );
+          containerDiv.setAttribute(
+            "data-original-height",
+            position.height.toString()
+          );
+
           containerDiv.style.left = `${position.x * scale}px`;
           containerDiv.style.top = `${position.y * scale}px`;
           containerDiv.style.width = `${position.width * scale}px`;
           containerDiv.style.height = `${position.height * scale}px`;
 
-          // Style the media element to maintain aspect ratio
           mediaElement.style.position = "absolute";
           mediaElement.style.width = "100%";
           mediaElement.style.height = "100%";
@@ -340,6 +426,27 @@ export class VideoOverlayManager {
     textElement.textContent = text;
     textElement.className = this.getAnimationClass(style.animation || "none");
     overlayContainer.appendChild(textElement);
+
+    // Store original position and style data
+    textElement.setAttribute("data-original-x", position.x.toString());
+    textElement.setAttribute("data-original-y", position.y.toString());
+    textElement.setAttribute("data-original-width", position.width.toString());
+    textElement.setAttribute(
+      "data-original-height",
+      position.height.toString()
+    );
+    textElement.setAttribute(
+      "data-original-font-size",
+      style.fontSize.toString()
+    );
+    textElement.setAttribute(
+      "data-original-padding",
+      (style.padding || 8).toString()
+    );
+    textElement.setAttribute(
+      "data-original-border-radius",
+      (style.borderRadius || 0).toString()
+    );
 
     if (duration) {
       this.overlayTimeout = window.setTimeout(() => {
