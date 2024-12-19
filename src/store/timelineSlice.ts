@@ -135,12 +135,12 @@ export const timelineSlice = createSlice({
       action: PayloadAction<{ id: string; name: string }>
     ) => {
       if (state.currentTimeline && state.currentTimeline.instructions) {
-        const instruction = state.currentTimeline.instructions.find(
-          (i) => i.id === action.payload.id
-        );
-        if (instruction) {
-          instruction.name = action.payload.name;
-        }
+        state.currentTimeline.instructions =
+          state.currentTimeline.instructions.map((instruction) =>
+            instruction.id === action.payload.id
+              ? { ...instruction, name: action.payload.name }
+              : instruction
+          );
       }
     },
   },

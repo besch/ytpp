@@ -222,8 +222,17 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
           instructions: updatedInstructions,
         }
       );
-      dispatch(setCurrentTimeline(savedTimeline));
+
+      // First update the Redux state
       dispatch(renameInstruction({ id: instruction.id, name: newName }));
+      dispatch(setCurrentTimeline(savedTimeline));
+
+      // Then invalidate the queries to ensure fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["instructions", currentTimelineId.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ["timelines"] });
+
       setIsRenaming(false);
     } catch (error) {
       console.error("Failed to rename instruction:", error);
