@@ -3,13 +3,12 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   selectCurrentTime,
   setCurrentTime,
-  selectInstructions,
   setSelectedInstructionId,
   setEditingInstruction,
   updateInstruction,
   selectCurrentTimeline,
   selectSelectedInstructionId,
-  setCurrentTimeline,
+  selectInstructions,
 } from "@/store/timelineSlice";
 import { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
 import { useAPI } from "@/hooks/useAPI";
@@ -17,6 +16,7 @@ import Button from "@/components/ui/Button";
 import { Move } from "lucide-react";
 import { useVideoManager } from "@/hooks/useVideoManager";
 import { toast } from "react-toastify";
+import { useParams } from "react-router-dom";
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
@@ -137,15 +137,16 @@ const Timeline: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const videoManager = useVideoManager();
   const currentTime = useSelector(selectCurrentTime);
-  const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
   const selectedInstructionId = useSelector(selectSelectedInstructionId);
+  const instructions = useSelector(selectInstructions);
   const [duration, setDuration] = useState<number>(0);
   const [draggingInstructionId, setDraggingInstructionId] = useState<
     string | null
   >(null);
   const [draggingTime, setDraggingTime] = useState<number | null>(null);
   const api = useAPI();
+  const { id: timelineId } = useParams();
 
   useEffect(() => {
     if (videoManager) {
@@ -191,21 +192,18 @@ const Timeline: React.FC = () => {
   };
 
   const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
-    if (!currentTimeline) return;
+    if (!currentTimeline || !timelineId) return;
 
     try {
-      const updatedTimeline = {
-        ...currentTimeline,
-        instructions: updatedInstructions,
-      };
-
-      const savedTimeline = await api.timelines.update(
-        currentTimeline.id,
-        updatedTimeline
+      // Update each instruction individually using the instructions API
+      await Promise.all(
+        updatedInstructions.map(async (instruction) => {
+          await api.instructions.update(instruction.id, instruction);
+        })
       );
-      dispatch(setCurrentTimeline(savedTimeline));
     } catch (error) {
       console.error("Failed to save instructions:", error);
+      toast.error("Failed to save instructions");
     }
   };
 
@@ -229,6 +227,8 @@ const Timeline: React.FC = () => {
         isDragging = true;
         setDraggingInstructionId(instruction.id);
         setDraggingTime(instruction.triggerTime);
+        // Set editing instruction when drag starts
+        dispatch(setEditingInstruction(instruction));
       }
 
       if (isDragging) {
@@ -244,28 +244,33 @@ const Timeline: React.FC = () => {
 
         updatedInstruction = {
           ...instruction,
-          triggerTime: Math.round(newTime),
+          triggerTime: newTime,
         };
         dispatch(updateInstruction(updatedInstruction));
+        // Update editing instruction with new time
         dispatch(setEditingInstruction(updatedInstruction));
       }
     };
 
     const handleMouseUp = async () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-
-      if (isDragging && updatedInstruction) {
-        setDraggingInstructionId(null);
-        setDraggingTime(null);
-
-        if (currentTimeline) {
-          const updatedInstructions = instructions.map((i) =>
-            i.id === updatedInstruction!.id ? updatedInstruction! : i
+      if (isDragging && updatedInstruction && timelineId) {
+        try {
+          await api.instructions.update(
+            updatedInstruction.id,
+            updatedInstruction
           );
-          await handleSaveInstructions(updatedInstructions);
+          // Keep editing instruction after drop
+          dispatch(setEditingInstruction(updatedInstruction));
+        } catch (error) {
+          console.error("Failed to update instruction:", error);
+          toast.error("Failed to update instruction");
         }
       }
+
+      setDraggingInstructionId(null);
+      setDraggingTime(null);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -290,6 +295,10 @@ const Timeline: React.FC = () => {
 
       if (!isDragging && (deltaX > dragThreshold || deltaY > dragThreshold)) {
         isDragging = true;
+        setDraggingInstructionId(`${instruction.id}-end`);
+        setDraggingTime(instruction.skipToTime);
+        // Set editing instruction when drag starts
+        dispatch(setEditingInstruction(instruction));
       }
 
       if (isDragging) {
@@ -300,30 +309,38 @@ const Timeline: React.FC = () => {
         const timePerPixel = duration / rect.width;
         const timeDelta = deltaX * timePerPixel;
 
-        const newTime = Math.max(
-          instruction.triggerTime,
-          Math.min(duration, startTime + timeDelta)
-        );
+        const newTime = Math.max(0, Math.min(duration, startTime + timeDelta));
+        setDraggingTime(newTime);
 
         updatedInstruction = {
           ...instruction,
-          skipToTime: Math.round(newTime),
+          skipToTime: newTime,
         };
         dispatch(updateInstruction(updatedInstruction));
+        // Update editing instruction with new time
         dispatch(setEditingInstruction(updatedInstruction));
       }
     };
 
     const handleMouseUp = async () => {
+      if (isDragging && updatedInstruction && timelineId) {
+        try {
+          await api.instructions.update(
+            updatedInstruction.id,
+            updatedInstruction
+          );
+          // Keep editing instruction after drop
+          dispatch(setEditingInstruction(updatedInstruction));
+        } catch (error) {
+          console.error("Failed to update instruction:", error);
+          toast.error("Failed to update instruction");
+        }
+      }
+
+      setDraggingInstructionId(null);
+      setDraggingTime(null);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-
-      if (isDragging && updatedInstruction && currentTimeline) {
-        const updatedInstructions = instructions.map((i) =>
-          i.id === updatedInstruction!.id ? updatedInstruction! : i
-        );
-        await handleSaveInstructions(updatedInstructions);
-      }
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -381,6 +398,7 @@ const Timeline: React.FC = () => {
       return markers;
     });
 
+    // Sort markers by position and calculate levels to prevent overlap
     const markersWithLevels = calculateMarkerLevels(markers);
 
     return (
@@ -541,14 +559,14 @@ const Timeline: React.FC = () => {
         >
           <div
             className="absolute -top-6 left-1/2 -translate-x-1/2 
-            bg-primary px-2 py-1 rounded text-sm font-medium text-white
-            shadow-lg"
+             bg-primary px-2 py-1 rounded text-sm font-medium text-white
+             shadow-lg"
           >
             {formatTime(currentTime)}
           </div>
           <div
             className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 
-            w-3 h-3 bg-primary rounded-full shadow-lg"
+             w-3 h-3 bg-primary rounded-full shadow-lg"
           />
         </div>
 

@@ -166,14 +166,18 @@ const InstructionEditor: React.FC = () => {
 
       dispatch(setCurrentTime(newInstruction.triggerTime));
 
-      // Reset form state but don't navigate away
+      // Reset form state
       setFormChanged(false);
       setInitialValues(methods.getValues());
 
-      // If this was a new instruction, update the editing state to reflect we're now editing it
-      if (!isEditing) {
-        dispatch(setEditingInstruction(newInstruction));
-      }
+      // Reset editing state and redirect to instruction list
+      dispatch(setEditingInstruction(null));
+
+      // Invalidate queries to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ["timelines"] });
+      await queryClient.invalidateQueries({ queryKey: ["instructions"] });
+
+      navigate(`/timeline/${timelineId}`);
     } catch (error) {
       console.error("Failed to save instruction:", error);
     }
