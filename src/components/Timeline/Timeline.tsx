@@ -16,7 +16,6 @@ import Button from "@/components/ui/Button";
 import { Move } from "lucide-react";
 import { useVideoManager } from "@/hooks/useVideoManager";
 import { toast } from "react-toastify";
-import { useParams } from "react-router-dom";
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
@@ -146,7 +145,6 @@ const Timeline: React.FC = () => {
   >(null);
   const [draggingTime, setDraggingTime] = useState<number | null>(null);
   const api = useAPI();
-  const { id: timelineId } = useParams();
 
   useEffect(() => {
     if (videoManager) {
@@ -192,7 +190,7 @@ const Timeline: React.FC = () => {
   };
 
   const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
-    if (!currentTimeline || !timelineId) return;
+    if (!currentTimeline) return;
 
     try {
       // Update each instruction individually using the instructions API
@@ -253,18 +251,9 @@ const Timeline: React.FC = () => {
     };
 
     const handleMouseUp = async () => {
-      if (isDragging && updatedInstruction && timelineId) {
-        try {
-          await api.instructions.update(
-            updatedInstruction.id,
-            updatedInstruction
-          );
-          // Keep editing instruction after drop
-          dispatch(setEditingInstruction(updatedInstruction));
-        } catch (error) {
-          console.error("Failed to update instruction:", error);
-          toast.error("Failed to update instruction");
-        }
+      if (isDragging && updatedInstruction) {
+        // Keep editing instruction after drop but don't update backend
+        dispatch(setEditingInstruction(updatedInstruction));
       }
 
       setDraggingInstructionId(null);
@@ -323,18 +312,9 @@ const Timeline: React.FC = () => {
     };
 
     const handleMouseUp = async () => {
-      if (isDragging && updatedInstruction && timelineId) {
-        try {
-          await api.instructions.update(
-            updatedInstruction.id,
-            updatedInstruction
-          );
-          // Keep editing instruction after drop
-          dispatch(setEditingInstruction(updatedInstruction));
-        } catch (error) {
-          console.error("Failed to update instruction:", error);
-          toast.error("Failed to update instruction");
-        }
+      if (isDragging && updatedInstruction) {
+        // Keep editing instruction after drop but don't update backend
+        dispatch(setEditingInstruction(updatedInstruction));
       }
 
       setDraggingInstructionId(null);
