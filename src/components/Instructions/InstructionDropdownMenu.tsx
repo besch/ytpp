@@ -109,6 +109,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(instruction.name || "");
   const [isRenamingLoading, setIsRenamingLoading] = useState(false);
+  const [isDeletingLoading, setIsDeletingLoading] = useState(false);
 
   const deleteInstructionMutation = useMutation({
     mutationFn: async () => {
@@ -145,6 +146,9 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     },
     onError: (error: Error) => {
       setIsDeletingInstruction(false);
+    },
+    onSettled: () => {
+      setIsDeletingLoading(false);
     },
   });
 
@@ -183,6 +187,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   };
 
   const handleConfirmDelete = async () => {
+    setIsDeletingLoading(true);
     await deleteInstructionMutation.mutateAsync();
     dispatch(setEditingInstruction(null));
     onDeleteSuccess?.();
@@ -261,12 +266,13 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 
       <ConfirmationDialog
         open={isDeletingInstruction}
-        onClose={() => setIsDeletingInstruction(false)}
+        onClose={() => !isDeletingLoading && setIsDeletingInstruction(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Instruction"
         description="Are you sure you want to delete this instruction?"
         confirmLabel="Delete"
         variant="destructive"
+        isLoading={isDeletingLoading}
       />
 
       <Dialog
@@ -282,6 +288,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
               placeholder={`${instruction.type} Instruction`}
               style={styles.input}
               disabled={isRenamingLoading}
+              autoFocus
             />
           </div>
           <div style={styles.buttonGroup}>

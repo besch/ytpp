@@ -2,6 +2,7 @@ import React from "react";
 import Dialog from "./Dialog";
 import Button from "./Button";
 import { X, Trash2 } from "lucide-react";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface ConfirmationDialogProps {
   open: boolean;
@@ -12,6 +13,7 @@ interface ConfirmationDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: "primary" | "destructive";
+  isLoading?: boolean;
 }
 
 const styles = {
@@ -76,6 +78,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   variant = "primary",
+  isLoading = false,
 }) => {
   const getButtonStyle = (baseStyle: any) => ({
     ...styles.button,
@@ -86,7 +89,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   });
 
   return (
-    <Dialog open={open} onClose={onClose} title={title}>
+    <Dialog open={open} onClose={() => !isLoading && onClose()} title={title}>
       <div>
         <p style={styles.description}>{description}</p>
         <div style={styles.buttonGroup}>
@@ -95,6 +98,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             size="sm"
             onClick={onClose}
             style={getButtonStyle(styles.cancelButton)}
+            disabled={isLoading}
           >
             <X style={styles.icon} />
             {cancelLabel}
@@ -102,20 +106,33 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           <Button
             variant={variant === "destructive" ? "destructive" : "primary"}
             size="sm"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={onConfirm}
             style={getButtonStyle(
               variant === "destructive"
                 ? styles.destructiveButton
                 : styles.confirmButton
             )}
+            disabled={isLoading}
           >
             {variant === "destructive" && <Trash2 style={styles.icon} />}
             {confirmLabel}
           </Button>
         </div>
+        {isLoading && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "8px",
+            }}
+          >
+            <LoadingSpinner size="sm" />
+          </div>
+        )}
       </div>
     </Dialog>
   );
