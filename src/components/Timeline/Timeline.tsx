@@ -15,7 +15,6 @@ import { useAPI } from "@/hooks/useAPI";
 import Button from "@/components/ui/Button";
 import { Move } from "lucide-react";
 import { useVideoManager } from "@/hooks/useVideoManager";
-import { toast } from "react-toastify";
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
@@ -411,6 +410,11 @@ const Timeline: React.FC = () => {
                       : handleInstructionDrag(e, instruction)
                   }
                   onClick={(e) => handleInstructionClick(e, instruction)}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    dispatch(setSelectedInstructionId(instruction.id));
+                    dispatch(setEditingInstruction(instruction));
+                  }}
                 >
                   {currentTime ===
                     (isEndMarker
