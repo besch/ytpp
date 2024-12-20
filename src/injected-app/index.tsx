@@ -32,15 +32,12 @@ function init() {
       event.data.source === "content-script" &&
       event.data.type === "RESPONSE"
     ) {
-      console.log("Injected app received response:", event.data); // Add logging
-      // Handle the response
       eventSystem.emit("api:response", event.data.payload);
     }
   });
 
   // Listen for API requests from the React app
   eventSystem.on("api:request", (request) => {
-    console.log("Injected app sending API request:", request); // Add logging
     // Forward the request to the content script
     window.postMessage(
       {

@@ -46,14 +46,6 @@ export function useAPI() {
     }
 
     const response = await makeAPIRequest(config);
-    console.log(
-      "useAPI received response:",
-      response,
-      "Data type:",
-      typeof response.data,
-      "Is Array:",
-      Array.isArray(response.data)
-    );
 
     if (!response.success) {
       if (response.status === 403) {
@@ -168,7 +160,6 @@ export function useAPI() {
     timelines: {
       getAll: async (videoUrl?: string): Promise<Timeline[]> => {
         const params = videoUrl ? { video_url: videoUrl } : undefined;
-        console.log("getAll called with params:", params);
 
         try {
           let attempts = 0;
@@ -191,21 +182,11 @@ export function useAPI() {
               attempts++;
               await new Promise((resolve) => setTimeout(resolve, 100)); // Small delay between attempts
             } catch (error) {
-              console.error(`Attempt ${attempts + 1} failed:`, error);
               attempts++;
               if (attempts === maxAttempts) throw error;
               await new Promise((resolve) => setTimeout(resolve, 100));
             }
           }
-
-          console.log(
-            "getAll received data:",
-            data,
-            "Type:",
-            typeof data,
-            "Is Array:",
-            Array.isArray(data)
-          );
 
           // Ensure we have valid timeline objects
           if (Array.isArray(data)) {
@@ -231,7 +212,6 @@ export function useAPI() {
           // Default to empty array
           return [];
         } catch (error) {
-          console.error("Error in getAll:", error);
           return [];
         }
       },
