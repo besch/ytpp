@@ -47,11 +47,16 @@ const InstructionsList: React.FC = () => {
         id: response.id,
         triggerTime: response.trigger_time,
       })) as Instruction[];
-      dispatch(setInstructions(transformedInstructions));
+
+      // Only dispatch if we have the correct timeline and valid instructions
+      if (currentTimeline && currentTimeline.id === Number(timelineId)) {
+        dispatch(setInstructions(transformedInstructions));
+      }
       return transformedInstructions;
     },
     staleTime: Infinity,
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes,
+    enabled: !!timelineId && !!currentTimeline, // Only run query when we have both timelineId and currentTimeline
   });
 
   useEffect(() => {
@@ -134,10 +139,10 @@ const InstructionsList: React.FC = () => {
 
       {showTypeSelect && isOwner ? (
         <InstructionTypeSelect onSelect={handleTypeSelect} />
-      ) : instructions.length > 0 ? (
+      ) : Array.isArray(instructions) && instructions.length > 0 ? (
         <div className="space-y-2 max-h-[600px] overflow-y-auto">
           {instructions
-            .slice()
+            .filter((instruction) => instruction && instruction.type) // Add filter to ensure valid instructions
             .sort((a, b) => a.triggerTime - b.triggerTime)
             .map((instruction) => (
               <div
