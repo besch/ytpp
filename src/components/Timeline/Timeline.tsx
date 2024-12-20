@@ -143,6 +143,7 @@ const Timeline: React.FC = () => {
     string | null
   >(null);
   const [draggingTime, setDraggingTime] = useState<number | null>(null);
+  const [wasJustDragging, setWasJustDragging] = useState(false);
   const api = useAPI();
 
   useEffect(() => {
@@ -151,6 +152,15 @@ const Timeline: React.FC = () => {
       dispatch(setCurrentTime(videoManager.getCurrentTime()));
     }
   }, [videoManager, dispatch]);
+
+  useEffect(() => {
+    if (wasJustDragging) {
+      const timer = setTimeout(() => {
+        setWasJustDragging(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [wasJustDragging]);
 
   const seekToTime = (timeMs: number) => {
     if (videoManager) {
@@ -184,6 +194,10 @@ const Timeline: React.FC = () => {
   ) => {
     e.stopPropagation();
     seekToTime(instruction.triggerTime);
+    if (!draggingInstructionId && !wasJustDragging) {
+      dispatch(setSelectedInstructionId(null));
+      dispatch(setEditingInstruction(null));
+    }
   };
 
   const handleInstructionDrag = (
@@ -231,6 +245,7 @@ const Timeline: React.FC = () => {
 
     const handleMouseUp = async () => {
       if (isDragging && updatedInstruction) {
+        setWasJustDragging(true);
         // Pass both the updated instruction and original time when setting editing state
         dispatch(
           setEditingInstruction({
