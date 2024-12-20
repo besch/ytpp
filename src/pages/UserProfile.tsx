@@ -79,7 +79,7 @@ const UserProfile: React.FC = () => {
 
       {filteredTimelines?.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
-          No timelines yet. Click the button above to create one.
+          No did not create any timelines yet.
         </div>
       ) : (
         <div className="space-y-4">

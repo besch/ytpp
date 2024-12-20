@@ -53,11 +53,31 @@ const TimelineList: React.FC = () => {
     mutationFn: (newTimeline: Partial<Timeline>) =>
       api.timelines.create(newTimeline),
     onSuccess: (newTimeline) => {
-      dispatch(setCurrentTimeline(newTimeline));
-      navigate(`/timeline/${newTimeline.id}`);
+      const timelineWithDefaults = {
+        ...newTimeline,
+        is_youtube_channel_owner: newTimeline.is_youtube_channel_owner ?? false,
+      };
+      dispatch(setCurrentTimeline(timelineWithDefaults as Timeline));
+      navigate(`/timeline/${timelineWithDefaults.id}`);
       queryClient.invalidateQueries({ queryKey: ["timelines"] });
     },
     onError: (error) => {
+      if (
+        error instanceof Error &&
+        error.message.includes("youtube_channel_owner")
+      ) {
+        const errorResponse = error.cause as any;
+        if (errorResponse?.data?.id) {
+          const timeline = {
+            ...errorResponse.data,
+            is_youtube_channel_owner: false,
+          };
+          dispatch(setCurrentTimeline(timeline as Timeline));
+          navigate(`/timeline/${timeline.id}`);
+          queryClient.invalidateQueries({ queryKey: ["timelines"] });
+          return;
+        }
+      }
       console.error("Failed to create timeline:", error);
     },
   });
@@ -190,11 +210,11 @@ const TimelineList: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <p className="text-lg font-medium">{timeline.title}</p>
                     {timelineOwnerships[index] && (
-                      <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
+                      <span className="px-2 py-0.5 text-xs bg-primary/90 text-white rounded-full">
                         Owner
                       </span>
                     )}
-                    {timeline.isYouTubeChannelOwner && (
+                    {timeline.is_youtube_channel_owner && (
                       <VerifiedBadge className="ml-1" />
                     )}
                   </div>
