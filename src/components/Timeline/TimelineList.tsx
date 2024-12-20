@@ -31,19 +31,7 @@ const TimelineList: React.FC = () => {
     refetch,
   } = useQuery({
     queryKey: ["timelines", videoUrl],
-    queryFn: async () => {
-      console.log("TimelineList queryFn called");
-      const response = await api.timelines.getAll(videoUrl);
-      console.log(
-        "TimelineList received response:",
-        response,
-        "Type:",
-        typeof response,
-        "Is Array:",
-        Array.isArray(response)
-      );
-      return response;
-    },
+    queryFn: async () => await api.timelines.getAll(videoUrl),
     staleTime: Infinity,
     gcTime: 1000 * 60 * 30,
   });

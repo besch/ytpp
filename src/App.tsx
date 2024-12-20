@@ -61,7 +61,6 @@ const AppContent: React.FC = () => {
         const userData = payload?.user || payload?.data?.user;
 
         if (userData) {
-          console.log("App: Updating Redux store with user data:", userData);
           dispatch(setUser(userData));
         }
       }

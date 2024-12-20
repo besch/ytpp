@@ -9,11 +9,10 @@ import {
   selectInstructions,
   selectCurrentTimeline,
   setCurrentTimeline,
-  seekToTime,
-  removeInstruction,
   updateInstruction,
 } from "@/store/timelineSlice";
 import { useAPI } from "@/hooks/useAPI";
+import { useVideoManager } from "@/hooks/useVideoManager";
 import {
   Instruction,
   OverlayInstruction,
@@ -26,7 +25,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { isEqual } from "lodash";
 import InstructionForm from "./InstructionForm";
-import InstructionDropdownMenu from "./InstructionDropdownMenu";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -38,6 +36,7 @@ const InstructionEditor: React.FC = () => {
   const navigate = useNavigate();
   const { id: timelineId } = useParams();
   const api = useAPI();
+  const videoManager = useVideoManager();
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
   const selectedType = editingInstruction?.type || null;
@@ -81,7 +80,9 @@ const InstructionEditor: React.FC = () => {
     methods.setValue("seconds", seconds);
     methods.setValue("milliseconds", milliseconds);
 
-    dispatch(seekToTime(time));
+    if (videoManager) {
+      videoManager.seekTo(time);
+    }
   };
 
   const handleSkipToTimeChange = (time: number) => {

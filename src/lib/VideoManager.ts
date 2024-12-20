@@ -8,7 +8,6 @@ import { VideoOverlayManager } from "./VideoOverlayManager";
 import { store } from "@/store";
 import { seekToTime } from "@/store/timelineSlice";
 import config from "./config";
-import { dispatchCustomEvent } from "@/lib/eventSystem";
 
 export class VideoManager {
   private videoElement: HTMLVideoElement | null = null;
@@ -34,7 +33,6 @@ export class VideoManager {
   public async findAndStoreVideoElement(): Promise<void> {
     // First try to find video in main document
     this.videoElement = document.querySelector("video");
-    console.log("!!!!!!!!!!!!videoElement", this.videoElement);
 
     if (this.videoElement) {
       if (!this.videoElement.id) {
@@ -187,7 +185,6 @@ export class VideoManager {
     instruction: OverlayInstruction
   ): Promise<void> {
     if (!this.videoElement || this.videoElement.paused) {
-      console.log("Video is paused, overlay instruction will not be executed");
       return;
     }
 

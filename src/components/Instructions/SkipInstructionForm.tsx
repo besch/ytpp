@@ -1,8 +1,7 @@
 import React, { useEffect } from "react";
 import { TimeInput } from "../ui/TimeInput";
 import { useFormContext } from "react-hook-form";
-import { useDispatch } from "react-redux";
-import { seekToTime } from "@/store/timelineSlice";
+import { useVideoManager } from "@/hooks/useVideoManager";
 
 interface SkipInstructionFormProps {
   onTimeChange: (time: number) => void;
@@ -12,7 +11,7 @@ const SkipInstructionForm: React.FC<SkipInstructionFormProps> = ({
   onTimeChange,
 }) => {
   const { watch, setValue } = useFormContext();
-  const dispatch = useDispatch();
+  const videoManager = useVideoManager();
 
   const parseTimeInput = (data: any) => {
     return (
@@ -36,7 +35,9 @@ const SkipInstructionForm: React.FC<SkipInstructionFormProps> = ({
   const handleTimeChange = (time: number) => {
     onTimeChange(time);
     // Update the timeline position to preview the skip location
-    dispatch(seekToTime(time));
+    if (videoManager) {
+      videoManager.seekTo(time);
+    }
   };
 
   // Set initial skip time when the form is first rendered
