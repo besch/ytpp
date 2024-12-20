@@ -83,7 +83,6 @@ export async function makeAPIRequest(
 ): Promise<APIResponse> {
   return new Promise((resolve, reject) => {
     const responseHandler = (response: APIResponse) => {
-      console.log("Received API response:", response);
       if (!response.success) {
         reject(
           new Error(
@@ -96,7 +95,6 @@ export async function makeAPIRequest(
       }
     };
 
-    console.log("Sending API request:", request);
     eventSystem.emit("api:request", request);
     eventSystem.once("api:response", responseHandler);
   });
