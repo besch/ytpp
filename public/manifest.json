@@ -10,7 +10,6 @@
     "identity",
     "identity.email"
   ],
-  "host_permissions": ["https://*/", "http://*/"],
   "action": {
     "default_icon": {
       "48": "assets/icons/icon.png",
