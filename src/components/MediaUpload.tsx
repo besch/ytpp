@@ -3,20 +3,8 @@ import { useDropzone } from "react-dropzone";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMediaUrl } from "@/lib/api";
-
-interface MediaData {
-  file: File;
-  url: string;
-  duration?: number;
-  name: string;
-  type: string;
-  position?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-}
+import MediaRecorder from "./MediaRecorder";
+import { MediaData } from "@/types";
 
 interface MediaUploadProps {
   onMediaSelected: (mediaData: MediaData) => void;
@@ -40,7 +28,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [showRecorder, setShowRecorder] = useState(false);
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -113,6 +101,13 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     });
   };
 
+  const handleRecordingComplete = async (mediaData: MediaData) => {
+    if (mediaData.file) {
+      await handleFileProcessing(mediaData.file);
+    }
+    setShowRecorder(false);
+  };
+
   const MediaPreview: React.FC<{ src: string; type: string }> = React.memo(
     ({ src, type }) => {
       const mediaUrl = React.useMemo(() => {
@@ -163,30 +158,57 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
   return (
     <div className="space-y-4">
-      <div
-        {...getRootProps()}
-        className={cn(
-          "border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer",
-          isDragActive
-            ? "border-primary bg-primary/10"
-            : "border-muted hover:border-primary/50",
-          isLoading && "opacity-50 cursor-wait"
-        )}
-      >
-        <input {...getInputProps()} />
-        <div className="flex flex-col items-center justify-center space-y-2 text-center">
-          <Upload className="w-8 h-8 text-muted-foreground" />
-          <div className="text-sm">
-            <p className="font-medium">
-              {isDragActive ? "Drop the file here" : "Drag & drop media here"}
-            </p>
-            <p className="text-muted-foreground">or click to select files</p>
+      {!showRecorder ? (
+        <>
+          <div
+            {...getRootProps()}
+            className={cn(
+              "border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer",
+              isDragActive
+                ? "border-primary bg-primary/10"
+                : "border-muted hover:border-primary/50",
+              isLoading && "opacity-50 cursor-wait"
+            )}
+          >
+            <input {...getInputProps()} />
+            <div className="flex flex-col items-center justify-center space-y-2 text-center">
+              <Upload className="w-8 h-8 text-muted-foreground" />
+              <div className="text-sm">
+                <p className="font-medium">
+                  {isDragActive
+                    ? "Drop the file here"
+                    : "Drag & drop media here"}
+                </p>
+                <p className="text-muted-foreground">
+                  or click to select files
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Supports video, audio, and image files
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Supports video, audio, and image files
-          </p>
+
+          <div className="text-center">
+            <button
+              onClick={() => setShowRecorder(true)}
+              className="text-sm text-primary hover:underline"
+            >
+              Or record audio/video directly
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="space-y-4">
+          <MediaRecorder onRecordingComplete={handleRecordingComplete} />
+          <button
+            onClick={() => setShowRecorder(false)}
+            className="text-sm text-muted-foreground hover:underline block w-full text-center"
+          >
+            Cancel recording
+          </button>
         </div>
-      </div>
+      )}
 
       {mediaError && <p className="text-sm text-destructive">{mediaError}</p>}
 
