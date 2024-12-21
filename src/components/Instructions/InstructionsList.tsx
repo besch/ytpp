@@ -48,16 +48,20 @@ const InstructionsList: React.FC = () => {
         triggerTime: response.trigger_time,
       })) as Instruction[];
 
-      // Only dispatch if we have the correct timeline and valid instructions
-      if (currentTimeline && currentTimeline.id === Number(timelineId)) {
-        dispatch(setInstructions(transformedInstructions));
-      }
+      // Always update Redux store with the latest instructions
+      dispatch(setInstructions(transformedInstructions));
       return transformedInstructions;
     },
-    staleTime: Infinity,
-    gcTime: 1000 * 60 * 30, // 30 minutes,
-    enabled: !!timelineId && !!currentTimeline, // Only run query when we have both timelineId and currentTimeline
+    staleTime: 0, // Always consider data stale to ensure fresh data on timeline switch
+    enabled: !!timelineId, // Only need timelineId to be present
   });
+
+  // Effect to ensure instructions are updated in Redux when timeline changes
+  useEffect(() => {
+    if (instructions && instructions.length > 0) {
+      dispatch(setInstructions(instructions));
+    }
+  }, [currentTimeline?.id, instructions, dispatch]);
 
   useEffect(() => {
     if (editingInstruction) {
