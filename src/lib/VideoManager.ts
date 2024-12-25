@@ -354,7 +354,6 @@ export class VideoManager {
 
     const { textOverlay, pauseMainVideo, overlayDuration } = instruction;
 
-    // We don't need to scale the position here since VideoOverlayManager handles scaling
     const position = textOverlay.position!;
 
     // Create a promise that resolves when the text overlay should end

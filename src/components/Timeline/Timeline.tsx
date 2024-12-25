@@ -135,7 +135,6 @@ const Timeline: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const videoManager = useVideoManager();
   const currentTime = useSelector(selectCurrentTime);
-  const currentTimeline = useSelector(selectCurrentTimeline);
   const selectedInstructionId = useSelector(selectSelectedInstructionId);
   const instructions = useSelector(selectInstructions);
   const [duration, setDuration] = useState<number>(0);
@@ -144,7 +143,6 @@ const Timeline: React.FC = () => {
   >(null);
   const [draggingTime, setDraggingTime] = useState<number | null>(null);
   const [wasJustDragging, setWasJustDragging] = useState(false);
-  const api = useAPI();
 
   useEffect(() => {
     if (videoManager) {
