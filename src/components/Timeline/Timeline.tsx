@@ -308,6 +308,7 @@ const Timeline: React.FC = () => {
 
     const handleMouseUp = async () => {
       if (isDragging && updatedInstruction) {
+        setWasJustDragging(true);
         // Pass both the updated instruction and original time when setting editing state
         dispatch(
           setEditingInstruction({
