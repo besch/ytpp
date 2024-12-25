@@ -354,16 +354,8 @@ export class VideoManager {
 
     const { textOverlay, pauseMainVideo, overlayDuration } = instruction;
 
-    // Calculate position based on video size
-    const videoRect = this.videoElement.getBoundingClientRect();
-    const scale = videoRect.width / config.mediaPositionerWidth;
-
-    const scaledPosition = {
-      x: textOverlay.position!.x * scale,
-      y: textOverlay.position!.y * scale,
-      width: textOverlay.position!.width * scale,
-      height: textOverlay.position!.height * scale,
-    };
+    // We don't need to scale the position here since VideoOverlayManager handles scaling
+    const position = textOverlay.position!;
 
     // Create a promise that resolves when the text overlay should end
     const textOverlayPromise = new Promise<void>((resolve) => {
@@ -389,7 +381,7 @@ export class VideoManager {
     await this.videoOverlayManager?.displayTextOverlay(
       textOverlay.text,
       textOverlay.style,
-      scaledPosition,
+      position,
       overlayDuration,
       instruction.id
     );
