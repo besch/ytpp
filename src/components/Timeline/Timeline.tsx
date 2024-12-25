@@ -198,6 +198,18 @@ const Timeline: React.FC = () => {
     }
   };
 
+  const handleSkipEndClick = (
+    e: React.MouseEvent,
+    instruction: SkipInstruction
+  ) => {
+    e.stopPropagation();
+    seekToTime(instruction.skipToTime);
+    if (!draggingInstructionId && !wasJustDragging) {
+      dispatch(setSelectedInstructionId(null));
+      dispatch(setEditingInstruction(null));
+    }
+  };
+
   const handleInstructionDrag = (
     e: React.MouseEvent,
     instruction: Instruction
@@ -283,8 +295,13 @@ const Timeline: React.FC = () => {
         isDragging = true;
         setDraggingInstructionId(`${instruction.id}-end`);
         setDraggingTime(instruction.skipToTime);
-        // Set editing instruction when drag starts
-        dispatch(setEditingInstruction(instruction));
+        // Set editing instruction when drag starts, including the original skipToTime
+        dispatch(
+          setEditingInstruction({
+            ...instruction,
+            _originalSkipToTime: startTime,
+          })
+        );
       }
 
       if (isDragging) {
@@ -423,7 +440,11 @@ const Timeline: React.FC = () => {
                       ? handleSkipEndDrag(e, instruction as SkipInstruction)
                       : handleInstructionDrag(e, instruction)
                   }
-                  onClick={(e) => handleInstructionClick(e, instruction)}
+                  onClick={(e) =>
+                    isEndMarker
+                      ? handleSkipEndClick(e, instruction as SkipInstruction)
+                      : handleInstructionClick(e, instruction)
+                  }
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     dispatch(setSelectedInstructionId(instruction.id));
