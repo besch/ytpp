@@ -25,6 +25,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { isEqual } from "lodash";
 import InstructionForm from "./InstructionForm";
+import config from "@/config";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -47,7 +48,7 @@ const InstructionEditor: React.FC = () => {
       minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
       seconds: Math.floor((currentTime / 1000) % 60),
       milliseconds: currentTime % 1000,
-      overlayDuration: 5,
+      overlayDuration: config.defaultOverlayDuration,
       useOverlayDuration: false,
       muteOverlayMedia: false,
       pauseMainVideo: false,
@@ -422,7 +423,7 @@ const InstructionEditor: React.FC = () => {
         skipToSeconds: skipSeconds,
         skipToMilliseconds: skipMilliseconds,
         overlayMediaType: "video",
-        overlayDuration: 5,
+        overlayDuration: config.defaultOverlayDuration,
         textOverlay: null,
       });
       setFormChanged(false);

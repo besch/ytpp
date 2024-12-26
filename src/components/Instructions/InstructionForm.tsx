@@ -16,6 +16,7 @@ import { useOverlayInstructionForm } from "@/hooks/forms/useOverlayInstructionFo
 import { useTextOverlayInstructionForm } from "@/hooks/forms/useTextOverlayInstructionForm";
 import InstructionDropdownMenu from "./InstructionDropdownMenu";
 import { parseTimeInput } from "@/lib/time";
+import config from "@/config";
 
 interface InstructionFormProps {
   isEditing: boolean;
@@ -65,7 +66,7 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
         minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
         seconds: Math.floor((currentTime / 1000) % 60),
         milliseconds: currentTime % 1000,
-        overlayDuration: 5,
+        overlayDuration: config.defaultOverlayDuration,
         useOverlayDuration: false,
         muteOverlayMedia: false,
         pauseMainVideo: false,

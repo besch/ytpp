@@ -7,6 +7,7 @@ import MediaUpload from "@/components/MediaUpload";
 import MediaPositioner, { MediaPosition } from "./MediaPositioner";
 import { MediaData } from "@/types";
 import { getMediaUrl } from "@/lib/api";
+import config from "@/config";
 
 interface OverlayInstructionFormProps {
   onMediaDelete: () => void;
@@ -40,7 +41,7 @@ const OverlayInstructionForm: React.FC<OverlayInstructionFormProps> = ({
     });
 
     // Reset related fields
-    setValue("overlayDuration", 5);
+    setValue("overlayDuration", config.defaultOverlayDuration);
 
     // Call the parent's onMediaDelete handler
     onMediaDelete();

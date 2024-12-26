@@ -1,7 +1,7 @@
 import { useFormContext } from "react-hook-form";
 import { TextOverlayInstruction } from "@/types";
 import { parseTimeInput } from "@/lib/time";
-
+import config from "@/config";
 export const useTextOverlayInstructionForm = () => {
   const { setValue } = useFormContext();
 
@@ -99,9 +99,13 @@ export const useTextOverlayInstructionForm = () => {
       );
     } else {
       // Set default values for new instructions
-      setValue("overlayDuration", 5, { shouldDirty: true });
+      setValue("overlayDuration", config.defaultOverlayDuration, {
+        shouldDirty: true,
+      });
       setValue("pauseMainVideo", false, { shouldDirty: true });
-      setValue("pauseDuration", 5, { shouldDirty: true });
+      setValue("pauseDuration", config.defaultPauseDuration, {
+        shouldDirty: true,
+      });
     }
   };
 
