@@ -127,7 +127,7 @@ const Navigation: React.FC = () => {
   return (
     <nav className="flex justify-between items-center px-8 py-6 bg-background border-b border-border">
       <div
-        className="cursor-pointer hover:text-primary flex items-center gap-3 text-lg"
+        className="cursor-pointer hover:text-white flex items-center gap-3 text-lg"
         onClick={handleHomeClick}
       >
         <Home className="h-6 w-6" />

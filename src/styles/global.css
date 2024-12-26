@@ -24,3 +24,15 @@
   scrollbar-width: thin;
   scrollbar-color: theme("colors.muted") theme("colors.background");
 }
+
+/* Link Styles */
+a {
+  color: white;
+  text-decoration: none;
+  transition: color 200ms;
+}
+
+a:hover {
+  color: white;
+  text-decoration: underline;
+}

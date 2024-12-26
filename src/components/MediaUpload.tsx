@@ -192,7 +192,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
           <div className="text-center">
             <button
               onClick={() => setShowRecorder(true)}
-              className="text-sm text-primary hover:underline"
+              className="text-sm text-white hover:underline"
             >
               Or record audio/video directly
             </button>

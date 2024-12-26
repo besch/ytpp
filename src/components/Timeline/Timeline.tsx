@@ -552,7 +552,7 @@ const Timeline: React.FC = () => {
 
   return (
     <div className="bg-background border border-border rounded-lg">
-      <div className="flex items-center justify-end p-4">
+      <div className="flex items-center justify-end p-2 pr-3">
         <Button
           variant="ghost"
           size="lg"

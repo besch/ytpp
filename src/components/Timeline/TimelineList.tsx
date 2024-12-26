@@ -226,26 +226,28 @@ const TimelineList: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleReaction(timeline, "like")}
-                      className={`p-1 rounded hover:bg-muted/20 ${
-                        timeline.user_reaction === "like" ? "text-primary" : ""
-                      }`}
+                      className="p-1 rounded hover:bg-muted/20"
                       disabled={!isAuthenticated}
                     >
-                      <ThumbsUp className="w-4 h-4" />
+                      {timeline.user_reaction === "like" ? (
+                        <ThumbsUp className="w-4 h-4 fill-current" />
+                      ) : (
+                        <ThumbsUp className="w-4 h-4" />
+                      )}
                     </button>
                     <span className="text-sm">{timeline.likes_count}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleReaction(timeline, "dislike")}
-                      className={`p-1 rounded hover:bg-muted/20 ${
-                        timeline.user_reaction === "dislike"
-                          ? "text-primary"
-                          : ""
-                      }`}
+                      className="p-1 rounded hover:bg-muted/20"
                       disabled={!isAuthenticated}
                     >
-                      <ThumbsDown className="w-4 h-4" />
+                      {timeline.user_reaction === "dislike" ? (
+                        <ThumbsDown className="w-4 h-4 fill-current" />
+                      ) : (
+                        <ThumbsDown className="w-4 h-4" />
+                      )}
                     </button>
                     <span className="text-sm">{timeline.dislikes_count}</span>
                   </div>
