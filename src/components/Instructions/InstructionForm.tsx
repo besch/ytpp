@@ -187,11 +187,7 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
         {isEditing && editingInstruction && currentTimeline && (
           <InstructionDropdownMenu
             instruction={editingInstruction}
-            timelineId={currentTimeline.id}
-            instructions={currentTimeline.instructions || []}
-            currentTimelineId={currentTimeline.id}
             hideEdit={true}
-            timeline={currentTimeline}
           />
         )}
       </div>

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus, Play } from "lucide-react";
+import { Plus } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
-  selectInstructions,
   setEditingInstruction,
   selectCurrentTimeline,
   selectEditingInstruction,
@@ -17,7 +16,7 @@ import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
 import TimelineDropdownMenu from "./TimelineDropdownMenu";
 import { RootState } from "@/store";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import InstructionDropdownMenu from "./InstructionDropdownMenu";
 import { useAPI } from "@/hooks/useAPI";
 import { useQuery } from "@tanstack/react-query";
@@ -26,12 +25,12 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { id: timelineId } = useParams();
-  const currentTimeline = useSelector(selectCurrentTimeline);
+  const timeline = useSelector(selectCurrentTimeline);
+  const timelineId = useSelector(selectCurrentTimeline)?.id;
   const editingInstruction = useSelector(selectEditingInstruction);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
   const isOwner = useSelector((state: RootState) =>
-    selectIsTimelineOwner(state, currentTimeline)
+    selectIsTimelineOwner(state, timeline)
   );
   const currentTime = useSelector(selectCurrentTime);
   const api = useAPI();
@@ -41,7 +40,8 @@ const InstructionsList: React.FC = () => {
     queryKey: ["instructions", timelineId],
     queryFn: async () => {
       if (!timelineId) return [];
-      const responses = await api.instructions.getAll(timelineId);
+      const responses = await api.instructions.getAll(timelineId.toString());
+      console.log(responses);
       const transformedInstructions = responses.map((response) => ({
         ...response.data,
         id: response.id,
@@ -61,7 +61,7 @@ const InstructionsList: React.FC = () => {
     if (instructions && instructions.length > 0) {
       dispatch(setInstructions(instructions));
     }
-  }, [currentTimeline?.id, instructions, dispatch]);
+  }, [timelineId, instructions, dispatch]);
 
   useEffect(() => {
     if (editingInstruction) {
@@ -110,7 +110,7 @@ const InstructionsList: React.FC = () => {
   return (
     <div className="space-y-4 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium">{currentTimeline?.title}</h1>
+        <h1 className="text-lg font-medium">{timeline?.title}</h1>
         <div className="flex items-center gap-2">
           {isOwner && (
             <>
@@ -128,12 +128,7 @@ const InstructionsList: React.FC = () => {
                     <Plus className="w-4 h-4 mr-4" />
                     Add Instruction
                   </Button>
-                  {currentTimeline && (
-                    <TimelineDropdownMenu
-                      currentTimeline={currentTimeline}
-                      isOwner={isOwner}
-                    />
-                  )}
+                  {timeline && <TimelineDropdownMenu isOwner={isOwner} />}
                 </>
               )}
             </>
@@ -172,13 +167,7 @@ const InstructionsList: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   {isOwner && (
-                    <InstructionDropdownMenu
-                      instruction={instruction}
-                      timelineId={Number(timelineId!)}
-                      instructions={instructions}
-                      currentTimelineId={currentTimeline!.id}
-                      timeline={currentTimeline!}
-                    />
+                    <InstructionDropdownMenu instruction={instruction} />
                   )}
                 </div>
               </div>

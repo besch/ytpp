@@ -34,48 +34,48 @@ export const useTextOverlayInstructionForm = () => {
 
     setValue(
       "textOverlay",
-      instruction
+      instruction?.textOverlay
         ? {
-            text: instruction.textOverlay.text,
+            text: instruction.textOverlay.text || defaultValues.text,
             style: {
               fontFamily:
-                instruction.textOverlay.style.fontFamily ||
+                instruction.textOverlay.style?.fontFamily ||
                 defaultValues.style.fontFamily,
               fontSize:
-                instruction.textOverlay.style.fontSize ||
+                instruction.textOverlay.style?.fontSize ||
                 defaultValues.style.fontSize,
               color:
-                instruction.textOverlay.style.color ||
+                instruction.textOverlay.style?.color ||
                 defaultValues.style.color,
               backgroundColor:
-                instruction.textOverlay.style.backgroundColor ||
+                instruction.textOverlay.style?.backgroundColor ||
                 defaultValues.style.backgroundColor,
               fontWeight:
-                instruction.textOverlay.style.fontWeight ||
+                instruction.textOverlay.style?.fontWeight ||
                 defaultValues.style.fontWeight,
               fontStyle:
-                instruction.textOverlay.style.fontStyle ||
+                instruction.textOverlay.style?.fontStyle ||
                 defaultValues.style.fontStyle,
               transparentBackground:
-                instruction.textOverlay.style.transparentBackground ||
+                instruction.textOverlay.style?.transparentBackground ||
                 defaultValues.style.transparentBackground,
               textAlign:
-                instruction.textOverlay.style.textAlign ||
+                instruction.textOverlay.style?.textAlign ||
                 defaultValues.style.textAlign,
               opacity:
-                instruction.textOverlay.style.opacity ||
+                instruction.textOverlay.style?.opacity ||
                 defaultValues.style.opacity,
               animation:
-                instruction.textOverlay.style.animation ||
+                instruction.textOverlay.style?.animation ||
                 defaultValues.style.animation,
               textShadow:
-                instruction.textOverlay.style.textShadow ||
+                instruction.textOverlay.style?.textShadow ||
                 defaultValues.style.textShadow,
               borderRadius:
-                instruction.textOverlay.style.borderRadius ||
+                instruction.textOverlay.style?.borderRadius ||
                 defaultValues.style.borderRadius,
               padding:
-                instruction.textOverlay.style.padding ||
+                instruction.textOverlay.style?.padding ||
                 defaultValues.style.padding,
             },
             position:

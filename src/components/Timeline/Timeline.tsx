@@ -6,12 +6,10 @@ import {
   setSelectedInstructionId,
   setEditingInstruction,
   updateInstruction,
-  selectCurrentTimeline,
   selectSelectedInstructionId,
   selectInstructions,
 } from "@/store/timelineSlice";
 import { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
-import { useAPI } from "@/hooks/useAPI";
 import Button from "@/components/ui/Button";
 import { Move } from "lucide-react";
 import { useVideoManager } from "@/hooks/useVideoManager";

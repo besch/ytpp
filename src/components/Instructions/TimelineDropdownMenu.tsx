@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { MoreVertical, Edit2, Trash2, X, Check } from "lucide-react";
 import { useAPI } from "@/hooks/useAPI";
-import { setCurrentTimeline } from "@/store/timelineSlice";
+import {
+  selectCurrentTimeline,
+  setCurrentTimeline,
+} from "@/store/timelineSlice";
 import { Timeline } from "@/types";
 import Button from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -19,7 +22,6 @@ import Dialog from "@/components/ui/Dialog";
 import Input from "@/components/ui/Input";
 
 interface TimelineDropdownMenuProps {
-  currentTimeline: Timeline;
   isOwner: boolean;
 }
 
@@ -77,13 +79,13 @@ const styles = {
 } as const;
 
 const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
-  currentTimeline,
   isOwner,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const api = useAPI();
+  const timeline = useSelector(selectCurrentTimeline);
 
   const [isRenamingTimeline, setIsRenamingTimeline] = useState(false);
   const [isDeletingTimeline, setIsDeletingTimeline] = useState(false);
@@ -93,7 +95,7 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
 
   const deleteTimelineMutation = useMutation({
     mutationFn: async () => {
-      return api.timelines.delete(currentTimeline.id);
+      return api.timelines.delete(timeline!.id);
     },
     onSuccess: () => {
       setIsDeletingTimeline(false);
@@ -110,7 +112,7 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
 
   const updateTimelineMutation = useMutation({
     mutationFn: async (newTitle: string) => {
-      return api.timelines.update(currentTimeline.id, { title: newTitle });
+      return api.timelines.update(timeline!.id, { title: newTitle });
     },
     onSuccess: (savedTimeline) => {
       if (savedTimeline) {
@@ -134,7 +136,7 @@ const TimelineDropdownMenu: React.FC<TimelineDropdownMenuProps> = ({
   };
 
   const handleRenameTimeline = () => {
-    setNewTimelineTitle(currentTimeline?.title || "");
+    setNewTimelineTitle(timeline?.title || "");
     setIsRenamingTimeline(true);
   };
 

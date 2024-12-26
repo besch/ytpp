@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { MoreVertical, Edit2, Trash2, Copy, Type, X } from "lucide-react";
@@ -11,6 +11,7 @@ import {
   renameInstruction,
   seekToTime,
   addInstruction,
+  selectCurrentTimeline,
 } from "@/store/timelineSlice";
 import {
   Instruction,
@@ -32,12 +33,8 @@ import Dialog from "../ui/Dialog";
 
 interface InstructionDropdownMenuProps {
   instruction: Instruction;
-  timelineId: number;
-  instructions: Instruction[];
-  currentTimelineId: number;
   hideEdit?: boolean;
   onDeleteSuccess?: () => void;
-  timeline: Timeline;
 }
 
 const styles = {
@@ -95,17 +92,16 @@ const styles = {
 
 const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   instruction,
-  timelineId,
-  instructions,
-  currentTimelineId,
   hideEdit,
   onDeleteSuccess,
-  timeline,
 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const api = useAPI();
   const queryClient = useQueryClient();
+  const timeline = useSelector(selectCurrentTimeline);
+  if (!timeline) return null;
+  const timelineId = timeline.id;
   const [isDeletingInstruction, setIsDeletingInstruction] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(instruction.name || "");
@@ -121,7 +117,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
         try {
           await api.timelines.deleteMedia(
             (instruction as OverlayInstruction).overlayMedia!.url,
-            Number(currentTimelineId)
+            Number(timelineId)
           );
         } catch (error) {
           console.warn("Failed to delete media file:", error);
@@ -152,7 +148,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   const cloneInstructionMutation = useMutation({
     mutationFn: async () => {
       const response = await api.instructions.clone(
-        currentTimelineId.toString(),
+        timelineId.toString(),
         instruction
       );
       return response.data as Instruction;
@@ -212,7 +208,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({
-        queryKey: ["instructions", currentTimelineId.toString()],
+        queryKey: ["instructions", timelineId.toString()],
       });
 
       setIsRenaming(false);

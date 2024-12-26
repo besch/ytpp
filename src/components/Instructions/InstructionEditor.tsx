@@ -220,6 +220,7 @@ const InstructionEditor: React.FC = () => {
           },
           overlayDuration: textOverlayInstruction.overlayDuration,
           pauseMainVideo: textOverlayInstruction.pauseMainVideo,
+          pauseDuration: textOverlayInstruction.pauseDuration,
         });
       } else {
         setInitialValues(values);

@@ -79,7 +79,6 @@ export interface Timeline {
   id: number;
   title: string;
   video_url: string;
-  instructions?: Instruction[];
   user_id: string;
   users?: {
     id: string;

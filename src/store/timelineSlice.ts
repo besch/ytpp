@@ -17,6 +17,7 @@ interface TimelineState {
   isCanvasVisible: boolean;
   timelines: Timeline[];
   currentTimeline: Timeline | null;
+  instructions: Instruction[];
   loading: boolean;
   error: string | null;
   videoElementId: string | null;
@@ -31,6 +32,7 @@ const initialState: TimelineState = {
   isCanvasVisible: true,
   timelines: [],
   currentTimeline: null,
+  instructions: [],
   loading: false,
   error: null,
   videoElementId: null,
@@ -44,26 +46,20 @@ export const timelineSlice = createSlice({
       state.currentTime = action.payload;
     },
     addInstruction: (state, action: PayloadAction<Instruction>) => {
-      if (state.currentTimeline && state.currentTimeline.instructions) {
-        state.currentTimeline.instructions.push(action.payload);
-      }
+      state.instructions.push(action.payload);
     },
     updateInstruction: (state, action: PayloadAction<Instruction>) => {
-      if (state.currentTimeline && state.currentTimeline.instructions) {
-        const index = state.currentTimeline.instructions.findIndex(
-          (instruction) => instruction.id === action.payload.id
-        );
-        if (index !== -1) {
-          state.currentTimeline.instructions[index] = action.payload;
-        }
+      const index = state.instructions.findIndex(
+        (instruction) => instruction.id === action.payload.id
+      );
+      if (index !== -1) {
+        state.instructions[index] = action.payload;
       }
     },
     removeInstruction: (state, action: PayloadAction<string>) => {
-      if (state.currentTimeline && state.currentTimeline.instructions) {
-        state.currentTimeline.instructions = (
-          state.currentTimeline.instructions || []
-        ).filter((instruction) => instruction.id !== action.payload);
-      }
+      state.instructions = state.instructions.filter(
+        (instruction) => instruction.id !== action.payload
+      );
     },
     setEditingInstruction: (
       state,
@@ -76,15 +72,7 @@ export const timelineSlice = createSlice({
       state.selectedElementId = null;
     },
     setInstructions: (state, action: PayloadAction<Instruction[]>) => {
-      if (state.currentTimeline) {
-        state.currentTimeline.instructions = action.payload.filter(
-          (instruction) =>
-            instruction &&
-            typeof instruction.triggerTime === "number" &&
-            typeof instruction.type === "string" &&
-            typeof instruction.id === "string"
-        );
-      }
+      state.instructions = action.payload;
     },
     setCanvasVisibility: (state, action: PayloadAction<boolean>) => {
       state.isCanvasVisible = action.payload;
@@ -120,28 +108,23 @@ export const timelineSlice = createSlice({
         textOverlay: TextOverlayMedia;
       }>
     ) => {
-      if (state.currentTimeline && state.currentTimeline.instructions) {
-        const instruction = state.currentTimeline.instructions.find(
-          (i) => i.id === action.payload.instructionId
-        ) as TextOverlayInstruction | undefined;
+      const instruction = state.instructions.find(
+        (i) => i.id === action.payload.instructionId
+      ) as TextOverlayInstruction | undefined;
 
-        if (instruction) {
-          instruction.textOverlay = action.payload.textOverlay;
-        }
+      if (instruction) {
+        instruction.textOverlay = action.payload.textOverlay;
       }
     },
     renameInstruction: (
       state,
       action: PayloadAction<{ id: string; name: string }>
     ) => {
-      if (state.currentTimeline && state.currentTimeline.instructions) {
-        state.currentTimeline.instructions =
-          state.currentTimeline.instructions.map((instruction) =>
-            instruction.id === action.payload.id
-              ? { ...instruction, name: action.payload.name }
-              : instruction
-          );
-      }
+      state.instructions = state.instructions.map((instruction) =>
+        instruction.id === action.payload.id
+          ? { ...instruction, name: action.payload.name }
+          : instruction
+      );
     },
   },
 });
@@ -169,10 +152,8 @@ export const {
 export const selectCurrentTime = (state: RootState) =>
   state.timeline.currentTime;
 export const selectActiveTab = (state: RootState) => state.timeline.activeTab;
-export const selectInstructions = createSelector(
-  [(state: RootState) => state.timeline.currentTimeline],
-  (currentTimeline) => currentTimeline?.instructions ?? []
-);
+export const selectInstructions = (state: RootState) =>
+  state.timeline.instructions;
 export const selectEditingInstruction = (state: RootState) =>
   state.timeline.editingInstruction;
 export const selectSelectedInstructionId = (state: RootState) =>
@@ -187,13 +168,5 @@ export const selectTimelineLoading = (state: RootState) =>
 export const selectTimelineError = (state: RootState) => state.timeline.error;
 export const selectVideoElementId = (state: RootState) =>
   state.timeline.videoElementId;
-export const selectTextOverlayInstructions = createSelector(
-  [selectInstructions],
-  (instructions) =>
-    instructions.filter(
-      (instruction): instruction is TextOverlayInstruction =>
-        instruction.type === "text-overlay"
-    )
-);
 
 export default timelineSlice.reducer;
