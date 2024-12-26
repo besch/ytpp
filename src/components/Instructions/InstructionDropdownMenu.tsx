@@ -10,6 +10,7 @@ import {
   setCurrentTimeline,
   renameInstruction,
   seekToTime,
+  addInstruction,
 } from "@/store/timelineSlice";
 import {
   Instruction,
@@ -127,20 +128,16 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
         }
       }
 
-      const updatedInstructions = instructions.filter(
-        (inst) => inst.id !== instruction.id
-      );
-      return api.timelines.update(Number(currentTimelineId), {
-        instructions: updatedInstructions,
-      });
+      // Delete the instruction using the instructions API
+      await api.instructions.delete(instruction.id);
+      return instruction.id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
       setIsDeletingInstruction(false);
-      dispatch(removeInstruction(instruction.id));
+      dispatch(removeInstruction(deletedId));
       queryClient.invalidateQueries({
         queryKey: ["instructions", timelineId.toString()],
       });
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
       onDeleteSuccess?.();
       navigate(`/timeline/${timelineId}`);
     },
@@ -158,24 +155,16 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
         currentTimelineId.toString(),
         instruction
       );
-
-      // Convert API response to Instruction type
-      const clonedInstruction = response.data as Instruction;
-      const updatedInstructions = [...instructions, clonedInstruction];
-
-      dispatch(
-        setCurrentTimeline({
-          ...timeline,
-          instructions: updatedInstructions,
-        })
-      );
-      return clonedInstruction;
+      return response.data as Instruction;
     },
-    onSuccess: () => {
+    onSuccess: (clonedInstruction) => {
+      // Update Redux state
+      dispatch(addInstruction(clonedInstruction));
+
+      // Invalidate queries to refresh the data
       queryClient.invalidateQueries({
         queryKey: ["instructions", timelineId.toString()],
       });
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
     },
     onError: (error: Error) => {
       console.error("Failed to clone instruction:", error);
@@ -211,27 +200,20 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 
   const handleConfirmRename = async () => {
     setIsRenamingLoading(true);
-    const updatedInstructions = instructions.map((inst) =>
-      inst.id === instruction.id ? { ...inst, name: newName } : inst
-    );
-
     try {
-      const savedTimeline = await api.timelines.update(
-        Number(currentTimelineId),
-        {
-          instructions: updatedInstructions,
-        }
-      );
+      // Update the instruction name using the instructions API
+      await api.instructions.update(instruction.id, {
+        ...instruction,
+        name: newName,
+      });
 
-      // First update the Redux state
+      // Update the Redux state
       dispatch(renameInstruction({ id: instruction.id, name: newName }));
-      dispatch(setCurrentTimeline(savedTimeline));
 
-      // Then invalidate the queries to ensure fresh data
+      // Invalidate queries to refresh the data
       queryClient.invalidateQueries({
         queryKey: ["instructions", currentTimelineId.toString()],
       });
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
 
       setIsRenaming(false);
     } catch (error) {

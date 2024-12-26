@@ -110,27 +110,6 @@ const InstructionEditor: React.FC = () => {
     }
   };
 
-  // Mutation for saving instructions
-  const saveInstructionsMutation = useMutation({
-    mutationFn: async (updatedInstructions: Instruction[]) => {
-      if (!currentTimeline) throw new Error("No timeline selected");
-
-      const updatedTimeline = {
-        ...currentTimeline,
-        instructions: updatedInstructions,
-      };
-
-      return api.timelines.update(currentTimeline.id, updatedTimeline);
-    },
-    onSuccess: (savedTimeline) => {
-      dispatch(setCurrentTimeline(savedTimeline));
-      queryClient.invalidateQueries({ queryKey: ["timelines"] });
-    },
-    onError: (error) => {
-      console.error("Failed to save instructions:", error);
-    },
-  });
-
   // Mutation for media upload
   const uploadMediaMutation = useMutation({
     mutationFn: async ({
@@ -156,25 +135,23 @@ const InstructionEditor: React.FC = () => {
     },
   });
 
-  const handleSaveInstructions = async (updatedInstructions: Instruction[]) => {
-    await saveInstructionsMutation.mutateAsync(updatedInstructions);
-  };
-
   const handleInstructionSubmit = async (newInstruction: Instruction) => {
     try {
-      let updatedInstructions: Instruction[];
+      // Remove _originalTriggerTime before saving
+      const { _originalTriggerTime, ...instructionToSave } = newInstruction;
+
       if (isEditing) {
-        updatedInstructions = instructions.map((i: Instruction) =>
-          i.id === newInstruction.id ? newInstruction : i
-        );
+        // Update existing instruction
+        await api.instructions.update(instructionToSave.id, instructionToSave);
       } else {
-        updatedInstructions = [...instructions, newInstruction];
+        // Create new instruction
+        await api.instructions.create(
+          currentTimeline!.id.toString(),
+          instructionToSave
+        );
       }
 
-      // Save to database
-      await handleSaveInstructions(updatedInstructions);
-
-      dispatch(setCurrentTime(newInstruction.triggerTime));
+      dispatch(setCurrentTime(instructionToSave.triggerTime));
 
       // Reset form state
       setFormChanged(false);
@@ -184,7 +161,6 @@ const InstructionEditor: React.FC = () => {
       dispatch(setEditingInstruction(null));
 
       // Invalidate queries to refresh the data
-      await queryClient.invalidateQueries({ queryKey: ["timelines"] });
       await queryClient.invalidateQueries({ queryKey: ["instructions"] });
 
       navigate(`/timeline/${timelineId}`);
@@ -531,9 +507,7 @@ const InstructionEditor: React.FC = () => {
           }}
         />
       </FormProvider>
-      {(saveInstructionsMutation.isPending ||
-        uploadMediaMutation.isPending ||
-        deleteMediaMutation.isPending) && (
+      {(uploadMediaMutation.isPending || deleteMediaMutation.isPending) && (
         <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
           <LoadingSpinner size="lg" />
         </div>
