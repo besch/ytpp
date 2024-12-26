@@ -222,6 +222,17 @@ const Timeline: React.FC = () => {
     const dragThreshold = 3; // pixels
     let updatedInstruction: Instruction | null = null;
 
+    // Create a drag overlay
+    const dragOverlay = document.createElement("div");
+    dragOverlay.style.position = "fixed";
+    dragOverlay.style.top = "0";
+    dragOverlay.style.left = "0";
+    dragOverlay.style.width = "100%";
+    dragOverlay.style.height = "100%";
+    dragOverlay.style.cursor = "ew-resize";
+    dragOverlay.style.zIndex = "9999";
+    document.body.appendChild(dragOverlay);
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = Math.abs(moveEvent.clientX - startX);
       const deltaY = Math.abs(moveEvent.clientY - startY);
@@ -269,6 +280,7 @@ const Timeline: React.FC = () => {
       setDraggingTime(null);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.body.removeChild(dragOverlay);
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -286,6 +298,17 @@ const Timeline: React.FC = () => {
     let isDragging = false;
     const dragThreshold = 3; // pixels
     let updatedInstruction: SkipInstruction | null = null;
+
+    // Create a drag overlay
+    const dragOverlay = document.createElement("div");
+    dragOverlay.style.position = "fixed";
+    dragOverlay.style.top = "0";
+    dragOverlay.style.left = "0";
+    dragOverlay.style.width = "100%";
+    dragOverlay.style.height = "100%";
+    dragOverlay.style.cursor = "ew-resize";
+    dragOverlay.style.zIndex = "9999";
+    document.body.appendChild(dragOverlay);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = Math.abs(moveEvent.clientX - startX);
@@ -339,6 +362,7 @@ const Timeline: React.FC = () => {
       setDraggingTime(null);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.body.removeChild(dragOverlay);
     };
 
     document.addEventListener("mousemove", handleMouseMove);

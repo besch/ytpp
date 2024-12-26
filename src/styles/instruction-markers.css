@@ -7,8 +7,9 @@
   border-radius: 9999px !important;
   position: relative !important;
   z-index: 30 !important;
-  cursor: pointer !important;
+  cursor: ew-resize !important;
   transition: all 200ms ease-out !important;
+  pointer-events: all !important;
 }
 
 .instruction-marker:hover {
