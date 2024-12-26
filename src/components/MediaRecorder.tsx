@@ -8,16 +8,19 @@ import {
   Play,
   Check,
   X,
+  AlertCircle,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { MediaData } from "@/types";
 
 interface MediaRecorderProps {
   onRecordingComplete: (mediaData: MediaData) => void;
+  currentMedia?: { url: string; type: string } | null;
 }
 
 const MediaRecorder: React.FC<MediaRecorderProps> = ({
   onRecordingComplete,
+  currentMedia,
 }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -29,13 +32,15 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
   const [previewMedia, setPreviewMedia] = useState<{
     url: string;
     type: string;
-  } | null>(null);
+  } | null>(currentMedia || null);
+  const [error, setError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const previewRef = useRef<HTMLVideoElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Timer effect
   useEffect(() => {
@@ -84,8 +89,33 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
     updateLevel();
   };
 
+  const cleanupRecording = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (previewRef.current) {
+      previewRef.current.srcObject = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    setIsRecording(false);
+    setIsPaused(false);
+    setElapsedTime(0);
+    setAudioLevel(0);
+  };
+
   const startRecording = async (type: "audio" | "video") => {
     try {
+      // Clean up any existing recording first
+      cleanupRecording();
+      setError(null);
+
       const constraints = {
         audio: true,
         video: type === "video" ? { width: 1280, height: 720 } : false,
@@ -123,18 +153,12 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
           type: type === "video" ? "video/webm" : "audio/webm",
         });
 
-        // Clean up
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
-          streamRef.current = null;
-        }
-        if (previewRef.current) {
-          previewRef.current.srcObject = null;
-        }
-        if (audioContextRef.current) {
-          audioContextRef.current.close();
-          audioContextRef.current = null;
-        }
+        cleanupRecording();
+      };
+
+      mediaRecorder.onerror = () => {
+        setError("Recording failed. Please try again.");
+        cleanupRecording();
       };
 
       mediaRecorder.start(1000); // Capture data every second
@@ -143,9 +167,10 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
       setElapsedTime(0);
     } catch (error) {
       console.error("Error starting recording:", error);
-      alert(
+      setError(
         "Failed to start recording. Please make sure you have granted the necessary permissions."
       );
+      cleanupRecording();
     }
   };
 
@@ -155,8 +180,6 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
       mediaRecorderRef.current.state !== "inactive"
     ) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsPaused(false);
     }
   };
 
@@ -173,6 +196,12 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
 
   const confirmRecording = () => {
     if (!previewMedia) return;
+
+    // Clean up audio element
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
 
     const file = new File(
       chunksRef.current,
@@ -196,20 +225,53 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
   };
 
   const discardRecording = () => {
+    // Clean up audio element
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
     if (previewMedia) {
       URL.revokeObjectURL(previewMedia.url);
     }
     setPreviewMedia(null);
     setRecordingType(null);
     setElapsedTime(0);
+    setError(null);
   };
+
+  const handleAudioReset = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupRecording();
+      if (previewMedia?.url.startsWith("blob:")) {
+        URL.revokeObjectURL(previewMedia.url);
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="flex items-center gap-2 p-3 text-sm bg-destructive/10 text-destructive rounded-md">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
+
       {!isRecording && !recordingType && !previewMedia && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 bg-muted rounded-lg p-4">
           <Button
-            onClick={() => startRecording("audio")}
+            onClick={(e) => {
+              e.preventDefault();
+              startRecording("audio");
+            }}
             variant="outline"
             className="flex-1"
           >
@@ -217,7 +279,10 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
             Record Audio
           </Button>
           <Button
-            onClick={() => startRecording("video")}
+            onClick={(e) => {
+              e.preventDefault();
+              startRecording("video");
+            }}
             variant="outline"
             className="flex-1"
           >
@@ -249,7 +314,7 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
           {isRecording && (
             <>
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 Recording Audio... {formatTime(elapsedTime)}
               </div>
               <div className="w-48 h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
@@ -274,17 +339,25 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
                 autoPlay
               />
             ) : (
-              <audio
-                src={previewMedia.url}
-                className="w-full mt-12"
-                controls
-                autoPlay
-              />
+              <div className="flex flex-col items-center justify-center h-full">
+                <audio
+                  ref={audioRef}
+                  src={previewMedia.url}
+                  className="w-full mt-12"
+                  controls
+                  onEnded={handleAudioReset}
+                >
+                  Your browser does not support the audio tag.
+                </audio>
+              </div>
             )}
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={confirmRecording}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmRecording();
+              }}
               variant="primary"
               className="flex-1"
             >
@@ -292,7 +365,10 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
               Use Recording
             </Button>
             <Button
-              onClick={discardRecording}
+              onClick={(e) => {
+                e.preventDefault();
+                discardRecording();
+              }}
               variant="destructive"
               className="flex-1"
             >
@@ -305,7 +381,14 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
 
       {isRecording && !previewMedia && (
         <div className="flex gap-2">
-          <Button onClick={togglePause} variant="outline" className="flex-1">
+          <Button
+            onClick={(e) => {
+              e.preventDefault();
+              togglePause();
+            }}
+            variant="outline"
+            className="flex-1"
+          >
             {isPaused ? (
               <>
                 <Play className="w-4 h-4 mr-2" />
@@ -319,7 +402,10 @@ const MediaRecorder: React.FC<MediaRecorderProps> = ({
             )}
           </Button>
           <Button
-            onClick={stopRecording}
+            onClick={(e) => {
+              e.preventDefault();
+              stopRecording();
+            }}
             variant="destructive"
             className="flex-1"
           >

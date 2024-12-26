@@ -102,10 +102,26 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   };
 
   const handleRecordingComplete = async (mediaData: MediaData) => {
-    if (mediaData.file) {
-      await handleFileProcessing(mediaData.file);
+    setIsLoading(true);
+    setMediaError(null);
+
+    try {
+      if (mediaData.file) {
+        const url = URL.createObjectURL(mediaData.file);
+        const duration = await getMediaDuration(url, mediaData.type);
+
+        onMediaSelected({
+          ...mediaData,
+          duration,
+        });
+      }
+    } catch (error) {
+      console.error("Error processing recorded media:", error);
+      setMediaError("Failed to process recording. Please try again.");
+    } finally {
+      setIsLoading(false);
+      setShowRecorder(false);
     }
-    setShowRecorder(false);
   };
 
   const MediaPreview: React.FC<{ src: string; type: string }> = React.memo(
@@ -191,7 +207,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
           <div className="text-center">
             <button
-              onClick={() => setShowRecorder(true)}
+              onClick={(e) => {
+                e.preventDefault();
+                setShowRecorder(true);
+              }}
               className="text-sm text-white hover:underline"
             >
               Or record audio/video directly
@@ -200,7 +219,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         </>
       ) : (
         <div className="space-y-4">
-          <MediaRecorder onRecordingComplete={handleRecordingComplete} />
+          <MediaRecorder
+            onRecordingComplete={handleRecordingComplete}
+            currentMedia={currentMedia}
+          />
           <button
             onClick={() => setShowRecorder(false)}
             className="text-sm text-muted-foreground hover:underline block w-full text-center"
@@ -212,7 +234,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
       {mediaError && <p className="text-sm text-destructive">{mediaError}</p>}
 
-      {currentMedia?.url && currentMedia.type && (
+      {currentMedia?.url && currentMedia.type && !showRecorder && (
         <MediaPreview src={currentMedia.url} type={currentMedia.type} />
       )}
     </div>
