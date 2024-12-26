@@ -1,5 +1,6 @@
 import { useFormContext } from "react-hook-form";
-import { SkipInstruction, TimeInput } from "@/types";
+import { SkipInstruction } from "@/types";
+import { parseTimeInput } from "@/lib/time";
 
 export const useSkipInstructionForm = (currentTime: number) => {
   const { setValue } = useFormContext();
@@ -46,14 +47,4 @@ export const useSkipInstructionForm = (currentTime: number) => {
     initializeForm,
     buildInstruction,
   };
-};
-
-const parseTimeInput = (data: TimeInput) => {
-  return (
-    (Number(data.hours) * 3600 +
-      Number(data.minutes) * 60 +
-      Number(data.seconds)) *
-      1000 +
-    Number(data.milliseconds || 0)
-  );
 };

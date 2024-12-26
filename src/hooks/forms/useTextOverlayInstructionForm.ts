@@ -1,5 +1,6 @@
 import { useFormContext } from "react-hook-form";
-import { TextOverlayInstruction, TimeInput } from "@/types";
+import { TextOverlayInstruction } from "@/types";
+import { parseTimeInput } from "@/lib/time";
 
 export const useTextOverlayInstructionForm = () => {
   const { setValue } = useFormContext();
@@ -31,29 +32,66 @@ export const useTextOverlayInstructionForm = () => {
       },
     };
 
-    setValue("textOverlay", instruction ? {
-      text: instruction.textOverlay.text,
-      style: {
-        fontFamily: instruction.textOverlay.style.fontFamily || defaultValues.style.fontFamily,
-        fontSize: instruction.textOverlay.style.fontSize || defaultValues.style.fontSize,
-        color: instruction.textOverlay.style.color || defaultValues.style.color,
-        backgroundColor: instruction.textOverlay.style.backgroundColor || defaultValues.style.backgroundColor,
-        fontWeight: instruction.textOverlay.style.fontWeight || defaultValues.style.fontWeight,
-        fontStyle: instruction.textOverlay.style.fontStyle || defaultValues.style.fontStyle,
-        transparentBackground: instruction.textOverlay.style.transparentBackground || defaultValues.style.transparentBackground,
-        textAlign: instruction.textOverlay.style.textAlign || defaultValues.style.textAlign,
-        opacity: instruction.textOverlay.style.opacity || defaultValues.style.opacity,
-        animation: instruction.textOverlay.style.animation || defaultValues.style.animation,
-        textShadow: instruction.textOverlay.style.textShadow || defaultValues.style.textShadow,
-        borderRadius: instruction.textOverlay.style.borderRadius || defaultValues.style.borderRadius,
-        padding: instruction.textOverlay.style.padding || defaultValues.style.padding,
-      },
-      position: instruction.textOverlay.position || defaultValues.position,
-    } : defaultValues, { shouldDirty: true });
+    setValue(
+      "textOverlay",
+      instruction
+        ? {
+            text: instruction.textOverlay.text,
+            style: {
+              fontFamily:
+                instruction.textOverlay.style.fontFamily ||
+                defaultValues.style.fontFamily,
+              fontSize:
+                instruction.textOverlay.style.fontSize ||
+                defaultValues.style.fontSize,
+              color:
+                instruction.textOverlay.style.color ||
+                defaultValues.style.color,
+              backgroundColor:
+                instruction.textOverlay.style.backgroundColor ||
+                defaultValues.style.backgroundColor,
+              fontWeight:
+                instruction.textOverlay.style.fontWeight ||
+                defaultValues.style.fontWeight,
+              fontStyle:
+                instruction.textOverlay.style.fontStyle ||
+                defaultValues.style.fontStyle,
+              transparentBackground:
+                instruction.textOverlay.style.transparentBackground ||
+                defaultValues.style.transparentBackground,
+              textAlign:
+                instruction.textOverlay.style.textAlign ||
+                defaultValues.style.textAlign,
+              opacity:
+                instruction.textOverlay.style.opacity ||
+                defaultValues.style.opacity,
+              animation:
+                instruction.textOverlay.style.animation ||
+                defaultValues.style.animation,
+              textShadow:
+                instruction.textOverlay.style.textShadow ||
+                defaultValues.style.textShadow,
+              borderRadius:
+                instruction.textOverlay.style.borderRadius ||
+                defaultValues.style.borderRadius,
+              padding:
+                instruction.textOverlay.style.padding ||
+                defaultValues.style.padding,
+            },
+            position:
+              instruction.textOverlay.position || defaultValues.position,
+          }
+        : defaultValues,
+      { shouldDirty: true }
+    );
 
     if (instruction) {
-      setValue("overlayDuration", instruction.overlayDuration, { shouldDirty: true });
-      setValue("pauseMainVideo", instruction.pauseMainVideo, { shouldDirty: true });
+      setValue("overlayDuration", instruction.overlayDuration, {
+        shouldDirty: true,
+      });
+      setValue("pauseMainVideo", instruction.pauseMainVideo, {
+        shouldDirty: true,
+      });
       setValue(
         "pauseDuration",
         instruction.pauseDuration || instruction.overlayDuration,
@@ -110,14 +148,4 @@ export const useTextOverlayInstructionForm = () => {
     initializeForm,
     buildInstruction,
   };
-};
-
-const parseTimeInput = (data: TimeInput) => {
-  return (
-    (Number(data.hours) * 3600 +
-      Number(data.minutes) * 60 +
-      Number(data.seconds)) *
-      1000 +
-    Number(data.milliseconds || 0)
-  );
 };

@@ -1,5 +1,6 @@
 import { useFormContext } from "react-hook-form";
-import { OverlayInstruction, TimeInput, MediaData } from "@/types";
+import { OverlayInstruction, MediaData } from "@/types";
+import { parseTimeInput } from "@/lib/time";
 
 export const useOverlayInstructionForm = () => {
   const { setValue, watch } = useFormContext();
@@ -94,14 +95,4 @@ export const useOverlayInstructionForm = () => {
     buildInstruction,
     handleMediaSelected,
   };
-};
-
-const parseTimeInput = (data: TimeInput) => {
-  return (
-    (Number(data.hours) * 3600 +
-      Number(data.minutes) * 60 +
-      Number(data.seconds)) *
-      1000 +
-    Number(data.milliseconds || 0)
-  );
 };

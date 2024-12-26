@@ -5,8 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { selectCurrentTimeline } from "@/store/timelineSlice";
 import { TimeInput } from "../ui/TimeInput";
-import { Instruction, TimeInput as TimeInputInterface } from "@/types";
-import InstructionsList from "./InstructionsList";
+import { Instruction } from "@/types";
 import { MediaPosition } from "./MediaPositioner";
 import OverlayInstructionForm from "./OverlayInstructionForm";
 import SkipInstructionForm from "./SkipInstructionForm";
@@ -16,6 +15,7 @@ import { useSkipInstructionForm } from "@/hooks/forms/useSkipInstructionForm";
 import { useOverlayInstructionForm } from "@/hooks/forms/useOverlayInstructionForm";
 import { useTextOverlayInstructionForm } from "@/hooks/forms/useTextOverlayInstructionForm";
 import InstructionDropdownMenu from "./InstructionDropdownMenu";
+import { parseTimeInput } from "@/lib/time";
 
 interface InstructionFormProps {
   isEditing: boolean;
@@ -142,16 +142,6 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
       navigate(`/timeline/${currentTimeline.id}`);
     }
   }, [selectedType, isEditing, currentTimeline, navigate]);
-
-  const parseTimeInput = (data: TimeInputInterface) => {
-    return (
-      (Number(data.hours) * 3600 +
-        Number(data.minutes) * 60 +
-        Number(data.seconds)) *
-        1000 +
-      Number(data.milliseconds || 0)
-    );
-  };
 
   const handleSubmit = async (data: any) => {
     try {

@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { TimeInput } from "../ui/TimeInput";
 import { useFormContext } from "react-hook-form";
 import { useVideoManager } from "@/hooks/useVideoManager";
+import { parseTimeInput } from "@/lib/time";
 
 interface SkipInstructionFormProps {
   onTimeChange: (time: number) => void;
@@ -12,16 +13,6 @@ const SkipInstructionForm: React.FC<SkipInstructionFormProps> = ({
 }) => {
   const { watch, setValue } = useFormContext();
   const videoManager = useVideoManager();
-
-  const parseTimeInput = (data: any) => {
-    return (
-      (Number(data.hours) * 3600 +
-        Number(data.minutes) * 60 +
-        Number(data.seconds)) *
-        1000 +
-      Number(data.milliseconds || 0)
-    );
-  };
 
   // Calculate the current skipToTime value
   const skipToTime = parseTimeInput({
