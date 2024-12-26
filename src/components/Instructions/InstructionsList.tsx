@@ -9,6 +9,7 @@ import {
   seekToTime,
   selectCurrentTime,
   setInstructions,
+  selectInstructions,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
 import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
@@ -28,6 +29,7 @@ const InstructionsList: React.FC = () => {
   const timeline = useSelector(selectCurrentTimeline);
   const timelineId = useSelector(selectCurrentTimeline)?.id;
   const editingInstruction = useSelector(selectEditingInstruction);
+  const instructions = useSelector(selectInstructions);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
   const isOwner = useSelector((state: RootState) =>
     selectIsTimelineOwner(state, timeline)
@@ -36,14 +38,13 @@ const InstructionsList: React.FC = () => {
   const api = useAPI();
 
   // Use React Query for fetching instructions
-  const { data: instructions = [], isLoading } = useQuery({
+  const { data: instructionsData = [], isLoading } = useQuery({
     queryKey: ["instructions", timelineId],
     queryFn: async () => {
       if (!timelineId) return [];
       const responses = await api.instructions.getAll(timelineId.toString());
-      console.log(responses);
       const transformedInstructions = responses.map((response) => ({
-        ...response.data,
+        ...response.data.data,
         id: response.id,
         triggerTime: response.trigger_time,
       })) as Instruction[];
@@ -56,12 +57,10 @@ const InstructionsList: React.FC = () => {
     enabled: !!timelineId, // Only need timelineId to be present
   });
 
-  // Effect to ensure instructions are updated in Redux when timeline changes
-  useEffect(() => {
-    if (instructions && instructions.length > 0) {
-      dispatch(setInstructions(instructions));
-    }
-  }, [timelineId, instructions, dispatch]);
+  // // Effect to ensure instructions are updated in Redux when timeline changes
+  // useEffect(() => {
+  //   dispatch(setInstructions(instructionsData));
+  // }, [timelineId, instructionsData, dispatch]);
 
   useEffect(() => {
     if (editingInstruction) {
