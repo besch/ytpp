@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Video Timeline",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Enhance videos with interactive timelines, skip sections, and overlay media elements using the Video Timelines Chrome extension.",
   "permissions": [
     "activeTab",

@@ -255,6 +255,7 @@ const Timeline: React.FC = () => {
 
         const newTime = Math.max(0, Math.min(duration, startTime + timeDelta));
         setDraggingTime(newTime);
+        seekToTime(newTime);
 
         updatedInstruction = {
           ...instruction,
@@ -339,6 +340,7 @@ const Timeline: React.FC = () => {
 
         const newTime = Math.max(0, Math.min(duration, startTime + timeDelta));
         setDraggingTime(newTime);
+        seekToTime(newTime);
 
         updatedInstruction = {
           ...instruction,
@@ -550,17 +552,15 @@ const Timeline: React.FC = () => {
 
   return (
     <div className="bg-background border border-border rounded-lg">
-      <div className="flex items-center justify-between p-4">
-        <div className="flex gap-2 items-center mb-4">
-          <Button
-            variant="ghost"
-            size="lg"
-            onMouseDown={handleDragStart}
-            title="Drag timeline"
-          >
-            <Move className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex items-center justify-end p-4">
+        <Button
+          variant="ghost"
+          size="lg"
+          onMouseDown={handleDragStart}
+          title="Drag timeline"
+        >
+          <Move className="h-4 w-4" />
+        </Button>
       </div>
 
       <div
