@@ -7,7 +7,7 @@
   border-radius: 9999px !important;
   position: relative !important;
   z-index: 30 !important;
-  cursor: ew-resize !important;
+  cursor: pointer !important;
   transition: all 200ms ease-out !important;
   pointer-events: all !important;
 }
