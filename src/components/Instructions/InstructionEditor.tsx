@@ -8,7 +8,6 @@ import {
   selectEditingInstruction,
   selectInstructions,
   selectCurrentTimeline,
-  setCurrentTimeline,
   updateInstruction,
 } from "@/store/timelineSlice";
 import { useAPI } from "@/hooks/useAPI";
@@ -25,6 +24,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import { isEqual } from "lodash";
 import InstructionForm from "./InstructionForm";
 import config from "@/config";
+
+const getInstructionTitle = (type: string): string => {
+  switch (type) {
+    case "pause":
+      return "Pause";
+    case "skip":
+      return "Skip";
+    case "overlay":
+      return "Media";
+    case "text-overlay":
+      return "Text";
+    default:
+      return type.charAt(0).toUpperCase() + type.slice(1);
+  }
+};
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
@@ -497,6 +511,12 @@ const InstructionEditor: React.FC = () => {
 
   return (
     <div className="p-6 overflow-x-hidden">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold">
+          {isEditing ? "Edit" : "New"}{" "}
+          {selectedType ? getInstructionTitle(selectedType) : ""} Instruction
+        </h1>
+      </div>
       <FormProvider {...methods}>
         <InstructionForm
           isEditing={isEditing}

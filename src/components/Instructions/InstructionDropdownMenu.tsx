@@ -7,7 +7,6 @@ import { useAPI } from "@/hooks/useAPI";
 import {
   removeInstruction,
   setEditingInstruction,
-  setCurrentTimeline,
   renameInstruction,
   seekToTime,
   addInstruction,
@@ -152,13 +151,14 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
       };
       return clonedInstruction;
     },
-    onSuccess: (clonedInstruction: InstructionResponse) => {
-      // Update Redux state
+    onSuccess: async (clonedInstruction: InstructionResponse) => {
+      // First add the cloned instruction to Redux to show immediate feedback
       dispatch(addInstruction(clonedInstruction));
 
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({
+      // Then invalidate and refetch to ensure we have the latest data
+      await queryClient.invalidateQueries({
         queryKey: ["instructions", timelineId.toString()],
+        refetchType: "active",
       });
     },
     onError: (error: Error) => {

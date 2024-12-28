@@ -147,6 +147,11 @@ const InstructionsList: React.FC = () => {
                 onClick={() =>
                   dispatch(seekToTime(instruction.data.triggerTime))
                 }
+                onDoubleClick={() => {
+                  if (!timelineId) return;
+                  dispatch(setEditingInstruction(instruction));
+                  navigate(`/timeline/${timelineId}/instruction`);
+                }}
               >
                 <div>
                   <p className="text-lg font-medium capitalize">
