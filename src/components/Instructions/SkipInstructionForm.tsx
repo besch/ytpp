@@ -3,7 +3,7 @@ import { TimeInput } from "../ui/TimeInput";
 import { useFormContext } from "react-hook-form";
 import { useVideoManager } from "@/hooks/useVideoManager";
 import { parseTimeInput } from "@/lib/time";
-import config from "@/config";
+import config from "@/lib/config";
 
 interface SkipInstructionFormProps {
   onTimeChange: (time: number) => void;

@@ -1,7 +1,7 @@
 import { useFormContext } from "react-hook-form";
 import { InstructionResponse } from "@/types";
 import { parseTimeInput } from "@/lib/time";
-import config from "@/config";
+import config from "@/lib/config";
 
 export const useTextOverlayInstructionForm = () => {
   const { setValue } = useFormContext();

@@ -16,7 +16,7 @@ import { useOverlayInstructionForm } from "@/hooks/forms/useOverlayInstructionFo
 import { useTextOverlayInstructionForm } from "@/hooks/forms/useTextOverlayInstructionForm";
 import InstructionDropdownMenu from "./InstructionDropdownMenu";
 import { parseTimeInput } from "@/lib/time";
-import config from "@/config";
+import config from "@/lib/config";
 
 interface InstructionFormProps {
   isEditing: boolean;

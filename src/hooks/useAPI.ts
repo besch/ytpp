@@ -1,6 +1,6 @@
 import { makeAPIRequest, APIRequest } from "@/lib/eventSystem";
-import { Timeline, MediaFile, InstructionResponse, Instruction } from "@/types";
-import config from "@/config";
+import { Timeline, InstructionResponse, Instruction } from "@/types";
+import config from "@/lib/config";
 
 export interface MediaUploadResponse {
   url: string;

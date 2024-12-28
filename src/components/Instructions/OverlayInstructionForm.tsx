@@ -7,7 +7,7 @@ import MediaUpload from "@/components/MediaUpload";
 import MediaPositioner, { MediaPosition } from "./MediaPositioner";
 import { MediaData } from "@/types";
 import { getMediaUrl } from "@/lib/api";
-import config from "@/config";
+import config from "@/lib/config";
 
 interface OverlayInstructionFormProps {
   onMediaDelete: () => void;

@@ -1,7 +1,6 @@
 import { useFormContext } from "react-hook-form";
 import { InstructionResponse, MediaData } from "@/types";
-import { parseTimeInput } from "@/lib/time";
-import config from "@/config";
+import config from "@/lib/config";
 
 export const useOverlayInstructionForm = () => {
   const { setValue, watch } = useFormContext();
