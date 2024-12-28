@@ -12,7 +12,7 @@ import {
   selectInstructions,
 } from "@/store/timelineSlice";
 import { selectIsTimelineOwner } from "@/store/authSlice";
-import type { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
+import type { InstructionResponse } from "@/types";
 import { formatTime } from "@/lib/time";
 import InstructionTypeSelect from "./InstructionTypeSelect";
 import TimelineDropdownMenu from "./TimelineDropdownMenu";
@@ -27,7 +27,7 @@ const InstructionsList: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const timeline = useSelector(selectCurrentTimeline);
-  const timelineId = useSelector(selectCurrentTimeline)?.id;
+  const timelineId = timeline?.id;
   const editingInstruction = useSelector(selectEditingInstruction);
   const instructions = useSelector(selectInstructions);
   const [showTypeSelect, setShowTypeSelect] = useState(false);
@@ -41,26 +41,19 @@ const InstructionsList: React.FC = () => {
   const { data: instructionsData = [], isLoading } = useQuery({
     queryKey: ["instructions", timelineId],
     queryFn: async () => {
-      if (!timelineId) return [];
-      const responses = await api.instructions.getAll(timelineId.toString());
-      const transformedInstructions = responses.map((response) => ({
-        ...response.data.data,
-        id: response.id,
-        triggerTime: response.trigger_time,
-      })) as Instruction[];
-
-      // Always update Redux store with the latest instructions
-      dispatch(setInstructions(transformedInstructions));
-      return transformedInstructions;
+      if (typeof timelineId === "number") {
+        return api.instructions.getAll(timelineId.toString());
+      }
+      return [];
     },
-    staleTime: 0, // Always consider data stale to ensure fresh data on timeline switch
-    enabled: !!timelineId, // Only need timelineId to be present
+    enabled: !!timelineId,
   });
 
-  // // Effect to ensure instructions are updated in Redux when timeline changes
-  // useEffect(() => {
-  //   dispatch(setInstructions(instructionsData));
-  // }, [timelineId, instructionsData, dispatch]);
+  useEffect(() => {
+    if (instructionsData.length > 0) {
+      dispatch(setInstructions(instructionsData));
+    }
+  }, [instructionsData, dispatch]);
 
   useEffect(() => {
     if (editingInstruction) {
@@ -73,27 +66,27 @@ const InstructionsList: React.FC = () => {
   };
 
   const handleTypeSelect = (type: string) => {
-    dispatch(setEditingInstruction({ type } as Instruction));
+    if (!timelineId) return;
+    dispatch(setEditingInstruction({ data: { type } } as InstructionResponse));
     setShowTypeSelect(false);
     navigate(`/timeline/${timelineId}/instruction`);
   };
 
-  const getInstructionDescription = (instruction: Instruction): string => {
-    if (instruction.type === "skip") {
-      return `Skips to ${formatTime(
-        (instruction as SkipInstruction).skipToTime
-      )}`;
-    } else if (instruction.type === "overlay") {
-      const overlayInstruction = instruction as OverlayInstruction;
-      let description = `Displays ${
-        overlayInstruction.overlayMedia?.name || "overlay media"
-      }`;
+  const getInstructionDescription = (
+    instruction: InstructionResponse
+  ): string => {
+    if (instruction.data.type === "skip" && instruction.data.skipToTime) {
+      return `Skips to ${formatTime(instruction.data.skipToTime)}`;
+    } else if (instruction.data.type === "overlay") {
+      const overlayMedia = instruction.data.overlayMedia;
+      let description = `Displays ${overlayMedia?.name || "overlay media"}`;
       return description;
     }
     return "";
   };
 
-  const isTimeMatching = (triggerTime: number): boolean => {
+  const isTimeMatching = (triggerTime: number | undefined): boolean => {
+    if (typeof triggerTime !== "number") return false;
     const tolerance = 100;
     return Math.abs(triggerTime - currentTime) < tolerance;
   };
@@ -137,28 +130,31 @@ const InstructionsList: React.FC = () => {
 
       {showTypeSelect && isOwner ? (
         <InstructionTypeSelect onSelect={handleTypeSelect} />
-      ) : Array.isArray(instructions) && instructions.length > 0 ? (
+      ) : instructions.length > 0 ? (
         <div className="space-y-2 max-h-[600px] overflow-y-auto">
           {instructions
-            .filter((instruction) => instruction && instruction.type) // Add filter to ensure valid instructions
-            .sort((a, b) => a.triggerTime - b.triggerTime)
+            .filter((instruction) => instruction && instruction.data.type)
+            .sort((a, b) => a.data.triggerTime - b.data.triggerTime)
             .map((instruction) => (
               <div
                 key={instruction.id}
                 className={`p-3 border border-border rounded-lg flex items-center justify-between transition-all duration-200 cursor-pointer
                   ${
-                    isTimeMatching(instruction.triggerTime)
+                    isTimeMatching(instruction.data.triggerTime)
                       ? "bg-primary/20 border-primary/50"
                       : "bg-muted/10 hover:bg-muted/20"
                   }`}
-                onClick={() => dispatch(seekToTime(instruction.triggerTime))}
+                onClick={() =>
+                  dispatch(seekToTime(instruction.data.triggerTime))
+                }
               >
                 <div>
                   <p className="text-lg font-medium capitalize">
-                    {instruction.name || `${instruction.type} Instruction`}
+                    {instruction.data.name ||
+                      `${instruction.data.type} Instruction`}
                   </p>
                   <p className="text-sm text-muted-foreground ml-2">
-                    at {formatTime(instruction.triggerTime)}
+                    at {formatTime(instruction.data.triggerTime)}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
                     {getInstructionDescription(instruction)}
@@ -166,7 +162,11 @@ const InstructionsList: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   {isOwner && (
-                    <InstructionDropdownMenu instruction={instruction} />
+                    <InstructionDropdownMenu
+                      instruction={
+                        instruction as unknown as InstructionResponse
+                      }
+                    />
                   )}
                 </div>
               </div>

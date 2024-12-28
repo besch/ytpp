@@ -1,11 +1,5 @@
 import { makeAPIRequest } from "@/lib/eventSystem";
-import {
-  Timeline,
-  Instruction,
-  MediaFile,
-  InstructionResponse,
-  SkipInstruction,
-} from "@/types";
+import { Timeline, InstructionResponse, MediaFile } from "@/types";
 const { API_BASE_URL } = require("../config.js");
 
 const API_URL = `${API_BASE_URL}/api`;
@@ -52,6 +46,7 @@ export const api = {
   },
   instructions: {
     getAll: async (timelineId: string): Promise<InstructionResponse[]> => {
+      if (!timelineId) return [];
       const response = await makeAPIRequest({
         endpoint: "/instructions",
         method: "GET",
@@ -70,14 +65,18 @@ export const api = {
 
     create: async (
       timelineId: string,
-      instruction: Omit<Instruction, "id">
+      instruction: Omit<
+        InstructionResponse,
+        "id" | "timeline_id" | "created_at" | "updated_at"
+      >
     ): Promise<InstructionResponse> => {
       const response = await makeAPIRequest({
         endpoint: "/instructions",
         method: "POST",
         body: {
           timeline_id: timelineId,
-          instruction,
+          name: instruction.data.name || `${instruction.data.type} Instruction`,
+          data: instruction.data,
         },
       });
       return response.data;
@@ -85,34 +84,36 @@ export const api = {
 
     clone: async (
       timelineId: string,
-      instruction: Instruction
+      instruction: InstructionResponse
     ): Promise<InstructionResponse> => {
-      const { id, ...instructionWithoutId } = instruction;
-      const clonedInstruction = {
-        ...instructionWithoutId,
-        triggerTime: instruction.triggerTime + 3000,
-      };
+      const newTriggerTime = instruction.data.triggerTime + 3000;
 
-      if (instruction.type === "skip") {
-        (clonedInstruction as SkipInstruction).skipToTime += 3000;
-      }
+      const clonedInstruction: Omit<
+        InstructionResponse,
+        "id" | "timeline_id" | "created_at" | "updated_at"
+      > = {
+        data: {
+          ...instruction.data,
+          name: `${instruction.data.name} (Copy)`,
+          triggerTime: newTriggerTime,
+          ...(instruction.data.type === "skip" &&
+          instruction.data.skipToTime !== undefined
+            ? { skipToTime: instruction.data.skipToTime + 3000 }
+            : {}),
+        },
+      };
 
       return api.instructions.create(timelineId, clonedInstruction);
     },
 
     update: async (
       id: string,
-      instruction: Partial<Instruction>
+      instruction: Partial<InstructionResponse>
     ): Promise<InstructionResponse> => {
       const response = await makeAPIRequest({
         endpoint: `/instructions/${id}`,
         method: "PUT",
-        body: {
-          type: instruction.type,
-          trigger_time: instruction.triggerTime,
-          name: instruction.name,
-          data: instruction,
-        },
+        body: instruction,
       });
       return response.data;
     },

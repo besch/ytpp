@@ -9,10 +9,15 @@ import {
   selectSelectedInstructionId,
   selectInstructions,
 } from "@/store/timelineSlice";
-import { Instruction, SkipInstruction, OverlayInstruction } from "@/types";
+import { InstructionResponse } from "@/types";
 import Button from "@/components/ui/Button";
 import { Move } from "lucide-react";
 import { useVideoManager } from "@/hooks/useVideoManager";
+
+type InstructionWithOriginalTimes = InstructionResponse & {
+  _originalTriggerTime?: number;
+  _originalSkipToTime?: number;
+};
 
 const formatTime = (timeMs: number): string => {
   const totalSeconds = Math.floor(timeMs / 1000);
@@ -26,24 +31,22 @@ const formatTime = (timeMs: number): string => {
   return `${pad(minutes)}:${pad(seconds)}`;
 };
 
-const getInstructionLabel = (instruction: Instruction): string => {
-  switch (instruction.type) {
+const getInstructionLabel = (instruction: InstructionResponse): string => {
+  switch (instruction.data.type) {
     case "skip":
-      const skipInstruction = instruction as SkipInstruction;
-      return `${formatTime(skipInstruction.triggerTime)} - ${formatTime(
-        skipInstruction.skipToTime
+      return `${formatTime(instruction.data.triggerTime)} - ${formatTime(
+        instruction.data.skipToTime || 0
       )}`;
 
     case "text-overlay":
       return ""; // Show nothing for text overlays
 
     case "overlay":
-      const overlayInstruction = instruction as OverlayInstruction;
-      if (!overlayInstruction.overlayMedia) return "No media";
+      if (!instruction.data.overlayMedia) return "No media";
 
       // Get file extension
       const fileExt =
-        overlayInstruction.overlayMedia.name?.split(".").pop()?.toLowerCase() ||
+        instruction.data.overlayMedia.name?.split(".").pop()?.toLowerCase() ||
         "";
 
       // Determine media type based on extension
@@ -68,7 +71,7 @@ const calculateMarkerLevels = (
   markers: Array<{
     id: string;
     position: number;
-    instruction: Instruction;
+    instruction: InstructionResponse;
     isEndMarker: boolean;
   }>
 ): Array<{ marker: (typeof markers)[0]; level: number }> => {
@@ -186,10 +189,10 @@ const Timeline: React.FC = () => {
 
   const handleInstructionClick = (
     e: React.MouseEvent,
-    instruction: Instruction
+    instruction: InstructionResponse
   ) => {
     e.stopPropagation();
-    seekToTime(instruction.triggerTime);
+    seekToTime(instruction.data.triggerTime);
     if (!draggingInstructionId && !wasJustDragging) {
       dispatch(setSelectedInstructionId(null));
       dispatch(setEditingInstruction(null));
@@ -198,10 +201,10 @@ const Timeline: React.FC = () => {
 
   const handleSkipEndClick = (
     e: React.MouseEvent,
-    instruction: SkipInstruction
+    instruction: InstructionResponse
   ) => {
     e.stopPropagation();
-    seekToTime(instruction.skipToTime);
+    seekToTime(instruction.data.skipToTime || 0);
     if (!draggingInstructionId && !wasJustDragging) {
       dispatch(setSelectedInstructionId(null));
       dispatch(setEditingInstruction(null));
@@ -210,15 +213,15 @@ const Timeline: React.FC = () => {
 
   const handleInstructionDrag = (
     e: React.MouseEvent,
-    instruction: Instruction
+    instruction: InstructionResponse
   ) => {
     e.stopPropagation();
     const startX = e.clientX;
     const startY = e.clientY;
-    const startTime = instruction.triggerTime;
+    const startTime = instruction.data.triggerTime;
     let isDragging = false;
     const dragThreshold = 3; // pixels
-    let updatedInstruction: Instruction | null = null;
+    let updatedInstruction: InstructionResponse | null = null;
     let dragOverlay: HTMLDivElement | null = null;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
@@ -227,12 +230,10 @@ const Timeline: React.FC = () => {
 
       if (!isDragging && (deltaX > dragThreshold || deltaY > dragThreshold)) {
         isDragging = true;
-        setDraggingInstructionId(instruction.id);
-        setDraggingTime(instruction.triggerTime);
-        // Set editing instruction when drag starts
+        setDraggingInstructionId(instruction.id || null);
+        setDraggingTime(instruction.data.triggerTime);
         dispatch(setEditingInstruction(instruction));
 
-        // Create drag overlay only when we start dragging
         dragOverlay = document.createElement("div");
         dragOverlay.style.position = "fixed";
         dragOverlay.style.top = "0";
@@ -257,7 +258,10 @@ const Timeline: React.FC = () => {
 
         updatedInstruction = {
           ...instruction,
-          triggerTime: newTime,
+          data: {
+            ...instruction.data,
+            triggerTime: newTime,
+          },
         };
         dispatch(updateInstruction(updatedInstruction));
       }
@@ -266,12 +270,11 @@ const Timeline: React.FC = () => {
     const handleMouseUp = async () => {
       if (isDragging && updatedInstruction) {
         setWasJustDragging(true);
-        // Pass both the updated instruction and original time when setting editing state
         dispatch(
           setEditingInstruction({
             ...updatedInstruction,
             _originalTriggerTime: startTime,
-          } as Instruction)
+          } as InstructionWithOriginalTimes)
         );
       }
 
@@ -290,15 +293,15 @@ const Timeline: React.FC = () => {
 
   const handleSkipEndDrag = (
     e: React.MouseEvent,
-    instruction: SkipInstruction
+    instruction: InstructionResponse
   ) => {
     e.stopPropagation();
     const startX = e.clientX;
     const startY = e.clientY;
-    const startTime = instruction.skipToTime;
+    const startTime = instruction.data.skipToTime || 0;
     let isDragging = false;
     const dragThreshold = 3; // pixels
-    let updatedInstruction: SkipInstruction | null = null;
+    let updatedInstruction: InstructionResponse | null = null;
     let dragOverlay: HTMLDivElement | null = null;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
@@ -308,16 +311,14 @@ const Timeline: React.FC = () => {
       if (!isDragging && (deltaX > dragThreshold || deltaY > dragThreshold)) {
         isDragging = true;
         setDraggingInstructionId(`${instruction.id}-end`);
-        setDraggingTime(instruction.skipToTime);
-        // Set editing instruction when drag starts, including the original skipToTime
+        setDraggingTime(instruction.data.skipToTime || 0);
         dispatch(
           setEditingInstruction({
             ...instruction,
             _originalSkipToTime: startTime,
-          })
+          } as InstructionWithOriginalTimes)
         );
 
-        // Create drag overlay only when we start dragging
         dragOverlay = document.createElement("div");
         dragOverlay.style.position = "fixed";
         dragOverlay.style.top = "0";
@@ -342,7 +343,10 @@ const Timeline: React.FC = () => {
 
         updatedInstruction = {
           ...instruction,
-          skipToTime: newTime,
+          data: {
+            ...instruction.data,
+            skipToTime: newTime,
+          },
         };
         dispatch(updateInstruction(updatedInstruction));
       }
@@ -351,12 +355,11 @@ const Timeline: React.FC = () => {
     const handleMouseUp = async () => {
       if (isDragging && updatedInstruction) {
         setWasJustDragging(true);
-        // Pass both the updated instruction and original time when setting editing state
         dispatch(
           setEditingInstruction({
             ...updatedInstruction,
             _originalSkipToTime: startTime,
-          } as SkipInstruction)
+          } as InstructionWithOriginalTimes)
         );
       }
 
@@ -376,13 +379,14 @@ const Timeline: React.FC = () => {
   const renderInstructionMarkers = () => {
     // First render skip ranges
     const skipRanges = instructions
-      .filter(
-        (instruction): instruction is SkipInstruction =>
-          instruction.type === "skip"
-      )
+      .filter((instruction) => instruction.data.type === "skip")
       .map((skipInstruction) => {
-        const startPosition = getTimelinePosition(skipInstruction.triggerTime);
-        const endPosition = getTimelinePosition(skipInstruction.skipToTime);
+        const startPosition = getTimelinePosition(
+          skipInstruction.data.triggerTime
+        );
+        const endPosition = getTimelinePosition(
+          skipInstruction.data.skipToTime || 0
+        );
 
         return (
           <div
@@ -402,7 +406,7 @@ const Timeline: React.FC = () => {
     // Then render instruction markers as before, but add end markers for skip instructions
     const markers = instructions.flatMap((instruction) => {
       const markers = [];
-      const position = getTimelinePosition(instruction.triggerTime);
+      const position = getTimelinePosition(instruction.data.triggerTime);
 
       markers.push({
         id: `marker-${instruction.id}`,
@@ -411,12 +415,11 @@ const Timeline: React.FC = () => {
         isEndMarker: false,
       });
 
-      if (instruction.type === "skip") {
-        const skipInstruction = instruction as SkipInstruction;
+      if (instruction.data.type === "skip") {
         markers.push({
           id: `marker-${instruction.id}-end`,
-          position: getTimelinePosition(skipInstruction.skipToTime),
-          instruction: skipInstruction,
+          position: getTimelinePosition(instruction.data.skipToTime || 0),
+          instruction,
           isEndMarker: true,
         });
       }
@@ -461,28 +464,28 @@ const Timeline: React.FC = () => {
                     }
                     transition-all duration-200 ease-out
                   `}
-                  data-type={instruction.type}
+                  data-type={instruction.data.type}
                   data-selected={isSelected}
                   onMouseDown={(e) =>
                     isEndMarker
-                      ? handleSkipEndDrag(e, instruction as SkipInstruction)
+                      ? handleSkipEndDrag(e, instruction)
                       : handleInstructionDrag(e, instruction)
                   }
                   onClick={(e) =>
                     isEndMarker
-                      ? handleSkipEndClick(e, instruction as SkipInstruction)
+                      ? handleSkipEndClick(e, instruction)
                       : handleInstructionClick(e, instruction)
                   }
                   onDoubleClick={(e) => {
                     e.stopPropagation();
-                    dispatch(setSelectedInstructionId(instruction.id));
+                    dispatch(setSelectedInstructionId(instruction.id || null));
                     dispatch(setEditingInstruction(instruction));
                   }}
                 >
                   {currentTime ===
                     (isEndMarker
-                      ? (instruction as SkipInstruction).skipToTime
-                      : instruction.triggerTime) && (
+                      ? instruction.data.skipToTime
+                      : instruction.data.triggerTime) && (
                     <span className="absolute inset-0 rounded-full bg-primary/30 animate-ripple" />
                   )}
                 </div>
@@ -499,9 +502,11 @@ const Timeline: React.FC = () => {
                   >
                     <div
                       className="font-medium mb-1"
-                      style={{ color: getInstructionColor(instruction.type) }}
+                      style={{
+                        color: getInstructionColor(instruction.data.type),
+                      }}
                     >
-                      {getInstructionTitle(instruction.type)}
+                      {getInstructionTitle(instruction.data.type)}
                     </div>
                     <div className="text-muted-foreground">
                       {draggingInstructionId === instruction.id &&

@@ -6,29 +6,27 @@ export interface TimeInput {
 }
 
 export interface BaseInstruction {
-  id: string;
-  type: string;
-  triggerTime: number;
-  name?: string;
-  isClone?: boolean;
+  id?: string;
+  timeline_id: number;
+  data: {
+    type: string;
+    triggerTime: number;
+    pauseMainVideo: boolean;
+    overlayDuration?: number;
+    textOverlay?: TextOverlayMedia;
+    overlayMedia?: OverlayMedia;
+    skipToTime?: number;
+    muteOverlayMedia?: boolean;
+    pauseDuration?: number;
+    name: string;
+  };
+  created_at?: number;
+  updated_at?: number;
 }
 
 export interface InstructionWithOriginalTimes extends BaseInstruction {
   _originalTriggerTime?: number;
   _originalSkipToTime?: number;
-}
-
-export interface OverlayInstruction extends InstructionWithOriginalTimes {
-  type: "overlay";
-  overlayMedia: OverlayMedia | null;
-  overlayDuration: number;
-  pauseMainVideo: boolean;
-  muteOverlayMedia?: boolean;
-}
-
-export interface SkipInstruction extends InstructionWithOriginalTimes {
-  type: "skip";
-  skipToTime: number;
 }
 
 export interface TextOverlayMedia {
@@ -58,18 +56,7 @@ export interface TextStyle {
   padding?: number;
 }
 
-export interface TextOverlayInstruction extends InstructionWithOriginalTimes {
-  type: "text-overlay";
-  textOverlay: TextOverlayMedia;
-  overlayDuration: number;
-  pauseMainVideo: boolean;
-  pauseDuration?: number;
-}
-
-export type Instruction =
-  | SkipInstruction
-  | OverlayInstruction
-  | TextOverlayInstruction;
+export type Instruction = InstructionWithOriginalTimes;
 
 export interface InstructionsState {
   instructions: Instruction[];
@@ -129,17 +116,9 @@ export interface MediaData {
   type: string;
 }
 
-export interface InstructionResponse {
-  id: string;
-  timeline_id: number;
-  type: string;
-  trigger_time: number;
-  name?: string;
-  data: any;
-  created_at: string;
-  updated_at: string;
-}
+export interface InstructionResponse extends BaseInstruction {}
 
-export type InstructionRequest = Omit<Instruction, "id"> & {
-  timeline_id: number;
-};
+export type InstructionRequest = Omit<
+  InstructionResponse,
+  "id" | "created_at" | "updated_at"
+>;

@@ -13,12 +13,7 @@ import {
   addInstruction,
   selectCurrentTimeline,
 } from "@/store/timelineSlice";
-import {
-  Instruction,
-  OverlayInstruction,
-  SkipInstruction,
-  Timeline,
-} from "@/types";
+import { InstructionResponse } from "@/types";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -32,7 +27,7 @@ import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import Dialog from "../ui/Dialog";
 
 interface InstructionDropdownMenuProps {
-  instruction: Instruction;
+  instruction: InstructionResponse;
   hideEdit?: boolean;
   onDeleteSuccess?: () => void;
 }
@@ -104,19 +99,19 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   const timelineId = timeline.id;
   const [isDeletingInstruction, setIsDeletingInstruction] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-  const [newName, setNewName] = useState(instruction.name || "");
+  const [newName, setNewName] = useState(instruction.data.name || "");
   const [isRenamingLoading, setIsRenamingLoading] = useState(false);
   const [isDeletingLoading, setIsDeletingLoading] = useState(false);
 
   const deleteInstructionMutation = useMutation({
     mutationFn: async () => {
       if (
-        instruction?.type === "overlay" &&
-        (instruction as OverlayInstruction).overlayMedia?.url
+        instruction.data.type === "overlay" &&
+        instruction.data.overlayMedia?.url
       ) {
         try {
           await api.timelines.deleteMedia(
-            (instruction as OverlayInstruction).overlayMedia!.url,
+            instruction.data.overlayMedia.url,
             Number(timelineId)
           );
         } catch (error) {
@@ -125,12 +120,12 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
       }
 
       // Delete the instruction using the instructions API
-      await api.instructions.delete(instruction.id);
+      await api.instructions.delete(instruction.id!);
       return instruction.id;
     },
     onSuccess: (deletedId) => {
       setIsDeletingInstruction(false);
-      dispatch(removeInstruction(deletedId));
+      dispatch(removeInstruction(deletedId!));
       queryClient.invalidateQueries({
         queryKey: ["instructions", timelineId.toString()],
       });
@@ -151,9 +146,13 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
         timelineId.toString(),
         instruction
       );
-      return response.data as Instruction;
+      const clonedInstruction: InstructionResponse = {
+        timeline_id: timelineId,
+        data: response.data,
+      };
+      return clonedInstruction;
     },
-    onSuccess: (clonedInstruction) => {
+    onSuccess: (clonedInstruction: InstructionResponse) => {
       // Update Redux state
       dispatch(addInstruction(clonedInstruction));
 
@@ -169,7 +168,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
 
   const handleEdit = () => {
     dispatch(setEditingInstruction(instruction));
-    dispatch(seekToTime(instruction.triggerTime));
+    dispatch(seekToTime(instruction.data.triggerTime));
     navigate(`/timeline/${timelineId}/instruction/${instruction.id}`);
   };
 
@@ -190,7 +189,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   };
 
   const handleRename = () => {
-    setNewName(instruction.name || `${instruction.type} Instruction`);
+    setNewName(instruction.data.name || `${instruction.data.type} Instruction`);
     setIsRenaming(true);
   };
 
@@ -198,13 +197,16 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     setIsRenamingLoading(true);
     try {
       // Update the instruction name using the instructions API
-      await api.instructions.update(instruction.id, {
+      await api.instructions.update(instruction.id!, {
         ...instruction,
-        name: newName,
+        data: {
+          ...instruction.data,
+          name: newName,
+        },
       });
 
       // Update the Redux state
-      dispatch(renameInstruction({ id: instruction.id, name: newName }));
+      dispatch(renameInstruction({ id: instruction.id!, name: newName }));
 
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({
@@ -278,7 +280,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
             <Input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder={`${instruction.type} Instruction`}
+              placeholder={`${instruction.data.type} Instruction`}
               style={styles.input}
               disabled={isRenamingLoading}
               autoFocus

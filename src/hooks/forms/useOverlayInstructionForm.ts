@@ -1,17 +1,21 @@
 import { useFormContext } from "react-hook-form";
-import { OverlayInstruction, MediaData } from "@/types";
+import { InstructionResponse, MediaData } from "@/types";
 import { parseTimeInput } from "@/lib/time";
+import config from "@/config";
 
 export const useOverlayInstructionForm = () => {
   const { setValue, watch } = useFormContext();
 
-  const initializeForm = (instruction: OverlayInstruction | null) => {
+  const initializeForm = (instruction: InstructionResponse | null) => {
     if (instruction) {
-      setValue("pauseMainVideo", instruction.pauseMainVideo || false);
-      setValue("overlayDuration", instruction.overlayDuration || 5);
-      setValue("muteOverlayMedia", instruction.muteOverlayMedia || false);
+      setValue("pauseMainVideo", instruction.data.pauseMainVideo || false);
+      setValue(
+        "overlayDuration",
+        instruction.data.overlayDuration || config.defaultOverlayDuration
+      );
+      setValue("muteOverlayMedia", instruction.data.muteOverlayMedia || false);
 
-      const overlayMedia = instruction.overlayMedia;
+      const overlayMedia = instruction.data.overlayMedia;
       if (overlayMedia) {
         setValue("overlayMedia", {
           url: overlayMedia.url,
@@ -36,14 +40,7 @@ export const useOverlayInstructionForm = () => {
     data: any,
     id: string,
     handleMediaUpload: (file: File) => Promise<string>
-  ): Promise<OverlayInstruction> => {
-    const triggerTime = parseTimeInput({
-      hours: data.hours || 0,
-      minutes: data.minutes || 0,
-      seconds: data.seconds || 0,
-      milliseconds: data.milliseconds || 0,
-    });
-
+  ) => {
     let overlayMedia = data.overlayMedia;
 
     // Handle media upload if there's a new file
@@ -59,13 +56,8 @@ export const useOverlayInstructionForm = () => {
     }
 
     return {
-      id,
-      type: "overlay",
-      triggerTime,
       overlayMedia,
       overlayDuration: data.overlayDuration,
-      pauseMainVideo: data.pauseMainVideo,
-      muteOverlayMedia: data.muteOverlayMedia || false,
     };
   };
 

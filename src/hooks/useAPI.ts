@@ -1,11 +1,6 @@
 import { makeAPIRequest, APIRequest } from "@/lib/eventSystem";
-import {
-  Timeline,
-  MediaFile,
-  InstructionResponse,
-  Instruction,
-  SkipInstruction,
-} from "@/types";
+import { Timeline, MediaFile, InstructionResponse, Instruction } from "@/types";
+import config from "@/config";
 
 export interface MediaUploadResponse {
   url: string;
@@ -90,23 +85,23 @@ export function useAPI() {
         });
       },
 
-      get: async (id: string): Promise<InstructionResponse> => {
+      get: async (instructionId: string): Promise<InstructionResponse> => {
         return request({
-          endpoint: `/instructions/${id}`,
+          endpoint: `/instructions/${instructionId}`,
           method: "GET",
         });
       },
 
       create: async (
         timelineId: string,
-        instruction: Omit<Instruction, "id">
+        instruction: Omit<Instruction, "id" | "timeline_id">
       ): Promise<InstructionResponse> => {
         return request({
           endpoint: "/instructions",
           method: "POST",
           body: {
             timeline_id: timelineId,
-            instruction,
+            data: instruction.data,
           },
         });
       },
@@ -116,43 +111,46 @@ export function useAPI() {
         instruction: Instruction
       ): Promise<InstructionResponse> => {
         const clonedInstruction = {
-          ...instruction,
-          triggerTime: instruction.triggerTime + 3000,
+          data: {
+            ...instruction.data,
+            triggerTime:
+              instruction.data.triggerTime + config.defaultSkipDuration,
+            ...(instruction.data.type === "skip" &&
+            instruction.data.skipToTime !== undefined
+              ? {
+                  skipToTime:
+                    instruction.data.skipToTime + config.defaultSkipDuration,
+                }
+              : {}),
+          },
         };
-
-        if (instruction.type === "skip") {
-          (clonedInstruction as SkipInstruction).skipToTime += 3000;
-        }
 
         return request({
           endpoint: "/instructions",
           method: "POST",
           body: {
             timeline_id: timelineId,
-            instruction: clonedInstruction,
+            data: clonedInstruction.data,
           },
         });
       },
 
       update: async (
-        id: string,
+        instructionId: string,
         instruction: Partial<Instruction>
       ): Promise<InstructionResponse> => {
         return request({
-          endpoint: `/instructions/${id}`,
+          endpoint: `/instructions/${instructionId}`,
           method: "PUT",
           body: {
-            type: instruction.type,
-            trigger_time: instruction.triggerTime,
-            name: instruction.name,
-            data: instruction,
+            data: instruction.data,
           },
         });
       },
 
-      delete: async (id: string): Promise<void> => {
+      delete: async (instructionId: string): Promise<void> => {
         return request({
-          endpoint: `/instructions/${id}`,
+          endpoint: `/instructions/${instructionId}`,
           method: "DELETE",
         });
       },

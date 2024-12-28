@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm, FormProvider } from "react-hook-form";
 import {
@@ -14,10 +14,9 @@ import {
 import { useAPI } from "@/hooks/useAPI";
 import { useVideoManager } from "@/hooks/useVideoManager";
 import {
-  Instruction,
-  OverlayInstruction,
-  SkipInstruction,
-  TextOverlayInstruction,
+  BaseInstruction,
+  InstructionResponse,
+  InstructionWithOriginalTimes,
 } from "@/types";
 import { MediaPosition } from "./MediaPositioner";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -29,18 +28,20 @@ import config from "@/config";
 
 const InstructionEditor: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const api = useAPI();
   const queryClient = useQueryClient();
   const currentTime = useSelector(selectCurrentTime);
-  const editingInstruction = useSelector(selectEditingInstruction);
+  const editingInstruction = useSelector(
+    selectEditingInstruction
+  ) as InstructionWithOriginalTimes | null;
   const instructions = useSelector(selectInstructions);
   const currentTimeline = useSelector(selectCurrentTimeline);
-  const navigate = useNavigate();
   const { id: timelineId } = useParams();
-  const api = useAPI();
   const videoManager = useVideoManager();
 
   const isEditing = editingInstruction !== null && "id" in editingInstruction;
-  const selectedType = editingInstruction?.type || null;
+  const selectedType = editingInstruction?.data?.type || null;
 
   const methods = useForm<any>({
     defaultValues: {
@@ -135,14 +136,17 @@ const InstructionEditor: React.FC = () => {
     },
   });
 
-  const handleInstructionSubmit = async (newInstruction: Instruction) => {
+  const handleInstructionSubmit = async (
+    newInstruction: InstructionResponse
+  ) => {
     try {
       // Remove _originalTriggerTime before saving
-      const { _originalTriggerTime, ...instructionToSave } = newInstruction;
+      const { _originalTriggerTime, ...instructionToSave } =
+        newInstruction as InstructionWithOriginalTimes;
 
       if (isEditing) {
         // Update existing instruction
-        await api.instructions.update(instructionToSave.id, instructionToSave);
+        await api.instructions.update(instructionToSave.id!, instructionToSave);
       } else {
         // Create new instruction
         await api.instructions.create(
@@ -151,7 +155,7 @@ const InstructionEditor: React.FC = () => {
         );
       }
 
-      dispatch(setCurrentTime(instructionToSave.triggerTime));
+      dispatch(setCurrentTime(instructionToSave.data.triggerTime));
 
       // Reset form state
       setFormChanged(false);
@@ -174,7 +178,7 @@ const InstructionEditor: React.FC = () => {
     if (
       !mediaURL ||
       !editingInstruction ||
-      editingInstruction.type !== "overlay"
+      editingInstruction.data.type !== "overlay"
     )
       return;
 
@@ -190,9 +194,12 @@ const InstructionEditor: React.FC = () => {
     dispatch(
       setEditingInstruction({
         ...editingInstruction,
-        overlayMedia: null,
-        useOverlayDuration: false,
-      } as OverlayInstruction)
+        data: {
+          ...editingInstruction.data,
+          overlayMedia: undefined,
+          useOverlayDuration: false,
+        },
+      } as InstructionResponse)
     );
 
     // Store the URL to be deleted in the form data
@@ -205,22 +212,22 @@ const InstructionEditor: React.FC = () => {
       const values = methods.getValues();
 
       // For text overlay instructions, we need to store the complete structure
-      if (editingInstruction.type === "text-overlay") {
+      if (editingInstruction.data.type === "text-overlay") {
         const textOverlayInstruction =
-          editingInstruction as TextOverlayInstruction;
+          editingInstruction as InstructionWithOriginalTimes;
         setInitialValues({
           ...values,
-          triggerTime: editingInstruction.triggerTime,
+          triggerTime: editingInstruction.data.triggerTime,
           textOverlay: {
-            text: textOverlayInstruction.textOverlay.text,
+            text: textOverlayInstruction!.data!.textOverlay!.text,
             style: {
-              ...textOverlayInstruction.textOverlay.style,
+              ...textOverlayInstruction!.data!.textOverlay!.style,
             },
-            position: textOverlayInstruction.textOverlay.position,
+            position: textOverlayInstruction!.data!.textOverlay!.position,
           },
-          overlayDuration: textOverlayInstruction.overlayDuration,
-          pauseMainVideo: textOverlayInstruction.pauseMainVideo,
-          pauseDuration: textOverlayInstruction.pauseDuration,
+          overlayDuration: textOverlayInstruction!.data!.overlayDuration,
+          pauseMainVideo: textOverlayInstruction!.data!.pauseMainVideo,
+          pauseDuration: textOverlayInstruction!.data!.pauseDuration,
         });
       } else {
         setInitialValues(values);
@@ -276,14 +283,22 @@ const InstructionEditor: React.FC = () => {
       editingInstruction &&
       (originalTriggerTime !== null || originalSkipToTime !== null)
     ) {
-      let updatedInstruction = { ...editingInstruction } as Instruction;
+      let updatedInstruction: InstructionResponse = {
+        ...editingInstruction,
+        data: {
+          ...editingInstruction.data,
+        },
+      };
 
       if (originalTriggerTime !== null) {
-        updatedInstruction.triggerTime = originalTriggerTime;
+        updatedInstruction.data.triggerTime = originalTriggerTime;
       }
 
-      if (originalSkipToTime !== null && updatedInstruction.type === "skip") {
-        (updatedInstruction as SkipInstruction).skipToTime = originalSkipToTime;
+      if (
+        originalSkipToTime !== null &&
+        updatedInstruction.data.type === "skip"
+      ) {
+        updatedInstruction.data.skipToTime = originalSkipToTime;
       }
 
       dispatch(updateInstruction(updatedInstruction));
@@ -326,12 +341,12 @@ const InstructionEditor: React.FC = () => {
         // Reset trigger time fields using editingInstruction's triggerTime
         if (editingInstruction) {
           const totalSeconds = Math.floor(
-            editingInstruction.triggerTime / 1000
+            editingInstruction.data.triggerTime / 1000
           );
           const hours = Math.floor(totalSeconds / 3600);
           const minutes = Math.floor((totalSeconds % 3600) / 60);
           const seconds = Math.floor(totalSeconds % 60);
-          const milliseconds = editingInstruction.triggerTime % 1000;
+          const milliseconds = editingInstruction.data.triggerTime % 1000;
 
           methods.setValue("hours", hours);
           methods.setValue("minutes", minutes);
@@ -416,29 +431,27 @@ const InstructionEditor: React.FC = () => {
         setOriginalTriggerTime(editingInstruction._originalTriggerTime ?? null);
       } else {
         // Set original time on first edit
-        setOriginalTriggerTime(editingInstruction.triggerTime);
+        setOriginalTriggerTime(editingInstruction.data.triggerTime);
       }
 
       if (
         "_originalSkipToTime" in editingInstruction &&
-        editingInstruction.type === "skip"
+        editingInstruction.data.type === "skip"
       ) {
         setOriginalSkipToTime(editingInstruction._originalSkipToTime ?? null);
-      } else if (editingInstruction.type === "skip") {
+      } else if (editingInstruction.data.type === "skip") {
         // Set original skip time on first edit
-        setOriginalSkipToTime(
-          (editingInstruction as SkipInstruction).skipToTime
-        );
+        setOriginalSkipToTime(editingInstruction.data.skipToTime ?? null);
       }
 
       // Update trigger time fields
       const triggerTotalSeconds = Math.floor(
-        editingInstruction.triggerTime / 1000
+        editingInstruction.data.triggerTime / 1000
       );
       const triggerHours = Math.floor(triggerTotalSeconds / 3600);
       const triggerMinutes = Math.floor((triggerTotalSeconds % 3600) / 60);
       const triggerSeconds = Math.floor(triggerTotalSeconds % 60);
-      const triggerMilliseconds = editingInstruction.triggerTime % 1000;
+      const triggerMilliseconds = editingInstruction.data.triggerTime % 1000;
 
       methods.setValue("hours", triggerHours, { shouldDirty: false });
       methods.setValue("minutes", triggerMinutes, { shouldDirty: false });
@@ -448,14 +461,14 @@ const InstructionEditor: React.FC = () => {
       });
 
       // If it's a skip instruction, update skipTo time fields
-      if (editingInstruction.type === "skip") {
+      if (editingInstruction.data.type === "skip") {
         const skipToTotalSeconds = Math.floor(
-          editingInstruction.skipToTime / 1000
+          editingInstruction.data.skipToTime! / 1000
         );
         const skipToHours = Math.floor(skipToTotalSeconds / 3600);
         const skipToMinutes = Math.floor((skipToTotalSeconds % 3600) / 60);
         const skipToSeconds = Math.floor(skipToTotalSeconds % 60);
-        const skipToMilliseconds = editingInstruction.skipToTime % 1000;
+        const skipToMilliseconds = editingInstruction.data.skipToTime! % 1000;
 
         methods.setValue("skipToHours", skipToHours, { shouldDirty: false });
         methods.setValue("skipToMinutes", skipToMinutes, {
@@ -472,11 +485,10 @@ const InstructionEditor: React.FC = () => {
       // Check if times have changed from original values
       const hasTimeChanges =
         (originalTriggerTime !== null &&
-          originalTriggerTime !== editingInstruction.triggerTime) ||
+          originalTriggerTime !== editingInstruction.data.triggerTime) ||
         (originalSkipToTime !== null &&
-          editingInstruction.type === "skip" &&
-          originalSkipToTime !==
-            (editingInstruction as SkipInstruction).skipToTime);
+          editingInstruction.data.type === "skip" &&
+          originalSkipToTime !== editingInstruction.data.skipToTime);
 
       setFormChanged(hasTimeChanges);
       setInitialValues(methods.getValues());

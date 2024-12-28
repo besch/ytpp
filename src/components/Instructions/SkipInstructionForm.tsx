@@ -3,6 +3,7 @@ import { TimeInput } from "../ui/TimeInput";
 import { useFormContext } from "react-hook-form";
 import { useVideoManager } from "@/hooks/useVideoManager";
 import { parseTimeInput } from "@/lib/time";
+import config from "@/config";
 
 interface SkipInstructionFormProps {
   onTimeChange: (time: number) => void;
@@ -41,7 +42,7 @@ const SkipInstructionForm: React.FC<SkipInstructionFormProps> = ({
         milliseconds: watch("milliseconds") || 0,
       });
 
-      const newSkipTime = triggerTime + 3000; // Add 3 seconds
+      const newSkipTime = triggerTime + config.defaultSkipDuration;
       const totalSeconds = Math.floor(newSkipTime / 1000);
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);

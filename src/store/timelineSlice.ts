@@ -1,23 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/store/index";
-import {
-  Timeline,
-  Instruction,
-  TextOverlayMedia,
-  TextOverlayInstruction,
-} from "@/types";
+import { Timeline, InstructionResponse, TextOverlayMedia } from "@/types";
 import { createSelector } from "@reduxjs/toolkit";
 
 interface TimelineState {
   currentTime: number;
   selectedElementId: string | null;
   activeTab: string;
-  editingInstruction: Instruction | null;
+  editingInstruction: InstructionResponse | null;
   selectedInstructionId: string | null;
   isCanvasVisible: boolean;
   timelines: Timeline[];
   currentTimeline: Timeline | null;
-  instructions: Instruction[];
+  instructions: InstructionResponse[];
   loading: boolean;
   error: string | null;
   videoElementId: string | null;
@@ -45,10 +40,10 @@ export const timelineSlice = createSlice({
     setCurrentTime: (state, action: PayloadAction<number>) => {
       state.currentTime = action.payload;
     },
-    addInstruction: (state, action: PayloadAction<Instruction>) => {
+    addInstruction: (state, action: PayloadAction<InstructionResponse>) => {
       state.instructions.push(action.payload);
     },
-    updateInstruction: (state, action: PayloadAction<Instruction>) => {
+    updateInstruction: (state, action: PayloadAction<InstructionResponse>) => {
       const index = state.instructions.findIndex(
         (instruction) => instruction.id === action.payload.id
       );
@@ -63,7 +58,7 @@ export const timelineSlice = createSlice({
     },
     setEditingInstruction: (
       state,
-      action: PayloadAction<Instruction | null>
+      action: PayloadAction<InstructionResponse | null>
     ) => {
       state.editingInstruction = action.payload;
     },
@@ -71,7 +66,7 @@ export const timelineSlice = createSlice({
       state.selectedInstructionId = action.payload;
       state.selectedElementId = null;
     },
-    setInstructions: (state, action: PayloadAction<Instruction[]>) => {
+    setInstructions: (state, action: PayloadAction<InstructionResponse[]>) => {
       state.instructions = action.payload;
     },
     setCanvasVisibility: (state, action: PayloadAction<boolean>) => {
@@ -98,22 +93,9 @@ export const timelineSlice = createSlice({
     setVideoElement: (state, action: PayloadAction<string | null>) => {
       state.videoElementId = action.payload;
     },
-    seekToTime: (state, action: PayloadAction<number>) => {
-      state.currentTime = action.payload;
-    },
-    updateTextOverlay: (
-      state,
-      action: PayloadAction<{
-        instructionId: string;
-        textOverlay: TextOverlayMedia;
-      }>
-    ) => {
-      const instruction = state.instructions.find(
-        (i) => i.id === action.payload.instructionId
-      ) as TextOverlayInstruction | undefined;
-
-      if (instruction) {
-        instruction.textOverlay = action.payload.textOverlay;
+    seekToTime: (state, action: PayloadAction<number | undefined>) => {
+      if (typeof action.payload === "number") {
+        state.currentTime = action.payload;
       }
     },
     renameInstruction: (
@@ -145,7 +127,6 @@ export const {
   setError,
   setVideoElement,
   seekToTime,
-  updateTextOverlay,
   renameInstruction,
 } = timelineSlice.actions;
 

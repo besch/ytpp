@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { selectCurrentTimeline } from "@/store/timelineSlice";
 import { TimeInput } from "../ui/TimeInput";
-import { Instruction } from "@/types";
+import { InstructionResponse } from "@/types";
 import { MediaPosition } from "./MediaPositioner";
 import OverlayInstructionForm from "./OverlayInstructionForm";
 import SkipInstructionForm from "./SkipInstructionForm";
@@ -20,10 +20,10 @@ import config from "@/config";
 
 interface InstructionFormProps {
   isEditing: boolean;
-  editingInstruction: Instruction | null;
+  editingInstruction: InstructionResponse | null;
   selectedType: string | null;
   currentTime: number;
-  onSubmit: (instruction: Instruction) => Promise<void>;
+  onSubmit: (instruction: InstructionResponse) => Promise<void>;
   onBack: () => void;
   onTimeChange: (time: number) => void;
   onSkipToTimeChange: (time: number) => void;
@@ -105,26 +105,28 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
   // Initialize form for editing existing instruction
   useEffect(() => {
     if (isEditing && editingInstruction && !isInitialized) {
-      const totalSeconds = Math.floor(editingInstruction.triggerTime / 1000);
+      const totalSeconds = Math.floor(
+        editingInstruction.data.triggerTime / 1000
+      );
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = Math.floor(totalSeconds % 60);
-      const milliseconds = editingInstruction.triggerTime % 1000;
+      const milliseconds = editingInstruction.data.triggerTime % 1000;
 
       methods.setValue("hours", hours, { shouldValidate: false });
       methods.setValue("minutes", minutes, { shouldValidate: false });
       methods.setValue("seconds", seconds, { shouldValidate: false });
       methods.setValue("milliseconds", milliseconds, { shouldValidate: false });
 
-      if (editingInstruction.type === "overlay") {
+      if (editingInstruction.data.type === "overlay") {
         overlayForm.initializeForm(editingInstruction);
-      } else if (editingInstruction.type === "skip") {
+      } else if (editingInstruction.data.type === "skip") {
         skipForm.initializeForm(editingInstruction);
-      } else if (editingInstruction.type === "text-overlay") {
+      } else if (editingInstruction.data.type === "text-overlay") {
         textOverlayForm.initializeForm(editingInstruction);
       }
 
-      previousInstructionId.current = editingInstruction.id;
+      previousInstructionId.current = editingInstruction.id!;
       setIsInitialized(true);
     }
   }, [
@@ -146,23 +148,66 @@ const InstructionForm: React.FC<InstructionFormProps> = ({
 
   const handleSubmit = async (data: any) => {
     try {
-      let newInstruction: Instruction;
-      // Always generate a new ID when cloning, use existing ID only when editing
-      const id =
-        !isEditing || editingInstruction?.isClone
-          ? Date.now().toString()
-          : editingInstruction?.id || Date.now().toString();
+      const id = !isEditing
+        ? Date.now().toString()
+        : editingInstruction?.id || Date.now().toString();
+
+      const triggerTime = parseTimeInput({
+        hours: data.hours || 0,
+        minutes: data.minutes || 0,
+        seconds: data.seconds || 0,
+        milliseconds: data.milliseconds || 0,
+      });
+
+      const baseInstruction: InstructionResponse = {
+        id,
+        timeline_id: currentTimeline?.id || 0,
+        data: {
+          type: selectedType || "",
+          triggerTime,
+          pauseMainVideo: false,
+          name: data.name || `${selectedType} Instruction`,
+        },
+      };
+
+      let newInstruction: InstructionResponse;
 
       if (selectedType === "text-overlay") {
-        newInstruction = textOverlayForm.buildInstruction(data, id);
+        const textOverlayData = textOverlayForm.buildInstruction(data, id);
+        newInstruction = {
+          ...baseInstruction,
+          data: {
+            ...baseInstruction.data,
+            textOverlay: textOverlayData.textOverlay,
+            overlayDuration: textOverlayData.overlayDuration,
+            pauseMainVideo: data.pauseMainVideo || false,
+          },
+        };
       } else if (selectedType === "overlay") {
-        newInstruction = await overlayForm.buildInstruction(
+        const overlayData = await overlayForm.buildInstruction(
           data,
           id,
           uploadMedia
         );
+        newInstruction = {
+          ...baseInstruction,
+          data: {
+            ...baseInstruction.data,
+            overlayMedia: overlayData.overlayMedia || undefined,
+            overlayDuration: overlayData.overlayDuration,
+            pauseMainVideo: data.pauseMainVideo || false,
+          },
+        };
       } else if (selectedType === "skip") {
-        newInstruction = skipForm.buildInstruction(data, id);
+        const skipData = skipForm.buildInstruction(data, id);
+        newInstruction = {
+          ...baseInstruction,
+          data: {
+            ...baseInstruction.data,
+            skipToTime: skipData.skipToTime,
+            pauseMainVideo: false,
+          },
+        };
       } else {
         return;
       }
