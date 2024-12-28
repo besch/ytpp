@@ -24,6 +24,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { isEqual } from "lodash";
 import InstructionForm from "./InstructionForm";
 import config from "@/config";
+import { VideoManager } from "@/lib/VideoManager";
 
 const getInstructionTitle = (type: string): string => {
   switch (type) {
@@ -82,6 +83,20 @@ const InstructionEditor: React.FC = () => {
   const [originalSkipToTime, setOriginalSkipToTime] = useState<number | null>(
     null
   );
+
+  // Add mutation for instruction updates
+  const updateInstructionMutation = useMutation({
+    mutationFn: async (instruction: Instruction) => {
+      if (isEditing) {
+        return api.instructions.update(instruction.id!, instruction);
+      } else {
+        return api.instructions.create(
+          currentTimeline!.id.toString(),
+          instruction
+        );
+      }
+    },
+  });
 
   const handleTimeChange = (time: number) => {
     const totalSeconds = Math.floor(time / 1000);
@@ -153,6 +168,14 @@ const InstructionEditor: React.FC = () => {
     newInstruction: InstructionResponse
   ) => {
     try {
+      // Clean up any active instances of this instruction in VideoManager
+      const videoManager = (window as any).videoManager as
+        | VideoManager
+        | undefined;
+      if (videoManager && editingInstruction?.id) {
+        videoManager.hideInstruction(editingInstruction.id);
+      }
+
       // Remove _originalTriggerTime before saving
       const { _originalTriggerTime, ...baseInstruction } =
         newInstruction as InstructionWithOriginalTimes;
@@ -169,16 +192,7 @@ const InstructionEditor: React.FC = () => {
         },
       } as Instruction;
 
-      if (isEditing) {
-        // Update existing instruction
-        await api.instructions.update(instructionToSave.id!, instructionToSave);
-      } else {
-        // Create new instruction
-        await api.instructions.create(
-          currentTimeline!.id.toString(),
-          instructionToSave
-        );
-      }
+      await updateInstructionMutation.mutateAsync(instructionToSave);
 
       dispatch(setCurrentTime(instructionToSave.data.triggerTime));
 
@@ -551,7 +565,9 @@ const InstructionEditor: React.FC = () => {
           }}
         />
       </FormProvider>
-      {(uploadMediaMutation.isPending || deleteMediaMutation.isPending) && (
+      {(uploadMediaMutation.isPending ||
+        deleteMediaMutation.isPending ||
+        updateInstructionMutation.isPending) && (
         <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
           <LoadingSpinner size="lg" />
         </div>

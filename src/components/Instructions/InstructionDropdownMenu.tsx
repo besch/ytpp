@@ -12,7 +12,7 @@ import {
   addInstruction,
   selectCurrentTimeline,
 } from "@/store/timelineSlice";
-import { InstructionResponse } from "@/types";
+import { InstructionResponse, Instruction } from "@/types";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/DropdownMenu";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import Dialog from "../ui/Dialog";
+import { VideoManager } from "@/lib/VideoManager";
 
 interface InstructionDropdownMenuProps {
   instruction: InstructionResponse;
@@ -143,22 +144,22 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
     mutationFn: async () => {
       const response = await api.instructions.clone(
         instruction.id!,
-        instruction
+        instruction as Instruction
       );
       const clonedInstruction: InstructionResponse = {
         id: response.id,
         timeline_id: timelineId,
-        data: response.data,
+        data: {
+          ...response.data,
+          type: instruction.data.type,
+        },
         created_at: response.created_at,
         updated_at: response.updated_at,
       };
       return clonedInstruction;
     },
     onSuccess: async (clonedInstruction: InstructionResponse) => {
-      // First add the cloned instruction to Redux to show immediate feedback
       dispatch(addInstruction(clonedInstruction));
-
-      // Then invalidate and refetch to ensure we have the latest data
       await queryClient.invalidateQueries({
         queryKey: ["instructions", timelineId.toString()],
         exact: true,
@@ -176,6 +177,13 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   };
 
   const handleDelete = () => {
+    // Clean up any active instances of this instruction in VideoManager
+    const videoManager = (window as any).videoManager as
+      | VideoManager
+      | undefined;
+    if (videoManager && instruction.id) {
+      videoManager.hideInstruction(instruction.id);
+    }
     setIsDeletingInstruction(true);
   };
 
@@ -188,6 +196,13 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   };
 
   const handleClone = async () => {
+    // Clean up any active instances of the original instruction before cloning
+    const videoManager = (window as any).videoManager as
+      | VideoManager
+      | undefined;
+    if (videoManager && instruction.id) {
+      videoManager.hideInstruction(instruction.id);
+    }
     await cloneInstructionMutation.mutateAsync();
   };
 
@@ -199,23 +214,33 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   const handleConfirmRename = async () => {
     setIsRenamingLoading(true);
     try {
-      // Update the instruction name using the instructions API
-      await api.instructions.update(instruction.id!, {
+      // Clean up any active instances of this instruction in VideoManager
+      const videoManager = (window as any).videoManager as
+        | VideoManager
+        | undefined;
+      if (videoManager && instruction.id) {
+        videoManager.hideInstruction(instruction.id);
+      }
+
+      const updatedInstruction = {
         ...instruction,
         data: {
           ...instruction.data,
           name: newName,
+          type: instruction.data.type as "overlay" | "text-overlay" | "skip",
+          overlayDuration: instruction.data.overlayDuration || 0,
+          muteOverlayMedia: instruction.data.muteOverlayMedia || false,
         },
-      });
+      };
 
-      // Update the Redux state
+      await api.instructions.update(
+        instruction.id!,
+        updatedInstruction as Instruction
+      );
       dispatch(renameInstruction({ id: instruction.id!, name: newName }));
-
-      // Invalidate queries to refresh the data
       queryClient.invalidateQueries({
         queryKey: ["instructions", timelineId.toString()],
       });
-
       setIsRenaming(false);
     } catch (error) {
       console.error("Failed to rename instruction:", error);

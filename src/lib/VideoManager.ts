@@ -329,6 +329,13 @@ export class VideoManager {
   }
 
   public setInstructions(instructions: Instruction[]): void {
+    // Clean up any active instructions and overlays
+    this.activeInstructions.forEach((_, id) => {
+      this.videoOverlayManager?.hideOverlay(id);
+    });
+    this.activeInstructions.clear();
+
+    // Set new instructions
     this.instructions = instructions;
   }
 
@@ -438,5 +445,13 @@ export class VideoManager {
 
     // Update the store with the new time
     store.dispatch(seekToTime(instruction.data.skipToTime));
+  }
+
+  public hideInstruction(id: string): void {
+    // Clean up the instruction if it's active
+    if (this.activeInstructions.has(id)) {
+      this.videoOverlayManager?.hideOverlay(id);
+      this.activeInstructions.delete(id);
+    }
   }
 }

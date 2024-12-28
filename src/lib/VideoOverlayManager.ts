@@ -292,15 +292,35 @@ export class VideoOverlayManager {
   public hideOverlay = (id: string): void => {
     const overlayElement = this.overlayElements.get(id);
     if (overlayElement) {
+      // Clean up any media elements
+      const videoElement = overlayElement.querySelector("video");
+      if (videoElement) {
+        (videoElement as HTMLVideoElement).pause();
+        (videoElement as HTMLVideoElement).src = "";
+        (videoElement as HTMLVideoElement).load();
+      }
+
+      const audioElement = overlayElement.querySelector("audio");
+      if (audioElement) {
+        (audioElement as HTMLAudioElement).pause();
+        (audioElement as HTMLAudioElement).src = "";
+        (audioElement as HTMLAudioElement).load();
+      }
+
+      // Remove the element and clear from map
       overlayElement.remove();
       this.overlayElements.delete(id);
     }
+
     if (this.overlayTimeout) {
       clearTimeout(this.overlayTimeout);
       this.overlayTimeout = null;
     }
+
     if (this.audioElement) {
       this.audioElement.pause();
+      this.audioElement.src = "";
+      this.audioElement.load();
       this.audioElement = null;
     }
   };
