@@ -143,7 +143,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
   const cloneInstructionMutation = useMutation({
     mutationFn: async () => {
       const response = await api.instructions.clone(
-        timelineId.toString(),
+        instruction.id!,
         instruction
       );
       const clonedInstruction: InstructionResponse = {
