@@ -107,7 +107,7 @@ export function useAPI() {
       },
 
       clone: async (
-        timelineId: string,
+        instructionId: string,
         instruction: Instruction
       ): Promise<InstructionResponse> => {
         const clonedInstruction = {
@@ -126,10 +126,10 @@ export function useAPI() {
         };
 
         return request({
-          endpoint: "/instructions",
+          endpoint: "/instructions/clone",
           method: "POST",
           body: {
-            timeline_id: timelineId,
+            instruction_id: instructionId,
             data: clonedInstruction.data,
           },
         });
@@ -142,9 +142,7 @@ export function useAPI() {
         return request({
           endpoint: `/instructions/${instructionId}`,
           method: "PUT",
-          body: {
-            data: instruction.data,
-          },
+          body: instruction.data,
         });
       },
 
