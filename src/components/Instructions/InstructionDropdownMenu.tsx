@@ -146,8 +146,11 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
         instruction
       );
       const clonedInstruction: InstructionResponse = {
+        id: response.id,
         timeline_id: timelineId,
         data: response.data,
+        created_at: response.created_at,
+        updated_at: response.updated_at,
       };
       return clonedInstruction;
     },
@@ -158,7 +161,7 @@ const InstructionDropdownMenu: React.FC<InstructionDropdownMenuProps> = ({
       // Then invalidate and refetch to ensure we have the latest data
       await queryClient.invalidateQueries({
         queryKey: ["instructions", timelineId.toString()],
-        refetchType: "active",
+        exact: true,
       });
     },
     onError: (error: Error) => {
