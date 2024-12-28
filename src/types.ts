@@ -62,7 +62,7 @@ export interface OverlayInstruction extends BaseInstruction {
     triggerTime: number;
     pauseMainVideo: boolean;
     overlayDuration: number;
-    overlayMedia: OverlayMedia;
+    overlayMedia?: OverlayMedia;
     muteOverlayMedia: boolean;
     name: string;
   };

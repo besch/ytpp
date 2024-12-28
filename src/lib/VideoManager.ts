@@ -195,6 +195,10 @@ export class VideoManager {
       return;
     }
 
+    if (!instruction.data.overlayMedia) {
+      return;
+    }
+
     const mediaType = instruction.data.overlayMedia.type.startsWith("video/")
       ? "video"
       : instruction.data.overlayMedia.type.startsWith("audio/")
