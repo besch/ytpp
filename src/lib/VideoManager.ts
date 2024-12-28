@@ -61,7 +61,7 @@ export class VideoManager {
   }
 
   public async handleInstruction(instruction: Instruction): Promise<void> {
-    switch (instruction.type) {
+    switch (instruction.data.type) {
       case "overlay":
         await this.handleOverlayInstruction(instruction as OverlayInstruction);
         break;
@@ -146,8 +146,8 @@ export class VideoManager {
     for (const [id, activeInstr] of this.activeInstructions) {
       if (activeInstr.endTime && currentTime >= activeInstr.endTime) {
         if (
-          activeInstr.instruction.type === "overlay" ||
-          activeInstr.instruction.type === "text-overlay"
+          activeInstr.instruction.data.type === "overlay" ||
+          activeInstr.instruction.data.type === "text-overlay"
         ) {
           this.videoOverlayManager?.hideOverlay(id);
         }
@@ -158,25 +158,32 @@ export class VideoManager {
     // Find new instructions to trigger
     const instructionsToTrigger = this.instructions.filter(
       (instr: Instruction) => {
-        const instrTime = instr.triggerTime / 1000;
+        const instrTime = instr.data.triggerTime / 1000;
         return instrTime > lastTime && instrTime <= currentTime;
       }
     );
 
     for (const instruction of instructionsToTrigger) {
-      if (!this.activeInstructions.has(instruction.id)) {
-        if (instruction.type === "overlay") {
-          const overlayInstruction = instruction as OverlayInstruction;
-          await this.handleOverlayInstruction(overlayInstruction);
-        } else if (instruction.type === "skip") {
+      if (!instruction.id || this.activeInstructions.has(instruction.id)) {
+        continue;
+      }
+
+      switch (instruction.data.type) {
+        case "overlay":
+          await this.handleOverlayInstruction(
+            instruction as OverlayInstruction
+          );
+          break;
+        case "skip":
           if (this.videoElement && !this.videoElement.paused) {
-            const skipInstruction = instruction as SkipInstruction;
-            this.handleInstructionSkip(skipInstruction.skipToTime);
+            await this.handleSkipInstruction(instruction as SkipInstruction);
           }
-        } else if (instruction.type === "text-overlay") {
-          const textOverlayInstruction = instruction as TextOverlayInstruction;
-          await this.handleTextOverlayInstruction(textOverlayInstruction);
-        }
+          break;
+        case "text-overlay":
+          await this.handleTextOverlayInstruction(
+            instruction as TextOverlayInstruction
+          );
+          break;
       }
     }
   }
@@ -188,34 +195,34 @@ export class VideoManager {
       return;
     }
 
-    const mediaType = instruction.overlayMedia!.type.startsWith("video/")
+    const mediaType = instruction.data.overlayMedia.type.startsWith("video/")
       ? "video"
-      : instruction.overlayMedia!.type.startsWith("audio/")
+      : instruction.data.overlayMedia.type.startsWith("audio/")
       ? "audio"
       : "image";
 
-    const duration = instruction.overlayDuration;
-    const endTime = instruction.triggerTime / 1000 + duration;
+    const duration = instruction.data.overlayDuration;
+    const endTime = instruction.data.triggerTime / 1000 + duration;
 
-    this.activeInstructions.set(instruction.id, {
+    this.activeInstructions.set(instruction.id!, {
       instruction,
       endTime,
     });
 
-    if (instruction.pauseMainVideo) {
+    if (instruction.data.pauseMainVideo) {
       this.videoElement.pause();
     }
 
     await this.videoOverlayManager?.playOverlayMedia(
-      instruction.overlayMedia!.url,
-      instruction.muteOverlayMedia || false,
+      instruction.data.overlayMedia.url,
+      instruction.data.muteOverlayMedia || false,
       mediaType,
-      instruction.id,
+      instruction.id!,
       duration,
-      instruction.overlayMedia!.position
+      instruction.data.overlayMedia.position
     );
 
-    if (instruction.pauseMainVideo) {
+    if (instruction.data.pauseMainVideo) {
       this.videoOverlayManager?.onOverlayEnded(() => {
         if (this.videoElement && this.videoElement.paused) {
           this.videoElement.play().catch((error) => {
@@ -346,13 +353,13 @@ export class VideoManager {
     }
 
     const endTime =
-      instruction.triggerTime / 1000 + instruction.overlayDuration;
-    this.activeInstructions.set(instruction.id, {
+      instruction.data.triggerTime / 1000 + instruction.data.overlayDuration;
+    this.activeInstructions.set(instruction.id!, {
       instruction,
       endTime,
     });
 
-    const { textOverlay, pauseMainVideo, overlayDuration } = instruction;
+    const { textOverlay, pauseMainVideo, overlayDuration } = instruction.data;
 
     // Calculate position based on video size
     const videoRect = this.videoElement.getBoundingClientRect();
@@ -375,7 +382,7 @@ export class VideoManager {
       ? new Promise<void>((resolve) => {
           setTimeout(
             resolve,
-            (instruction.pauseDuration || overlayDuration) * 1000
+            (instruction.data.pauseDuration || overlayDuration) * 1000
           );
         })
       : Promise.resolve();
@@ -391,7 +398,7 @@ export class VideoManager {
       textOverlay.style,
       scaledPosition,
       overlayDuration,
-      instruction.id
+      instruction.id!
     );
 
     // Handle both the text overlay duration and video resume timing independently
@@ -406,7 +413,7 @@ export class VideoManager {
 
     // Handle text overlay cleanup after its duration
     textOverlayPromise.then(() => {
-      this.videoOverlayManager?.hideOverlay(instruction.id);
+      this.videoOverlayManager?.hideOverlay(instruction.id!);
       if (this.overlayEndedCallback) {
         this.overlayEndedCallback();
       }
@@ -423,9 +430,9 @@ export class VideoManager {
     if (!this.videoElement) return;
 
     // Skip to the specified time
-    this.videoElement.currentTime = instruction.skipToTime / 1000;
+    this.videoElement.currentTime = instruction.data.skipToTime / 1000;
 
     // Update the store with the new time
-    store.dispatch(seekToTime(instruction.skipToTime));
+    store.dispatch(seekToTime(instruction.data.skipToTime));
   }
 }

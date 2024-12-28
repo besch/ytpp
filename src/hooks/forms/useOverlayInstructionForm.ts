@@ -62,11 +62,14 @@ export const useOverlayInstructionForm = () => {
   };
 
   const handleMediaSelected = (mediaData: MediaData) => {
-    setValue("overlayDuration", Math.ceil(mediaData.duration ?? 5));
+    setValue(
+      "overlayDuration",
+      Math.ceil(mediaData.duration ?? config.defaultOverlayDuration)
+    );
     setValue("overlayMedia", {
       file: mediaData.file,
       url: mediaData.url,
-      duration: mediaData.duration ?? 5,
+      duration: mediaData.duration ?? config.defaultOverlayDuration,
       name: mediaData.name,
       type: mediaData.type,
       position: {

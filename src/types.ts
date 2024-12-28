@@ -56,7 +56,44 @@ export interface TextStyle {
   padding?: number;
 }
 
-export type Instruction = InstructionWithOriginalTimes;
+export interface OverlayInstruction extends BaseInstruction {
+  data: {
+    type: "overlay";
+    triggerTime: number;
+    pauseMainVideo: boolean;
+    overlayDuration: number;
+    overlayMedia: OverlayMedia;
+    muteOverlayMedia: boolean;
+    name: string;
+  };
+}
+
+export interface TextOverlayInstruction extends BaseInstruction {
+  data: {
+    type: "text-overlay";
+    triggerTime: number;
+    pauseMainVideo: boolean;
+    overlayDuration: number;
+    textOverlay: TextOverlayMedia;
+    pauseDuration?: number;
+    name: string;
+  };
+}
+
+export interface SkipInstruction extends BaseInstruction {
+  data: {
+    type: "skip";
+    triggerTime: number;
+    pauseMainVideo: boolean;
+    skipToTime: number;
+    name: string;
+  };
+}
+
+export type Instruction =
+  | OverlayInstruction
+  | TextOverlayInstruction
+  | SkipInstruction;
 
 export interface InstructionsState {
   instructions: Instruction[];

@@ -13,9 +13,9 @@ import {
 import { useAPI } from "@/hooks/useAPI";
 import { useVideoManager } from "@/hooks/useVideoManager";
 import {
-  BaseInstruction,
   InstructionResponse,
   InstructionWithOriginalTimes,
+  Instruction,
 } from "@/types";
 import { MediaPosition } from "./MediaPositioner";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -63,7 +63,6 @@ const InstructionEditor: React.FC = () => {
       minutes: Math.floor(((currentTime / 1000) % 3600) / 60),
       seconds: Math.floor((currentTime / 1000) % 60),
       milliseconds: currentTime % 1000,
-      overlayDuration: config.defaultOverlayDuration,
       useOverlayDuration: false,
       muteOverlayMedia: false,
       pauseMainVideo: false,
@@ -155,8 +154,20 @@ const InstructionEditor: React.FC = () => {
   ) => {
     try {
       // Remove _originalTriggerTime before saving
-      const { _originalTriggerTime, ...instructionToSave } =
+      const { _originalTriggerTime, ...baseInstruction } =
         newInstruction as InstructionWithOriginalTimes;
+
+      // Ensure type is properly narrowed
+      const instructionToSave = {
+        ...baseInstruction,
+        data: {
+          ...baseInstruction.data,
+          type: baseInstruction.data.type as
+            | "overlay"
+            | "text-overlay"
+            | "skip",
+        },
+      } as Instruction;
 
       if (isEditing) {
         // Update existing instruction
