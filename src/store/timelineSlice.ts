@@ -76,6 +76,9 @@ export const timelineSlice = createSlice({
       state.timelines = action.payload;
     },
     setCurrentTimeline: (state, action: PayloadAction<Timeline | null>) => {
+      state.instructions = [];
+      state.editingInstruction = null;
+      state.selectedInstructionId = null;
       state.currentTimeline = action.payload;
     },
     timelineDeleted: (state, action: PayloadAction<number>) => {
