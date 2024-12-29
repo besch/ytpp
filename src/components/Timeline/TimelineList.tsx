@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Plus, ThumbsUp, ThumbsDown, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,69 @@ import {
 } from "@/store/authSlice";
 import { RootState, store } from "@/store";
 import { useAPI } from "@/hooks/useAPI";
+import TimelineNameDialog from "./TimelineNameDialog";
+
+const styles = {
+  inputContainer: {
+    marginBottom: "24px",
+    paddingRight: "24px",
+  },
+  input: {
+    width: "100%",
+    padding: "8px 12px",
+    backgroundColor: "rgb(17 24 39)",
+    border: "1px solid #4B5563",
+    borderRadius: "6px",
+    color: "#ffffff",
+    fontSize: "14px",
+    outline: "none",
+  },
+  buttonGroup: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "8px",
+  },
+  icon: {
+    width: "14px",
+    height: "14px",
+    marginRight: "6px",
+  },
+  button: {
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    fontSize: "14px",
+    fontWeight: 500,
+    transition: "background-color 200ms",
+  },
+  cancelButton: {
+    backgroundColor: "transparent",
+    color: "#9CA3AF",
+    border: "1px solid #4B5563",
+    "&:hover": {
+      backgroundColor: "rgba(75, 85, 99, 0.3)",
+    },
+  },
+  confirmButton: {
+    backgroundColor: "#2563EB",
+    color: "#ffffff",
+    border: "none",
+    "&:hover": {
+      backgroundColor: "#4F46E5",
+    },
+  },
+  loadingOverlay: {
+    position: "absolute",
+    inset: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "8px",
+  },
+} as const;
 
 const TimelineList: React.FC = () => {
   const dispatch = useDispatch();
@@ -22,6 +85,8 @@ const TimelineList: React.FC = () => {
   const api = useAPI();
   const videoUrl = window.location.href.split("&")[0];
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newTimelineTitle, setNewTimelineTitle] = useState("");
 
   // Query for fetching timelines
   const {
@@ -124,10 +189,16 @@ const TimelineList: React.FC = () => {
   }, [timelines, isAuthenticated]);
 
   const handleCreateTimeline = async () => {
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleCreateTimelineSubmit = async (title: string) => {
     createTimelineMutation.mutate({
-      title: "New Timeline",
+      title,
       video_url: videoUrl,
     });
+    setIsCreateDialogOpen(false);
+    setNewTimelineTitle("");
   };
 
   const handleEditTimeline = async (timeline: Timeline) => {
@@ -140,6 +211,14 @@ const TimelineList: React.FC = () => {
       await refetch();
     } catch (error) {}
   };
+
+  const getButtonStyle = (baseStyle: any) => ({
+    ...styles.button,
+    ...baseStyle,
+    "&:hover": {
+      ...baseStyle["&:hover"],
+    },
+  });
 
   if (error) {
     return (
@@ -174,6 +253,20 @@ const TimelineList: React.FC = () => {
           New Timeline
         </Button>
       </div>
+
+      <TimelineNameDialog
+        open={isCreateDialogOpen}
+        onClose={() => {
+          setIsCreateDialogOpen(false);
+          setNewTimelineTitle("");
+        }}
+        onSubmit={handleCreateTimelineSubmit}
+        title="Create New Timeline"
+        value={newTimelineTitle}
+        onChange={setNewTimelineTitle}
+        isLoading={createTimelineMutation.isPending}
+        submitLabel="Create"
+      />
 
       {isLoading || createTimelineMutation.isPending ? (
         <div className="flex justify-center py-12">
