@@ -41,12 +41,6 @@ const TimelineList: React.FC = () => {
     mutationFn: (newTimeline: Partial<Timeline>) =>
       api.timelines.create(newTimeline),
     onSuccess: (newTimeline) => {
-      const timelineWithDefaults = {
-        ...newTimeline,
-        is_youtube_channel_owner: newTimeline.is_youtube_channel_owner ?? false,
-      };
-      dispatch(setCurrentTimeline(timelineWithDefaults as Timeline));
-      navigate(`/timeline/${timelineWithDefaults.id}`);
       queryClient.invalidateQueries({ queryKey: ["timelines"] });
     },
     onError: (error) => {

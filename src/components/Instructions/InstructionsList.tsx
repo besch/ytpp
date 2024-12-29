@@ -29,10 +29,12 @@ const InstructionsList: React.FC = () => {
   const timeline = useSelector(selectCurrentTimeline);
   const timelineId = timeline?.id;
   const editingInstruction = useSelector(selectEditingInstruction);
-  const instructions = useSelector(selectInstructions);
+  const instructions = useSelector(
+    (state: RootState) => state.timeline.instructions
+  );
   const [showTypeSelect, setShowTypeSelect] = useState(false);
-  const isOwner = useSelector((state: RootState) =>
-    selectIsTimelineOwner(state, timeline)
+  const isOwner = useSelector(
+    (state: RootState) => state.timeline.currentTimeline?.isOwner
   );
   const currentTime = useSelector(selectCurrentTime);
   const api = useAPI();
@@ -50,6 +52,7 @@ const InstructionsList: React.FC = () => {
   });
 
   useEffect(() => {
+    console.log("instructionsData", instructionsData);
     if (instructionsData.length > 0) {
       dispatch(setInstructions(instructionsData));
     }
