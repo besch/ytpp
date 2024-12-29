@@ -7,6 +7,7 @@ import {
   setCurrentTime,
   selectVideoElementId,
 } from "@/store/timelineSlice";
+import { Instruction } from "@/types";
 
 export function useVideoManager() {
   const dispatch = useDispatch();
@@ -19,8 +20,10 @@ export function useVideoManager() {
     if (!videoElementId) return;
 
     videoManagerRef.current = new VideoManager();
-    const videoElement = document.getElementById(videoElementId) as HTMLVideoElement;
-    
+    const videoElement = document.getElementById(
+      videoElementId
+    ) as HTMLVideoElement;
+
     if (videoElement) {
       videoManagerRef.current.setVideoElement(videoElement);
 
@@ -41,7 +44,7 @@ export function useVideoManager() {
   // Update instructions when they change
   useEffect(() => {
     if (videoManagerRef.current) {
-      videoManagerRef.current.setInstructions(instructions);
+      videoManagerRef.current.setInstructions(instructions as Instruction[]);
     }
   }, [instructions]);
 
